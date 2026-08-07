@@ -1,0 +1,95 @@
+@if (unitId() == null) {
+  <div class="p-6 text-sm text-neutral-400">Carregando unidade...</div>
+} @else {
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-lg font-semibold">Mapa de Mesas</h1>
+
+      <form class="flex gap-2 items-center" (ngSubmit)="createTable()">
+        <input
+          name="newTableNumber" [(ngModel)]="newTableNumber" placeholder="Número"
+          class="w-24 rounded-xl bg-black/30 border border-white/10 px-2 py-1.5 text-xs outline-none focus:border-brand-500/60 transition"
+        />
+        <input
+          name="newTableCapacity" [(ngModel)]="newTableCapacity" type="number" min="1" placeholder="Lugares"
+          class="w-20 rounded-xl bg-black/30 border border-white/10 px-2 py-1.5 text-xs outline-none focus:border-brand-500/60 transition"
+        />
+        <button type="submit" class="btn-brand rounded-xl px-3 py-1.5 text-xs">+ Mesa</button>
+      </form>
+    </div>
+
+    @if (error()) {
+      <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+        <span>{{ error() }}</span>
+        <button (click)="error.set(null)" class="text-red-400">×</button>
+      </div>
+    }
+
+    @if (tables().length === 0) {
+      <p class="text-sm text-neutral-500">Nenhuma mesa cadastrada nesta unidade.</p>
+    }
+
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      @for (table of tables(); track table.id) {
+        <div class="rounded-2xl border p-4 flex flex-col gap-2 backdrop-blur-sm" [class]="statusStyles[table.status]">
+          <div class="flex items-center justify-between">
+            <span class="text-lg font-semibold">Mesa {{ table.number }}</span>
+            <span class="text-xs opacity-80">{{ table.capacity }} lug.</span>
+          </div>
+          <span class="text-xs uppercase tracking-wide opacity-90">{{ statusLabels[table.status] }}</span>
+
+          <div class="mt-2 flex flex-col gap-1.5">
+            @if (table.status === 'LIVRE') {
+              <button (click)="startOpening(table)" class="text-xs btn-brand rounded-lg py-1.5">
+                Abrir atendimento
+              </button>
+            }
+            @if (table.status === 'OCUPADA') {
+              <button
+                (click)="goToOccupiedTable(table)"
+                [disabled]="navigatingTableId() === table.id"
+                class="text-xs btn-brand rounded-lg py-1.5 disabled:opacity-50"
+              >
+                {{ navigatingTableId() === table.id ? 'Abrindo...' : 'Ver atendimento' }}
+              </button>
+            }
+            @for (t of manualTransitions[table.status]; track t.to) {
+              <button (click)="changeStatus(table, t.to)" class="text-xs rounded-lg border border-current/30 py-1.5 hover:bg-white/5 transition">
+                {{ t.label }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  @if (openingTable(); as table) {
+    <div class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6 z-10">
+      <form (ngSubmit)="confirmOpen()" class="w-full max-w-sm glass rounded-2xl p-6 space-y-4">
+        <h2 class="text-sm font-semibold">Abrir atendimento — Mesa {{ table.number }}</h2>
+
+        <div class="space-y-1">
+          <label class="text-xs text-neutral-400">Número de pessoas</label>
+          <input
+            required type="number" min="1" name="partySize" [(ngModel)]="partySize"
+            class="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-500/60 transition"
+          />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-xs text-neutral-400">Observações</label>
+          <textarea
+            name="notes" [(ngModel)]="notes" rows="2"
+            class="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-500/60 transition"
+          ></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" (click)="openingTable.set(null)" class="text-sm text-neutral-400 px-3 py-1.5">Cancelar</button>
+          <button type="submit" class="btn-brand rounded-xl px-4 py-1.5 text-sm">Abrir</button>
+        </div>
+      </form>
+    </div>
+  }
+}

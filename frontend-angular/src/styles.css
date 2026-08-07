@@ -1,10 +1,90 @@
 @import "tailwindcss";
 
-/* Reset minimo equivalente ao que o Vite/React trazia */
+/*
+ * Bueno's House — sistema de design.
+ * Base escura profunda (nao preto chapado) com brilho ambiente, cor de marca
+ * ambar/laranja (apetitosa, combina com hamburgueria) e superficies de vidro.
+ */
+@theme {
+  --color-brand-300: #fdba74;
+  --color-brand-400: #fb923c;
+  --color-brand-500: #f97316;
+  --color-brand-600: #ea580c;
+  --color-ink-950: #08090d;
+  --color-ink-900: #0d0f16;
+  --color-ink-850: #12151f;
+  --color-ink-800: #1a1e2b;
+  --color-ink-700: #262b3b;
+}
+
 * {
   box-sizing: border-box;
 }
 html, body {
   margin: 0;
   padding: 0;
+}
+
+/* Fundo global: gradiente escuro + dois brilhos ambiente sutis (marca e frio) */
+body {
+  min-height: 100vh;
+  color: #e8eaf0;
+  background-color: #08090d;
+  background-image:
+    radial-gradient(60rem 60rem at 12% -10%, rgba(249, 115, 22, 0.10), transparent 55%),
+    radial-gradient(50rem 50rem at 100% 0%, rgba(56, 189, 248, 0.07), transparent 50%),
+    linear-gradient(180deg, #0a0c12 0%, #08090d 100%);
+  background-attachment: fixed;
+}
+
+/* Superficie de vidro reutilizavel (cards, paineis) */
+.glass {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+}
+.glass-hover:hover {
+  border-color: rgba(249, 115, 22, 0.35);
+  background: rgba(255, 255, 255, 0.055);
+}
+
+/* Botao de marca com gradiente e brilho */
+.btn-brand {
+  background-image: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+  color: #1a1204;
+  font-weight: 600;
+  box-shadow: 0 6px 20px -6px rgba(249, 115, 22, 0.6);
+  transition: filter 0.15s ease, transform 0.05s ease;
+}
+.btn-brand:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.btn-brand:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn-brand:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+/* Texto com gradiente de marca (logo) */
+.brand-text {
+  background-image: linear-gradient(120deg, #fdba74 0%, #f97316 55%, #ea580c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Barra de rolagem discreta e no tom do tema */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
 }

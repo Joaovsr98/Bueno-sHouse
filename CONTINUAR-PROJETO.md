@@ -1049,3 +1049,72 @@ obrigatórios.
 
 **Nada foi alterado.** Com isto, os 38 capítulos do material foram todos
 auditados (seções 10 a 20 deste documento). Não há mais capítulos pendentes.
+
+---
+
+## 21. Matriz de decisão de padrões GoF (consolidada — 2026-08-07)
+
+A pedido da usuária: **padrão não é meta**. Só implementar padrão quando houver
+a dor concreta. Esta matriz consolida e ATUALIZA as auditorias por capítulo
+(seções 15-18), refletindo o que mudou desde então: **Proxy/cache já
+implementado** (seção 19) e **Observer via eventos de domínio parcialmente
+implementado** (seção 19).
+
+Classificações: `JÁ ATENDIDO` (framework/arquitetura/linguagem/já implementado)
+· `APLICAR AGORA` · `QUANDO A FUNCIONALIDADE EXISTIR` · `NÃO HÁ DOR`.
+
+| Padrão | Evidência no código | Classificação |
+|---|---|---|
+| Singleton | beans Spring singleton por padrão; HikariCP p/ conexões | JÁ ATENDIDO (framework) |
+| Factory Method | não há exportação de cardápio | NÃO HÁ DOR |
+| Abstract Factory | só existe JPA+MySQL (1 família) | NÃO HÁ DOR |
+| Builder | `OrderService.create()` monta `Order` com muitos setters | APLICAR AGORA (baixa urgência) |
+| Prototype | combos não existem | QUANDO A FUNCIONALIDADE EXISTIR |
+| Adapter | sem gateway externo (escopo Etapa 1) | QUANDO A FUNCIONALIDADE EXISTIR |
+| Façade | checkout = 2 chamadas (`/orders` + `/payments`) | QUANDO A FUNCIONALIDADE EXISTIR (canal delivery) |
+| Decorator | `@PreAuthorize` (Spring Security AOP) | JÁ ATENDIDO (framework) |
+| Proxy | `@Cacheable`/`@CacheEvict` em `Category/ProductService` | JÁ ATENDIDO (implementado, seção 19) |
+| Composite | `Category` 1:N `Product` (raso) | QUANDO A FUNCIONALIDADE EXISTIR |
+| Bridge | 1 canal de notificação só | NÃO HÁ DOR |
+| Flyweight | FK normalizada + identity map do JPA | JÁ ATENDIDO (arquitetura) |
+| Strategy | sem cupom/desconto | QUANDO A FUNCIONALIDADE EXISTIR |
+| Observer | eventos de domínio (`inventory`/`notifications`) + WebSocket (`kitchen`) | APLICAR AGORA (expandir p/ Cliente/motoboy) |
+| Command | log via `OrderStatusHistory`, fila via `status` | NÃO HÁ DOR |
+| State | `ALLOWED_TRANSITIONS` em 7 services | JÁ ATENDIDO (mapa de transições) |
+| Chain of Responsibility | filtros Spring Security | JÁ ATENDIDO (framework) |
+| Iterator | `for-each`/`.stream()` do JDK | JÁ ATENDIDO (linguagem) |
+| Mediator | acoplamento direto entre módulos (ver ciclos abaixo) | QUANDO A DOR CRESCER (via eventos, sem "classe Deus") |
+| Memento | sem edição/undo de ficha | QUANDO A FUNCIONALIDADE EXISTIR |
+| Visitor | CMV não implementado | QUANDO A FUNCIONALIDADE EXISTIR |
+| Interpreter | só filtro por categoria | NÃO HÁ DOR |
+
+**Decisões-chave confirmadas com a usuária:**
+- **State** já resolve o problema (impedir salto inválido) via mapa — **não reescrever** para classes polimórficas.
+- **Observer** expande naturalmente quando a jornada do Cliente (Angular) existir.
+- **Command** não implementar — os ganhos já vêm de `OrderStatusHistory` + fila por status.
+- **Singleton clássico** nunca — o container Spring já administra as instâncias.
+
+### Achado novo desta auditoria: 3 dependências CÍCLICAS entre módulos
+
+Confirmado por análise de imports cross-module (viola "dependências acíclicas"
+do Cap. 36):
+
+```
+ordering ↔ kitchen       (OrderService→KitchenEventPublisher; KitchenService→OrderService/OrderItem)
+ordering ↔ delivery      (OrderService cria Delivery; DeliveryService→Order)
+payments ↔ cashregister  (mútua)
+```
+
+Nenhum módulo expõe uma API pública — o acesso entre módulos é direto às
+classes internas (repositórios/entidades). São ciclos de **compilação** (o
+Spring sobe porque não há ciclo de *bean*). Solução alinhada ao pedido (sem
+"classe Deus"): **eventos de domínio** para quebrar `ordering↔kitchen` e
+`ordering↔delivery` — mecanismo já iniciado na seção 19. **Não implementado
+ainda — registrado como pendência.**
+
+### Arquitetura confirmada (sem mudança)
+
+`Angular → REST/JSON → Spring Boot → MySQL`, **monólito modular**, 14 módulos
+por domínio, camadas `apresentação → aplicação → domínio ← infraestrutura`.
+**Microsserviços não entram.** A única dívida arquitetural real são as
+fronteiras acíclicas acima.

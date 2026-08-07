@@ -13,10 +13,14 @@ export const routes: Routes = [
       import('./features/staff-layout/staff-layout').then((m) => m.StaffLayout),
     children: [
       {
+        path: 'mesas',
+        loadComponent: () => import('./features/tables/tables').then((m) => m.Tables),
+      },
+      {
         path: 'catalogo',
         loadComponent: () => import('./features/catalog/catalog').then((m) => m.Catalog),
       },
-      { path: '', redirectTo: 'catalogo', pathMatch: 'full' },
+      { path: '', redirectTo: 'mesas', pathMatch: 'full' },
     ],
   },
   { path: '**', redirectTo: '' },
