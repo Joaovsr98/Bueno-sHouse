@@ -25,7 +25,8 @@ INSERT INTO profiles (name, description) VALUES
     ('CAIXA', 'Operacao de caixa e pagamentos'),
     ('GARCOM', 'Atendimento de mesas e comandas'),
     ('COZINHA', 'Painel de producao'),
-    ('MOTOBOY', 'Entregas');
+    ('MOTOBOY', 'Entregas'),
+    ('CLIENTE', 'Cliente do delivery (app do cliente)');
 
 -- Senha "admin123" com BCrypt real (hash gerado e verificado nesta etapa) -
 -- reaproveitada para todos os usuarios de demonstracao abaixo, um por perfil,
@@ -37,7 +38,8 @@ INSERT INTO users (public_id, email, password_hash, profile_id, active) VALUES
     (UUID(), 'caixa@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 3, TRUE),
     (UUID(), 'garcom@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 4, TRUE),
     (UUID(), 'cozinha@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 5, TRUE),
-    (UUID(), 'motoboy@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 6, TRUE);
+    (UUID(), 'motoboy@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 6, TRUE),
+    (UUID(), 'cliente@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 7, TRUE);
 
 INSERT INTO employees (user_id, unit_id, full_name, role) VALUES
     (1, 1, 'Administrador Demo', 'ADMINISTRADOR'),
@@ -77,3 +79,11 @@ INSERT INTO tables (unit_id, number, capacity) VALUES
 INSERT INTO delivery_zones (unit_id, zone_name, neighborhood, fee, minimum_order_value, estimated_minutes) VALUES
     (1, 'Centro', 'Centro', 5.00, 20.00, 30),
     (1, 'Zona Sul Proxima', 'Jardim Exemplo', 8.00, 25.00, 40);
+
+-- Cliente de demonstracao vinculado ao usuario cliente@demo.local (user_id 7),
+-- com um endereco padrao no bairro Centro (que tem zona de entrega).
+INSERT INTO customers (user_id, full_name, phone, email)
+VALUES (7, 'Cliente Demo', '(11) 90000-9999', 'cliente@demo.local');
+
+INSERT INTO customer_addresses (customer_id, label, street, number, neighborhood, city, state, zip_code, is_default)
+VALUES (1, 'Casa', 'Rua das Flores', '100', 'Centro', 'Sao Paulo', 'SP', '01000-000', TRUE);

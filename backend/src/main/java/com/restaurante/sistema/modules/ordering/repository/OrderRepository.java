@@ -13,6 +13,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByCommandId(Long commandId);
 
+    List<Order> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
+
     @Query("SELECT COALESCE(MAX(o.orderNumber), 0) FROM Order o WHERE o.unitId = :unitId")
     Long findMaxOrderNumberForUnit(@Param("unitId") Long unitId);
 }

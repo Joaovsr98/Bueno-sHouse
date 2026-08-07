@@ -36,6 +36,22 @@ public class CustomerService {
         return toResponse(customer);
     }
 
+    /** Cadastro do cliente logado (perfil CLIENTE). */
+    @Transactional(readOnly = true)
+    public CustomerResponse findByUserId(Long userId) {
+        Customer customer = customerRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente vinculado ao usuario", userId));
+        return toResponse(customer);
+    }
+
+    /** Id do cliente vinculado ao usuario logado (para regras de propriedade). */
+    @Transactional(readOnly = true)
+    public Long customerIdOfUser(Long userId) {
+        return customerRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException("Usuario cliente sem cadastro de cliente vinculado"))
+                .getId();
+    }
+
     @Transactional
     public CustomerResponse create(CustomerRequest request) {
         if (customerRepository.findByPhone(request.phone()).isPresent()) {

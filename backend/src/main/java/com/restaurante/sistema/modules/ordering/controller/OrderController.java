@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.ordering.controller;
 
+import com.restaurante.sistema.modules.customers.service.CustomerService;
+import com.restaurante.sistema.modules.identity.security.CurrentUserProvider;
 import com.restaurante.sistema.modules.ordering.dto.*;
 import com.restaurante.sistema.modules.ordering.service.OrderService;
 import jakarta.validation.Valid;
@@ -14,9 +16,17 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final CurrentUserProvider currentUserProvider;
+    private final CustomerService customerService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(
+            OrderService orderService,
+            CurrentUserProvider currentUserProvider,
+            CustomerService customerService
+    ) {
         this.orderService = orderService;
+        this.currentUserProvider = currentUserProvider;
+        this.customerService = customerService;
     }
 
     @GetMapping
@@ -27,13 +37,26 @@ public class OrderController {
         return orderService.listByUnit(unitId, status);
     }
 
+    /** Pedidos do cliente logado (app do cliente). */
+    @GetMapping("/mine")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public List<OrderResponse> mine() {
+        Long customerId = customerService.customerIdOfUser(currentUserProvider.getCurrentUserId());
+        return orderService.listByCustomer(customerId);
+    }
+
     @GetMapping("/{id}")
     public OrderResponse findById(@PathVariable Long id) {
+        // CLIENTE so acessa o proprio pedido (checagem de propriedade); staff ve qualquer um.
+        if ("CLIENTE".equals(currentUserProvider.getCurrentUser().getProfile().getName())) {
+            Long customerId = customerService.customerIdOfUser(currentUserProvider.getCurrentUserId());
+            return orderService.findByIdForCustomer(id, customerId);
+        }
         return orderService.findById(id);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','GARCOM','CAIXA')")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','GARCOM','CAIXA','CLIENTE')")
     @ResponseStatus(HttpStatus.CREATED)
     public OrderResponse create(@Valid @RequestBody CreateOrderRequest request) {
         return orderService.create(request);

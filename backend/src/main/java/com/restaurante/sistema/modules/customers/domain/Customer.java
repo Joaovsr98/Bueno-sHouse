@@ -21,6 +21,11 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Vinculo opcional a um User com perfil CLIENTE (app do cliente).
+    // Nulo para clientes cadastrados pelo balcao/telefone.
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
 

@@ -2,6 +2,7 @@ package com.restaurante.sistema.modules.customers.controller;
 
 import com.restaurante.sistema.modules.customers.dto.*;
 import com.restaurante.sistema.modules.customers.service.CustomerService;
+import com.restaurante.sistema.modules.identity.security.CurrentUserProvider;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +20,17 @@ import java.util.List;
 public class CustomerController {
 
     private final CustomerService customerService;
+    private final CurrentUserProvider currentUserProvider;
 
-    public CustomerController(CustomerService customerService) {
+    public CustomerController(CustomerService customerService, CurrentUserProvider currentUserProvider) {
         this.customerService = customerService;
+        this.currentUserProvider = currentUserProvider;
+    }
+
+    /** Cadastro do proprio cliente logado (app do cliente). */
+    @GetMapping("/me")
+    public CustomerResponse me() {
+        return customerService.findByUserId(currentUserProvider.getCurrentUserId());
     }
 
     @GetMapping("/{id}")

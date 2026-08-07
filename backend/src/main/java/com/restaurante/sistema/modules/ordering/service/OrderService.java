@@ -12,6 +12,7 @@ import com.restaurante.sistema.modules.catalog.repository.ProductVariationReposi
 import com.restaurante.sistema.modules.dinein.repository.CommandRepository;
 import com.restaurante.sistema.modules.customers.domain.CustomerAddress;
 import com.restaurante.sistema.modules.customers.repository.CustomerAddressRepository;
+import com.restaurante.sistema.modules.customers.service.CustomerService;
 import com.restaurante.sistema.modules.delivery.domain.Delivery;
 import com.restaurante.sistema.modules.delivery.domain.DeliveryZone;
 import com.restaurante.sistema.modules.delivery.repository.DeliveryRepository;
@@ -88,6 +89,7 @@ public class OrderService {
     private final CurrentUserProvider currentUserProvider;
     private final KitchenEventPublisher kitchenEventPublisher;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final CustomerService customerService;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -102,7 +104,8 @@ public class OrderService {
             DeliveryRepository deliveryRepository,
             CurrentUserProvider currentUserProvider,
             KitchenEventPublisher kitchenEventPublisher,
-            ApplicationEventPublisher applicationEventPublisher
+            ApplicationEventPublisher applicationEventPublisher,
+            CustomerService customerService
     ) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -117,6 +120,7 @@ public class OrderService {
         this.currentUserProvider = currentUserProvider;
         this.kitchenEventPublisher = kitchenEventPublisher;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.customerService = customerService;
     }
 
     @Transactional(readOnly = true)
@@ -132,8 +136,30 @@ public class OrderService {
         return toResponse(getOrThrow(id));
     }
 
+    /** Pedidos do cliente logado (app do cliente), mais recentes primeiro. */
+    @Transactional(readOnly = true)
+    public List<OrderResponse> listByCustomer(Long customerId) {
+        return orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId).stream()
+                .map(this::toResponse).toList();
+    }
+
+    /**
+     * Consulta de pedido com checagem de propriedade: o cliente so ve o proprio
+     * pedido. Retorna 404 (nao 403) se nao for dono, para nao revelar a
+     * existencia do pedido de outro cliente.
+     */
+    @Transactional(readOnly = true)
+    public OrderResponse findByIdForCustomer(Long id, Long customerId) {
+        Order order = getOrThrow(id);
+        if (!customerId.equals(order.getCustomerId())) {
+            throw new ResourceNotFoundException("Order", id);
+        }
+        return toResponse(order);
+    }
+
     @Transactional
-    public OrderResponse create(CreateOrderRequest request) {
+    public OrderResponse create(CreateOrderRequest incoming) {
+        final CreateOrderRequest request = applyClienteRulesIfNeeded(incoming);
         validateChannel(request.channel());
 
         if ("SALAO".equals(request.channel())) {
@@ -329,6 +355,30 @@ public class OrderService {
                 recordHistory(orderId, "PRONTO", "AGUARDANDO_ENTREGADOR", "Pedido delivery liberado para retirada");
             }
         }
+    }
+
+    /**
+     * Se quem cria o pedido e um usuario CLIENTE (app do cliente), forcamos:
+     * canal DELIVERY, sem comanda, e o customerId do proprio cliente logado -
+     * ignorando o que veio no request, para um cliente nunca pedir "como
+     * outro". O endereco enviado ainda e validado (precisa pertencer a esse
+     * cliente) pela regra de DELIVERY ja existente no create().
+     */
+    private CreateOrderRequest applyClienteRulesIfNeeded(CreateOrderRequest request) {
+        String profile = currentUserProvider.getCurrentUser().getProfile().getName();
+        if (!"CLIENTE".equals(profile)) {
+            return request;
+        }
+        Long myCustomerId = customerService.customerIdOfUser(currentUserProvider.getCurrentUserId());
+        return new CreateOrderRequest(
+                request.unitId(),
+                "DELIVERY",
+                null,
+                myCustomerId,
+                request.customerAddressId(),
+                request.notes(),
+                request.items()
+        );
     }
 
     private void validateChannel(String channel) {
