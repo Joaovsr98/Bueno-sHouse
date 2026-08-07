@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* Reset minimo equivalente ao que o Vite/React trazia */
+* {
+  box-sizing: border-box;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+}
