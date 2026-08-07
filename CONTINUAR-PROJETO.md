@@ -905,3 +905,147 @@ protegido → POST protegido, tudo 200, zero erro.
 
 **Estado atual: 2 commits no Git, backend rodando localmente sem erros
 conhecidos, cache e eventos de domínio testados manualmente com sucesso.**
+
+---
+
+## 20. Auditoria — Capítulos 32 a 38 (Parte IV completa: arquitetura, DDD, hexagonal, persistência)
+
+Feita em 2026-08-07. **Nenhum código foi alterado.** Este lote fecha o
+material inteiro (38 capítulos). Diferente das rodadas de padrões (Parte
+III), aqui a unidade de análise é a arquitetura do projeto como um todo, não
+um recurso isolado — por isso a auditoria é mais qualitativa, com achados que
+se repetem entre capítulos (o mesmo problema aparece sob ângulos diferentes).
+
+### Cap. 32 — Panorama: onde o projeto se encaixa
+
+O material enquadra o DaHorta como **monólito em camadas**. O nosso backend é
+tecnicamente um monólito (uma aplicação Spring Boot implantável), mas a
+organização interna já é mais parecida com **monólito modular** (Cap. 36) do
+que camadas puras: 14 módulos de negócio (`identity`, `catalog`, `dinein`,
+`ordering`, `kitchen`, `payments`, `cashregister`, `customers`, `delivery`,
+`couriers`, `inventory`, `reports`, `notifications`), cada um com as suas
+próprias subcamadas (`controller`/`service`/`repository`/`domain`/`dto`). Ou
+seja: **o projeto já nasceu mais avançado, arquiteturalmente, do que o
+"monólito em camadas" que é o ponto de partida do material** — mas sem a
+disciplina de fronteira que o monólito modular exige (ver Cap. 36 abaixo).
+
+### Cap. 33 — DDD tático: entidades, agregados, e um achado real
+
+| Bloco do DDD | No material | No projeto atual | Status |
+|---|---|---|---|
+| Objeto de valor (`Dinheiro`) | Imutável, igualdade por valor | Usamos `BigDecimal` puro em todo lugar — resolve "nunca usar float" (Cap. 03), mas não é um tipo `Dinheiro` próprio com invariantes (ex.: não aceitar negativo) | `PARCIAL` |
+| Entidade | Identidade própria, igualdade por id | `Order`, `Product`, `Command` etc. têm `id` e `equals`/`hashCode` (padrão JPA) — aderente | `JÁ ATENDIDO` |
+| Modelo rico vs. anêmico | Comportamento mora na entidade, não em serviços externos | **As entidades são anêmicas por design**: `Order`/`Command`/`RestaurantTable`/`Delivery` são getters/setters (`@Getter @Setter` do Lombok), e toda a lógica de transição (`ALLOWED_TRANSITIONS`, validações) mora nos `Service`s, não nas entidades. É exatamente o anti-padrão que o Cap. 33 nomeia — mas é também o padrão dominante em aplicações Spring Data JPA reais (entidades ricas com JPA têm atrito real: proxies, lazy loading, equals/hashCode complicados). **Decisão consciente e comum, não um erro isolado deste projeto** | `GAP RECONHECIDO (trade-off comum do ecossistema, não um bug)` |
+| Agregado e raiz protegendo os internos | Só a raiz é porta de entrada; partes internas não são acessadas de fora | **Achado concreto:** `KitchenService` injeta `OrderItemRepository` e acessa/salva `OrderItem` **diretamente**, sem passar pela raiz `Order`. É exatamente o furo que o Cap. 33 descreve ("referências externas apontam para a raiz, nunca para as partes internas") | `GAP CONFIRMADO` |
+| Repositório | Interface, uma por raiz de agregado | Spring Data `JpaRepository` — já auditado várias vezes como aderente. Mas hoje existe repositório para `OrderItem` **também**, não só para `Order` (a raiz) — reforça o achado acima | `PARCIAL` |
+
+### Cap. 34 — DDD estratégico: subdomínios e camada anticorrupção
+
+Mapeamento natural do DaHorta acadêmico aos nossos módulos: **core** (o
+diferencial) = `ordering`+`kitchen`+`dinein` (fluxo do pedido); **apoio** =
+`catalog`, `delivery`, `couriers`, `inventory`; **genérico** = `identity`,
+`payments` (login e cobrança não são o diferencial do negócio). Isso já
+existia implicitamente na organização por módulos, sem o vocabulário formal.
+
+Camada anticorrupção: **não se aplica**, pelo mesmo motivo já registrado no
+Cap. 14 (Adapter) — não há sistema externo (gateway de pagamento, Firebase)
+para traduzir. `NÃO APLICÁVEL`.
+
+### Cap. 35 — Camadas e MVC: a regra de dependência tem uma exceção conhecida
+
+`Controller → Service → Repository` já auditado várias vezes como aderente
+(Cap. 04/06). Mas a "regra de dependência" estrita do capítulo (*domínio não
+conhece tecnologia*) **não é seguida à risca**: as entidades de domínio
+(`Order`, `Product` etc.) têm anotações JPA (`@Entity`, `@Column`,
+`@ManyToOne`) — ou seja, **o domínio depende do framework de persistência**,
+o oposto do que o capítulo pede. Isso é, de novo, o padrão dominante em
+aplicações Spring Boot reais ("entidade JPA como modelo de domínio" é a
+prática mais comum do ecossistema, não uma falha isolada) — o alternativa
+pura exigiria um modelo de domínio separado + entidades JPA + mapeador, o que
+é bem mais código para o ganho que este projeto precisa hoje. MVC clássico
+(com View server-side) não se aplica: o backend é API REST pura (JSON), sem
+renderização de tela no servidor — o "V" do MVC vive inteiramente no React.
+
+| Item | Status |
+|---|---|
+| Controller → Service → Repository | `JÁ ATENDIDO` |
+| Domínio livre de tecnologia (regra de dependência estrita) | `GAP RECONHECIDO (trade-off comum do Spring/JPA)` |
+| MVC (aplicável só ao front, que não é server-rendered) | `NÃO APLICÁVEL ao backend` |
+
+### Cap. 36 — Monólito modular: o achado mais importante desta rodada
+
+O projeto **já é, na intenção, um monólito modular** — 14 módulos por área de
+negócio, cada um com as suas camadas. Mas falta a disciplina central que o
+capítulo exige: **"os módulos se comunicam apenas pelas suas APIs públicas,
+nunca alcançando classes internas uns dos outros."** Confirmado por busca:
+`OrderService` (módulo `ordering`) importa e injeta diretamente
+`ProductRepository`/`AdditionalRepository` (`catalog`), `CommandRepository`
+(`dinein`), `CustomerAddressRepository` (`customers`),
+`DeliveryRepository`/`DeliveryZoneRepository` (`delivery`) — repositórios
+internos de **quatro outros módulos**, sem nenhuma API pública intermediária.
+Não existe, em nenhum módulo, uma classe `XxxApi`/`XxxFacade` que sirva de
+fronteira — tudo é acessível de qualquer lugar (repositórios Spring Data são
+`public` por padrão).
+
+Isso **não é uma novidade** — é a mesma dor que a seção 1 deste documento já
+registrava desde antes deste material chegar ("o número de módulos que
+`OrderService`/`KitchenService` conhecem diretamente está crescendo"), e que
+os Capítulos 15 (Façade), 22 (Observer) e 28 (Mediator) já tinham apontado
+por ângulos diferentes. **O Cap. 36 é o quarto capítulo a convergir no mesmo
+ponto**, agora com o vocabulário mais preciso: falta uma API pública por
+módulo.
+
+`GAP CONFIRMADO — o mais recorrente de toda a Parte III/IV.`
+
+### Cap. 37 — Hexagonal: metade do hexágono já existe
+
+Portas de saída: `JÁ ATENDIDO` — os repositórios Spring Data são exatamente
+isso (interface no domínio/módulo, implementação gerada pelo framework).
+Portas de entrada: **não existem como interface explícita** — os
+`Controller`s chamam `Service`s como classes concretas (`OrderService`, não
+uma interface `CriarPedidoUseCase`). O próprio capítulo nota que isso é
+"metade do hexágono" — muitos projetos Spring reais param exatamente aqui,
+porque o ganho de uma porta de entrada explícita (trocar de condutor sem
+tocar no núcleo) raramente compensa o código extra quando o único condutor é
+o REST controller.
+
+| Item | Status |
+|---|---|
+| Portas de saída (repositórios) | `JÁ ATENDIDO` |
+| Portas de entrada (casos de uso como interface) | `GAP (baixa prioridade, trade-off comum)` |
+| Camada anticorrupção nas bordas | `NÃO APLICÁVEL (sem integração externa, mesmo motivo do Cap. 14/34)` |
+
+### Cap. 38 — Persistência e ORM: já usamos a via automatizada
+
+O material é explícito: "é exatamente esse trabalho que um ORM automatiza".
+Usamos **JPA + Hibernate**, não JDBC manual — a via que o próprio curso
+recomenda para o projeto real (o JDBC manual é só o degrau pedagógico). O
+mapeamento objeto-relacional é automático (anotações + Hibernate), consistente
+com todas as consultas parametrizadas já auditadas (Cap. 04/07 — sem SQL
+Injection). O único ponto já registrado (Cap. 35) é que o mapeamento **não
+vive isolado num adaptador** — ele está embutido nas próprias entidades via
+anotação, não separado num `Mapeador`+entidade-pura como o capítulo descreve
+como ideal. Mesmo trade-off, mesma resposta: prática padrão do ecossistema.
+
+`JÁ ATENDIDO (via ORM, que é a recomendação do próprio material), com a mesma
+ressalva de acoplamento do Cap. 35/37 já registrada.`
+
+### Conclusão da Parte IV inteira, e do material completo (38 capítulos)
+
+Nenhum `CONFLITO`. Um único tema se repete em 5 capítulos diferentes (15, 22,
+28, 33, 36) sob ângulos distintos, e converge sempre na mesma recomendação:
+
+> **O projeto precisa de fronteiras explícitas entre módulos** — seja como
+> API pública por módulo (Cap. 36), seja como eventos de domínio para reduzir
+> chamadas diretas (Cap. 22/28, já parcialmente resolvido na seção 19 para
+> `Kitchen↔Inventory` e `Ordering↔Notifications`), seja respeitando a raiz do
+> agregado em vez de acessar `OrderItem` direto (Cap. 33).
+
+Os demais achados (entidades anêmicas, domínio acoplado ao JPA, sem porta de
+entrada explícita) são **trade-offs conscientes e comuns do ecossistema
+Spring Boot**, não erros — registrados para que a usuária saiba que existem e
+possa decidir se algum deles vale a pena resolver, não porque sejam
+obrigatórios.
+
+**Nada foi alterado.** Com isto, os 38 capítulos do material foram todos
+auditados (seções 10 a 20 deste documento). Não há mais capítulos pendentes.
