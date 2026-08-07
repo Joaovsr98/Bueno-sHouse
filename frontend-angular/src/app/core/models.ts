@@ -154,6 +154,30 @@ export interface CashMovementResponse {
   createdAt: string;
 }
 
+export interface CustomerAddressResponse {
+  id: number;
+  label: string | null;
+  street: string;
+  number: string;
+  complement: string | null;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  referencePoint: string | null;
+  isDefault: boolean;
+}
+
+export interface CustomerResponse {
+  id: number;
+  fullName: string;
+  phone: string;
+  email: string | null;
+  document: string | null;
+  birthDate: string | null;
+  addresses: CustomerAddressResponse[];
+}
+
 export interface DeliveryResponse {
   id: number;
   orderId: number;

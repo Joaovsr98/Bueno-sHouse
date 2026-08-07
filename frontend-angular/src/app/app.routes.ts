@@ -7,6 +7,34 @@ export const routes: Routes = [
     loadComponent: () => import('./features/login/login').then((m) => m.Login),
   },
   {
+    path: 'app',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/customer/customer-layout').then((m) => m.CustomerLayout),
+    children: [
+      {
+        path: 'cardapio',
+        loadComponent: () => import('./features/customer/customer-menu').then((m) => m.CustomerMenu),
+      },
+      {
+        path: 'carrinho',
+        loadComponent: () =>
+          import('./features/customer/customer-checkout').then((m) => m.CustomerCheckout),
+      },
+      {
+        path: 'pedidos',
+        loadComponent: () =>
+          import('./features/customer/customer-orders').then((m) => m.CustomerOrders),
+      },
+      {
+        path: 'pedidos/:orderId',
+        loadComponent: () =>
+          import('./features/customer/customer-order-track').then((m) => m.CustomerOrderTrack),
+      },
+      { path: '', redirectTo: 'cardapio', pathMatch: 'full' },
+    ],
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () =>

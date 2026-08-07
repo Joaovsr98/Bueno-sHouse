@@ -1,0 +1,35 @@
+<h1 class="text-xl font-bold mb-1">Cardápio</h1>
+<p class="text-sm text-neutral-500 mb-6">Escolha seus itens e monte seu pedido para entrega.</p>
+
+@if (error()) {
+  <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+    <span>{{ error() }}</span>
+    <button (click)="error.set(null)" class="text-red-400">×</button>
+  </div>
+}
+
+@if (loading()) {
+  <p class="text-sm text-neutral-500">Carregando cardápio...</p>
+}
+
+@for (group of groups(); track group.category.id) {
+  <section class="mb-8">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-brand-300 mb-3">{{ group.category.name }}</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      @for (product of group.products; track product.id) {
+        <div class="glass rounded-2xl p-4 flex flex-col">
+          <div class="flex-1">
+            <h3 class="text-sm font-medium">{{ product.name }}</h3>
+            <p class="text-xs text-neutral-500 mt-1 line-clamp-2">{{ product.description || '' }}</p>
+          </div>
+          <div class="flex items-center justify-between mt-3">
+            <span class="text-sm font-semibold text-brand-300">{{ currency(product.basePrice) }}</span>
+            <button (click)="add(product)" class="btn-brand rounded-xl px-3 py-1.5 text-xs">
+              {{ added() === product.id ? 'Adicionado ✓' : '+ Adicionar' }}
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+}

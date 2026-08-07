@@ -1,6 +1,8 @@
 /** Rota inicial por perfil apos o login (espelha o defaultRouteForRole do React). */
 export function defaultRouteForRole(profileName: string | undefined): string {
   switch (profileName) {
+    case 'CLIENTE':
+      return '/app/cardapio';
     case 'MOTOBOY':
       return '/motoboy';
     case 'COZINHA':

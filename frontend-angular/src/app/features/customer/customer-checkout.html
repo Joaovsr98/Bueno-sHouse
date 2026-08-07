@@ -1,0 +1,67 @@
+<h1 class="text-xl font-bold mb-6">Seu carrinho</h1>
+
+@if (error()) {
+  <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+    <span>{{ error() }}</span>
+    <button (click)="error.set(null)" class="text-red-400">×</button>
+  </div>
+}
+
+@if (lines().length === 0) {
+  <div class="glass rounded-2xl p-8 text-center">
+    <p class="text-sm text-neutral-400">Seu carrinho está vazio.</p>
+    <a routerLink="/app/cardapio" class="inline-block mt-3 btn-brand rounded-xl px-4 py-2 text-sm">Ver cardápio</a>
+  </div>
+} @else {
+  <div class="space-y-2 mb-6">
+    @for (line of lines(); track line.productId) {
+      <div class="glass rounded-2xl p-4 flex items-center gap-3">
+        <div class="flex-1">
+          <p class="text-sm font-medium">{{ line.productName }}</p>
+          <p class="text-xs text-neutral-500">{{ currency(line.basePrice) }}</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button (click)="changeQty(line.productId, -1)" class="w-7 h-7 rounded-lg bg-white/10 text-sm">−</button>
+          <span class="text-sm w-6 text-center">{{ line.quantity }}</span>
+          <button (click)="changeQty(line.productId, 1)" class="w-7 h-7 rounded-lg bg-white/10 text-sm">+</button>
+        </div>
+        <span class="text-sm font-semibold w-20 text-right text-brand-300">{{ currency(line.basePrice * line.quantity) }}</span>
+        <button (click)="remove(line.productId)" class="text-xs text-neutral-500 hover:text-red-400">remover</button>
+      </div>
+    }
+  </div>
+
+  <div class="glass rounded-2xl p-5 mb-6">
+    <h2 class="text-sm font-semibold mb-3">Endereço de entrega</h2>
+    @if (addresses().length === 0) {
+      <p class="text-sm text-neutral-500">Nenhum endereço cadastrado.</p>
+    }
+    <div class="space-y-2">
+      @for (addr of addresses(); track addr.id) {
+        <button
+          (click)="selectAddress(addr.id)"
+          class="w-full text-left rounded-xl border p-3 text-sm transition"
+          [class]="selectedAddressId() === addr.id ? 'border-brand-500/60 bg-brand-500/10' : 'border-white/10 hover:bg-white/5'"
+        >
+          <span class="font-medium">{{ addr.label || 'Endereço' }}</span>
+          <span class="text-neutral-400"> — {{ addr.street }}, {{ addr.number }} · {{ addr.neighborhood }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="glass rounded-2xl p-5">
+    <div class="flex justify-between text-sm mb-1">
+      <span class="text-neutral-400">Subtotal</span>
+      <span class="font-medium">{{ currency(subtotal()) }}</span>
+    </div>
+    <p class="text-xs text-neutral-500 mb-4">A taxa de entrega é calculada pelo bairro no momento do pedido.</p>
+    <button
+      (click)="placeOrder()"
+      [disabled]="placing() || selectedAddressId() == null"
+      class="w-full btn-brand rounded-xl py-2.5 text-sm"
+    >
+      {{ placing() ? 'Enviando...' : 'Finalizar pedido' }}
+    </button>
+  </div>
+}

@@ -1,0 +1,32 @@
+<h1 class="text-xl font-bold mb-6">Meus pedidos</h1>
+
+@if (error()) {
+  <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300">{{ error() }}</div>
+}
+
+@if (loading()) {
+  <p class="text-sm text-neutral-500">Carregando...</p>
+}
+
+@if (!loading() && orders().length === 0) {
+  <div class="glass rounded-2xl p-8 text-center">
+    <p class="text-sm text-neutral-400">Você ainda não fez nenhum pedido.</p>
+    <a routerLink="/app/cardapio" class="inline-block mt-3 btn-brand rounded-xl px-4 py-2 text-sm">Ver cardápio</a>
+  </div>
+}
+
+<div class="space-y-2">
+  @for (order of orders(); track order.id) {
+    <a [routerLink]="['/app/pedidos', order.id]" class="block glass glass-hover rounded-2xl p-4 transition">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium">Pedido #{{ order.orderNumber }}</p>
+          <p class="text-xs text-neutral-500 mt-0.5">{{ order.items.length }} item(ns) · {{ currency(order.total) }}</p>
+        </div>
+        <span class="text-xs uppercase tracking-wide rounded-full border border-brand-500/30 text-brand-300 px-3 py-1">
+          {{ label(order.status) }}
+        </span>
+      </div>
+    </a>
+  }
+</div>
