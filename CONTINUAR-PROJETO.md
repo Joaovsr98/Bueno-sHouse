@@ -804,3 +804,104 @@ Nenhum `CONFLITO` em nenhum dos 13 capítulos. Panorama final da Parte III
   `Composite` nas rodadas anteriores.
 
 **Nada foi alterado.**
+
+---
+
+## 19. Implementação das 4 pendências aprovadas (2026-08-07)
+
+A usuária aprovou implementar as pendências acumuladas nas seções 12, 17 e 18.
+As quatro foram feitas, testadas manualmente contra o backend rodando (login
+real, chamadas HTTP reais), e commitadas.
+
+**1. Git inicializado (Cap. 02).** `.gitignore` criado **antes** do primeiro
+`git add` (cobre `.env`, `node_modules/`, `target/`, `.vite/`,
+`*.tsbuildinfo`, IDEs). Confirmado com `git check-ignore -v` que `.env` nunca
+foi staged. Dois commits feitos: o inicial (238 arquivos) e um pequeno ajuste
+(um build artifact do TypeScript, `tsconfig.tsbuildinfo`, tinha escapado do
+primeiro `.gitignore` — corrigido e removido do índice no commit seguinte).
+
+**2. Testes corrigidos (Cap. 12 — Builder).** `OrderKitchenFlowIT.java:87` e
+`PaymentCashRegisterFlowIT.java:97` construíam `CreateOrderRequest`
+posicionalmente com a lista de argumentos desatualizada (faltava
+`customerAddressId` em um, `notes` no outro). Corrigidos. `mvn test-compile`
+agora compila os testes limpo — a suíte em si continua não executável neste
+ambiente (Testcontainers exige Docker), mas o código de teste está correto.
+
+**3. Cache do cardápio (Cap. 17 — Proxy).** `CacheConfig.java` novo
+(`@EnableCaching`, `ConcurrentMapCacheManager` autoconfigurado pelo Spring
+Boot, sem dependência nova). `CategoryService.listByUnit` e
+`ProductService.listByUnit`/`listByCategory` ganharam `@Cacheable`; os métodos
+de escrita (`create`/`update`/`softDelete` dos dois services) ganharam
+`@CacheEvict(allEntries = true)`. **Testado de verdade**: primeira chamada a
+`GET /api/categories` em ~157ms, segunda em ~34ms (cache hit); criar uma
+categoria nova invalidou o cache corretamente (a listagem seguinte já trazia
+o item novo).
+
+**4. Eventos de domínio (Cap. 22/28 — Observer/Mediator).** Dois eventos
+novos em `common/event/`: `OrderItemReadyEvent` e `OrderReadyEvent`, usando
+`ApplicationEventPublisher` do Spring (síncrono, mesma thread/transação —
+comportamento idêntico ao das chamadas diretas que substituíram, só
+desacoplado).
+- `KitchenService` **não conhece mais `InventoryService`** — publica
+  `OrderItemReadyEvent` ao marcar um item `PRONTO`; `InventoryEventListener`
+  (novo, no módulo `inventory`) reage e chama `deductForOrderItem`.
+- `OrderService` **não conhece mais `NotificationService`** — publica
+  `OrderReadyEvent` quando o pedido fica `PRONTO`; `OrderNotificationListener`
+  (novo, no módulo `notifications`) reage e cria a notificação.
+- **Testado de ponta a ponta**: abri mesa → comanda → pedido → enviei pra
+  cozinha → iniciei e completei o item → confirmei que a notificação "Pedido
+  pronto" foi criada corretamente via `GET /api/notifications/unread`, com
+  zero erros no log. O acoplamento que a seção 1 já tinha identificado como
+  problema está resolvido.
+
+### Bug pré-existente encontrado e corrigido durante os testes
+
+Ao testar de verdade (pela primeira vez neste ambiente) uma chamada
+autenticada a um endpoint de negócio, todo `GET`/`POST` protegido retornava
+**403** com `org.hibernate.LazyInitializationException: failed to lazily
+initialize... Profile.permissions... no Session`.
+
+Causa: `AppUserDetailsService.loadUserByUsername` não era `@Transactional`, e
+`User.getAuthorities()` lê `profile.getPermissions()` (`@ManyToMany(LAZY)`).
+O `JwtAuthenticationFilter` chama `getAuthorities()` **fora** de qualquer
+transação/sessão Hibernate (filtros de servlet não são gerenciados pelo
+Spring Data) — então, mesmo com o login funcionando (não usa esse caminho),
+**toda requisição autenticada para qualquer endpoint de negócio quebrava**.
+Isso nunca tinha sido detectado porque nenhuma etapa anterior deste projeto
+chegou a testar um endpoint protegido de ponta a ponta com um token real.
+
+Corrigido: `loadUserByUsername` agora é `@Transactional(readOnly = true)` e
+força a inicialização de `profile.getPermissions()` (`Hibernate.initialize`)
+antes de retornar, dentro da transação. Testado e confirmado: login → GET
+protegido → POST protegido, tudo 200, zero erro.
+
+### Arquivos novos/alterados nesta rodada
+
+| Arquivo | O que mudou |
+|---|---|
+| `.gitignore` | Novo |
+| `backend/src/main/java/.../config/CacheConfig.java` | Novo — `@EnableCaching` |
+| `backend/src/main/java/.../catalog/service/CategoryService.java` | `@Cacheable`/`@CacheEvict` |
+| `backend/src/main/java/.../catalog/service/ProductService.java` | `@Cacheable`/`@CacheEvict` |
+| `backend/src/main/java/.../common/event/OrderItemReadyEvent.java` | Novo |
+| `backend/src/main/java/.../common/event/OrderReadyEvent.java` | Novo |
+| `backend/src/main/java/.../kitchen/service/KitchenService.java` | Publica evento em vez de chamar `InventoryService` direto |
+| `backend/src/main/java/.../inventory/service/InventoryEventListener.java` | Novo — reage a `OrderItemReadyEvent` |
+| `backend/src/main/java/.../ordering/service/OrderService.java` | Publica evento em vez de chamar `NotificationService` direto |
+| `backend/src/main/java/.../notifications/service/OrderNotificationListener.java` | Novo — reage a `OrderReadyEvent` |
+| `backend/src/main/java/.../identity/security/AppUserDetailsService.java` | Bug fix: `@Transactional` + inicialização eager das permissões |
+| `backend/src/test/java/.../ordering/OrderKitchenFlowIT.java` | Bug fix: `CreateOrderRequest` posicional corrigido |
+| `backend/src/test/java/.../payments/PaymentCashRegisterFlowIT.java` | Bug fix: `CreateOrderRequest` posicional corrigido |
+
+### O que ainda não foi feito (não pedido nesta rodada)
+
+- `UNIQUE (unit_id, name)` em `categories` (Cap. 03, seção 12) — mencionado,
+  não aprovado ainda.
+- Strategy para desconto/cupom (Cap. 06/08/21) — sem requisito formal ainda.
+- WebSocket/Observer para motoboy e cliente (Cap. 22) — o gap do ator Cliente
+  (seção 11) segue de pé.
+- `mvn test` de verdade (precisa de Docker para Testcontainers) continua
+  pendente — os testes só foram *corrigidos*, não *executados*.
+
+**Estado atual: 2 commits no Git, backend rodando localmente sem erros
+conhecidos, cache e eventos de domínio testados manualmente com sucesso.**
