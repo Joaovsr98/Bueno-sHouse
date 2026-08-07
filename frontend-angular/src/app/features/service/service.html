@@ -1,0 +1,72 @@
+<div class="p-6 max-w-3xl">
+  <button (click)="back()" class="text-xs text-neutral-500 hover:text-neutral-300 mb-4 transition">
+    ← Voltar para mesas
+  </button>
+
+  <div class="flex items-start justify-between mb-6">
+    <div>
+      <h1 class="text-lg font-semibold">Atendimento #{{ serviceId }}</h1>
+      @if (service(); as s) {
+        <p class="text-sm text-neutral-400 mt-1">Mesa {{ s.tableNumber }} · {{ s.partySize }} pessoa(s)</p>
+      }
+    </div>
+    @if (serviceStatus(); as status) {
+      <span class="text-xs uppercase tracking-wide rounded-full border border-white/15 px-3 py-1 text-brand-300">
+        {{ serviceStatusLabels[status] ?? status }}
+      </span>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+      <span>{{ error() }}</span>
+      <button (click)="error.set(null)" class="text-red-400">×</button>
+    </div>
+  }
+
+  @if (serviceActions().length > 0) {
+    <div class="flex gap-2 mb-6">
+      @for (t of serviceActions(); track t.to) {
+        <button
+          (click)="transitionService(t.to)"
+          class="text-xs rounded-xl border border-white/15 px-3 py-1.5 text-neutral-300 hover:bg-white/5 transition"
+        >
+          {{ t.label }}
+        </button>
+      }
+    </div>
+  }
+
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="text-sm font-semibold">Comandas</h2>
+    <button (click)="openCommand()" class="btn-brand rounded-xl px-3 py-1.5 text-xs">+ Nova comanda</button>
+  </div>
+
+  @if (commands().length === 0) {
+    <p class="text-sm text-neutral-500">Nenhuma comanda aberta ainda.</p>
+  }
+
+  <div class="space-y-2">
+    @for (command of commands(); track command.id) {
+      <div class="glass rounded-2xl p-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium">Comanda #{{ command.id }}</p>
+          <p class="text-xs text-neutral-500 mt-0.5">{{ commandStatusLabels[command.status] ?? command.status }}</p>
+        </div>
+        <div class="flex gap-2">
+          @if (isCommandOpen(command.status)) {
+            <button (click)="goToOrder(command.id)" class="text-xs btn-brand rounded-xl px-3 py-1.5">Fazer pedido</button>
+          }
+          @for (t of commandActions(command.status); track t.to) {
+            <button
+              (click)="transitionCommand(command.id, t.to)"
+              class="text-xs rounded-xl border border-white/15 px-3 py-1.5 text-neutral-300 hover:bg-white/5 transition"
+            >
+              {{ t.label }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

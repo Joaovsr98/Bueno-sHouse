@@ -17,8 +17,29 @@ export const routes: Routes = [
         loadComponent: () => import('./features/tables/tables').then((m) => m.Tables),
       },
       {
+        path: 'atendimento/:serviceId',
+        loadComponent: () => import('./features/service/service').then((m) => m.Service),
+      },
+      {
+        path: 'atendimento/:serviceId/comanda/:commandId',
+        loadComponent: () => import('./features/order/order').then((m) => m.Order),
+      },
+      {
+        path: 'cozinha',
+        loadComponent: () => import('./features/kitchen/kitchen').then((m) => m.Kitchen),
+      },
+      {
+        path: 'caixa',
+        loadComponent: () =>
+          import('./features/cash-register/cash-register').then((m) => m.CashRegister),
+      },
+      {
         path: 'catalogo',
         loadComponent: () => import('./features/catalog/catalog').then((m) => m.Catalog),
+      },
+      {
+        path: 'motoboy',
+        loadComponent: () => import('./features/courier/courier').then((m) => m.Courier),
       },
       { path: '', redirectTo: 'mesas', pathMatch: 'full' },
     ],

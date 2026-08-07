@@ -1,0 +1,95 @@
+@if (unitId() == null || loading()) {
+  <div class="p-6 text-sm text-neutral-400">Carregando...</div>
+} @else {
+  <div class="p-6 max-w-2xl">
+    <h1 class="text-lg font-semibold mb-4">Caixa</h1>
+
+    @if (error()) {
+      <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+        <span>{{ error() }}</span>
+        <button (click)="error.set(null)" class="text-red-400">×</button>
+      </div>
+    }
+
+    @if (!register()) {
+      <form (ngSubmit)="openRegister()" class="glass rounded-2xl p-6 space-y-4">
+        <p class="text-sm text-neutral-400">Nenhum caixa aberto nesta unidade.</p>
+        <div class="space-y-1">
+          <label class="text-xs text-neutral-400">Saldo inicial (R$)</label>
+          <input
+            required type="number" step="0.01" min="0" name="openingBalance" [(ngModel)]="openingBalance"
+            class="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-500/60 transition"
+          />
+        </div>
+        <button type="submit" class="btn-brand rounded-xl px-4 py-2 text-sm">Abrir caixa</button>
+      </form>
+    } @else {
+      <div class="space-y-6">
+        <div class="glass rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-semibold">Caixa #{{ register()!.id }} — <span class="text-green-400">aberto</span></span>
+            <button (click)="showCloseForm.set(!showCloseForm())" class="text-xs rounded-xl border border-white/15 px-3 py-1.5 text-neutral-300 hover:bg-white/5 transition">
+              Fechar caixa
+            </button>
+          </div>
+          <p class="text-sm text-neutral-400">Saldo inicial: {{ currency(register()!.openingBalance) }}</p>
+
+          @if (showCloseForm()) {
+            <form (ngSubmit)="closeRegister()" class="mt-4 flex gap-2 items-end">
+              <div class="space-y-1 flex-1">
+                <label class="text-xs text-neutral-400">Saldo contado ao fechar (R$)</label>
+                <input
+                  required type="number" step="0.01" min="0" name="closingBalance" [(ngModel)]="closingBalance"
+                  class="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-500/60 transition"
+                />
+              </div>
+              <button type="submit" class="btn-brand rounded-xl px-4 py-2 text-sm">Confirmar</button>
+            </form>
+          }
+        </div>
+
+        <div class="glass rounded-2xl p-6">
+          <h2 class="text-sm font-semibold mb-3">Movimentos (sangria / suprimento)</h2>
+          <form (ngSubmit)="registerMovement()" class="flex flex-wrap gap-2 items-end mb-4">
+            <div class="space-y-1">
+              <label class="text-xs text-neutral-400">Tipo</label>
+              <select name="movementType" [(ngModel)]="movementType" class="rounded-xl bg-black/30 border border-white/10 px-2 py-2 text-sm outline-none focus:border-brand-500/60">
+                <option value="SANGRIA">Sangria</option>
+                <option value="SUPRIMENTO">Suprimento</option>
+                <option value="ENTRADA">Entrada</option>
+                <option value="SAIDA">Saída</option>
+              </select>
+            </div>
+            <div class="space-y-1">
+              <label class="text-xs text-neutral-400">Valor (R$)</label>
+              <input
+                required type="number" step="0.01" min="0.01" name="movementAmount" [(ngModel)]="movementAmount"
+                class="w-28 rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-500/60 transition"
+              />
+            </div>
+            <div class="space-y-1 flex-1 min-w-[10rem]">
+              <label class="text-xs text-neutral-400">Motivo</label>
+              <input
+                name="movementReason" [(ngModel)]="movementReason"
+                class="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-500/60 transition"
+              />
+            </div>
+            <button type="submit" class="btn-brand rounded-xl px-4 py-2 text-sm">Registrar</button>
+          </form>
+
+          <div class="space-y-1">
+            @if (movements().length === 0) {
+              <p class="text-sm text-neutral-500">Nenhum movimento registrado.</p>
+            }
+            @for (m of movements(); track m.id) {
+              <div class="flex justify-between text-sm py-1.5 border-t border-white/10 first:border-t-0">
+                <span class="text-neutral-300">{{ movementLabels[m.type] ?? m.type }}{{ m.reason ? ' — ' + m.reason : '' }}</span>
+                <span class="text-neutral-400">{{ currency(m.amount) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

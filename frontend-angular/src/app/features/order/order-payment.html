@@ -1,0 +1,25 @@
+@if (balance(); as bal) {
+  @if (bal.fullyPaid) {
+    <p class="text-xs text-green-400">Pago integralmente.</p>
+  } @else {
+    <form (ngSubmit)="register()" class="flex flex-wrap gap-2 items-end border-t border-white/10 pt-3">
+      <span class="text-xs text-neutral-400 w-full">
+        Saldo devedor: <span class="text-neutral-200 font-medium">{{ currency(bal.remaining) }}</span>
+      </span>
+      <select
+        name="method" [(ngModel)]="method"
+        class="rounded-xl bg-black/30 border border-white/10 px-2 py-1.5 text-xs outline-none focus:border-brand-500/60 transition"
+      >
+        @for (m of methods; track m.value) {
+          <option [value]="m.value">{{ m.label }}</option>
+        }
+      </select>
+      <input
+        required type="number" step="0.01" min="0.01" [max]="bal.remaining"
+        name="amount" [(ngModel)]="amount" placeholder="Valor"
+        class="w-24 rounded-xl bg-black/30 border border-white/10 px-2 py-1.5 text-xs outline-none focus:border-brand-500/60 transition"
+      />
+      <button type="submit" [disabled]="saving()" class="text-xs btn-brand rounded-xl px-3 py-1.5">Receber</button>
+    </form>
+  }
+}

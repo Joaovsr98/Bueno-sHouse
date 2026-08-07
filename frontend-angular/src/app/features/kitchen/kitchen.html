@@ -1,0 +1,68 @@
+@if (unitId() == null) {
+  <div class="p-6 text-sm text-neutral-400">Carregando unidade...</div>
+} @else {
+  <div class="p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-lg font-semibold">Painel da Cozinha</h1>
+      @if (sectors().length > 0) {
+        <select
+          [value]="sectorId() ?? ''"
+          (change)="onSectorChange($any($event.target).value)"
+          class="rounded-xl bg-black/30 border border-white/10 px-3 py-1.5 text-sm text-neutral-300 outline-none focus:border-brand-500/60"
+        >
+          @for (s of sectors(); track s.id) {
+            <option [value]="s.id">{{ s.name }}</option>
+          }
+        </select>
+      }
+    </div>
+
+    @if (sectors().length === 0) {
+      <p class="text-sm text-neutral-500">Nenhum setor de cozinha cadastrado para esta unidade.</p>
+    }
+
+    @if (error()) {
+      <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+        <span>{{ error() }}</span>
+        <button (click)="error.set(null)" class="text-red-400">×</button>
+      </div>
+    }
+
+    @if (tasks().length === 0 && sectors().length > 0) {
+      <p class="text-sm text-neutral-500">Nenhum item pendente neste setor.</p>
+    }
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      @for (task of tasks(); track task.orderItemId) {
+        <div
+          class="rounded-2xl border p-4 flex flex-col gap-2 backdrop-blur-sm"
+          [class]="statusStyles[task.status] ?? 'border-white/10 bg-white/5'"
+        >
+          <div class="flex items-start justify-between">
+            <span class="text-sm font-semibold">Pedido #{{ task.orderNumber }}</span>
+            <span class="text-xs text-neutral-400">{{ elapsedMinutes(task.orderCreatedAt) }} min</span>
+          </div>
+          <p class="text-sm">{{ task.quantity }}x {{ task.productName }}</p>
+          @if (task.notes) {
+            <p class="text-xs text-neutral-400 italic">{{ task.notes }}</p>
+          }
+          <span class="text-xs uppercase tracking-wide text-neutral-400">{{ statusLabels[task.status] ?? task.status }}</span>
+
+          <div class="flex gap-2 mt-2">
+            @if (task.status === 'ENVIADO') {
+              <button (click)="start(task.orderItemId)" class="flex-1 text-xs btn-brand rounded-lg py-1.5">Iniciar</button>
+            }
+            @if (task.status === 'EM_PREPARO') {
+              <button (click)="complete(task.orderItemId)" class="flex-1 text-xs btn-brand rounded-lg py-1.5">Concluir</button>
+            }
+            @if (canToggle(task.status)) {
+              <button (click)="markUnavailable(task.orderItemId)" class="text-xs rounded-lg border border-current/30 px-2 py-1.5 hover:bg-white/5 transition">
+                Indisponível
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
