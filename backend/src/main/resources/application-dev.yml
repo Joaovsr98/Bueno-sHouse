@@ -1,0 +1,14 @@
+# Profile "dev": habilita a migration de dados de demonstracao (V900__seed_demo_data.sql)
+# e aumenta o nivel de log. Nunca usar este profile em producao.
+#
+# Ativacao: SPRING_PROFILES_ACTIVE=dev (ja configurado no docker-compose.yml para o
+# ambiente local).
+
+spring:
+  flyway:
+    target: latest
+
+logging:
+  level:
+    com.restaurante.sistema: DEBUG
+    org.hibernate.SQL: DEBUG

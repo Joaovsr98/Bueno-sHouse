@@ -1,0 +1,14 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  cors:
+    allowed-origins: http://localhost:5173
+  jwt:
+    secret: test-secret-key-not-for-production-use-only-testing-purposes
+    expiration-minutes: 480

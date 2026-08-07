@@ -1,0 +1,25 @@
+# Segredos e configuração local — nunca versionar
+.env
+.env.*
+!.env.example
+
+# Backend (Maven/Java)
+backend/target/
+*.class
+*.log
+
+# Frontend (Node/Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# IDEs e SO
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Ferramentas do Claude Code neste projeto
+.claude/
