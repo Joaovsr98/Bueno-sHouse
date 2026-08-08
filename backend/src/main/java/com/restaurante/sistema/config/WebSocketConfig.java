@@ -1,6 +1,7 @@
 package com.restaurante.sistema.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
@@ -14,15 +15,20 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
  * "/topic/kitchen/{unitId}" para receber atualizacoes de itens de pedido
  * (novo item enviado, item iniciado, item pronto).
  *
- * Nao ha autenticacao no handshake do WebSocket nesta etapa - isso e uma
- * lacuna conhecida (o REST exige JWT em tudo, mas o STOMP endpoint ainda nao
- * valida token). Fica registrado como pendencia tecnica para antes de
- * qualquer deploy real: o ideal e validar o JWT no handshake ou usar um
- * interceptor de canal STOMP.
+ * Seguranca: o handshake STOMP e autenticado por
+ * {@link WebSocketAuthChannelInterceptor}, que valida o mesmo JWT usado no REST
+ * no frame CONNECT. Conexoes sem token valido sao recusadas - o painel em tempo
+ * real exige login, assim como os endpoints REST.
  */
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+
+    private final WebSocketAuthChannelInterceptor authChannelInterceptor;
+
+    public WebSocketConfig(WebSocketAuthChannelInterceptor authChannelInterceptor) {
+        this.authChannelInterceptor = authChannelInterceptor;
+    }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
@@ -33,5 +39,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic");
         registry.setApplicationDestinationPrefixes("/app");
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(authChannelInterceptor);
     }
 }

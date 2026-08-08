@@ -55,8 +55,9 @@ export JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-21.0.12.8-hotspot"
 "$JAVA_HOME/bin/java" -jar target/sistema-0.1.0-SNAPSHOT.jar
 ```
 Testado com sucesso em 2026-08-07: login retorna 200 para os 6 usuários seed
-(`admin`, `gerente`, `caixa`, `garcom`, `cozinha`, `motoboy` @demo.local, senha
-`admin123` — ver seção sobre `V900__seed_demo_data.sql` mais abaixo).
+(`admin`, `gerente`, `caixa`, `garcom`, `cozinha`, `motoboy` @demo.local, com a
+senha de desenvolvimento definida no seed `V900__seed_demo_data.sql` — ver seção
+mais abaixo).
 
 `mvn test` (suíte completa com Testcontainers) continua **não executável** aqui,
 pois Testcontainers exige Docker. Só foi possível rodar o backend "de verdade"
@@ -123,7 +124,9 @@ método em vez de publish/subscribe.
 
 ### Pendências herdadas (sem mudança nesta etapa)
 
-- WebSocket sem autenticação no handshake (Etapa 8).
+- ~~WebSocket sem autenticação no handshake (Etapa 8).~~ **RESOLVIDO** — o handshake
+  STOMP agora valida o JWT no frame `CONNECT` via `WebSocketAuthChannelInterceptor`
+  (mesmo `JwtService` do REST); conexão sem token válido é recusada.
 - Nomenclatura `Service`/`@Service` do Spring (Etapa 7).
 - Concorrência na geração de `order_number` sob alta carga (Etapa 8).
 - Sem troco/estorno estruturado (Etapa 9).
@@ -183,8 +186,7 @@ consolidação, não de novos módulos:
    foi verificado neste ambiente de geração de código em nenhuma das 13
    etapas.
 2. Resolver as dívidas técnicas acumuladas, por ordem de risco:
-   - Autenticação no handshake do WebSocket (antes de qualquer exposição
-     pública).
+   - ~~Autenticação no handshake do WebSocket~~ — **feito** (`WebSocketAuthChannelInterceptor`).
    - Teste de concorrência real com threads paralelas (aceite de entrega,
      abertura de atendimento).
    - Considerar extrair um mecanismo de eventos de domínio para reduzir o
@@ -245,7 +247,7 @@ Cozinha → Caixa → Área do Motoboy. Ver `frontend/src/pages/`.
 
 `V900__seed_demo_data.sql` foi expandido: além do `admin@demo.local` original,
 agora existe um usuário por perfil (`gerente`, `caixa`, `garcom`, `cozinha`,
-`motoboy` @demo.local, todos com senha `admin123`) para permitir login de um
+`motoboy` @demo.local, todos com a senha de desenvolvimento do seed) para permitir login de um
 clique na tela de login, sem digitar credenciais — pensado para testar cada
 perfil rapidamente durante o desenvolvimento.
 

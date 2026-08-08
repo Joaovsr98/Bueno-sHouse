@@ -4,7 +4,7 @@ Sistema de gestão operacional para restaurantes, lanchonetes, hamburguerias e p
 Cobre o fluxo completo: cardápio → mesa/atendimento/comanda → pedido → cozinha → pagamento
 → caixa → delivery → motoboy → confirmação de entrega.
 
-> **Status atual do projeto: Fase 2 concluída. Todos os módulos do escopo original estão implementados — sistema completo.**
+> **Status atual do projeto: backend completo (todos os módulos do escopo original implementados). Frontend em migração de React para Angular — telas de staff e a jornada do cliente já portadas.**
 > Veja `CONTINUAR-PROJETO.md` para saber exatamente o que já existe, o que foi testado
 > e quais são os próximos passos.
 
@@ -15,7 +15,9 @@ Cobre o fluxo completo: cardápio → mesa/atendimento/comanda → pedido → co
 **Backend:** Java 21, Spring Boot 3.3, Spring Data JPA/Hibernate, Spring Security, MySQL 8,
 Flyway, Maven.
 
-**Frontend:** React 18, TypeScript, Vite, Tailwind CSS 4, TanStack Query, React Router.
+**Frontend:** Angular 20 (standalone components, signals), TypeScript, Tailwind CSS 4.
+O frontend React original (`frontend/`) é mantido como referência até a paridade ser
+confirmada, mas o desenvolvimento ativo é no Angular (`frontend-angular/`).
 
 **Infraestrutura:** Docker, Docker Compose.
 
@@ -148,10 +150,19 @@ A migration `V900__seed_demo_data.sql` cria automaticamente (apenas em ambiente 
 desenvolvimento):
 - 1 restaurante e 1 unidade de demonstração
 - 6 perfis (Administrador, Gerente, Caixa, Garçom, Cozinha, Motoboy)
-- 1 usuário administrador: `admin@demo.local` — **senha de desenvolvimento apenas**,
-  nunca use em produção
+- 1 usuário administrador: `admin@demo.local` — **credencial de desenvolvimento apenas**,
+  criada exclusivamente pelo seed no profile `dev`, nunca use em produção
 - Categorias, produtos e mesas de exemplo
 - 2 zonas de entrega de exemplo
+
+A senha do usuário de demonstração é definida apenas no seed de desenvolvimento
+(`V900__seed_demo_data.sql`) e **não é documentada aqui de propósito**. Para rodar os
+exemplos `curl` abaixo, exporte-a no seu shell local a partir da sua configuração de dev:
+
+```bash
+export DEMO_EMAIL=admin@demo.local
+export DEMO_PASSWORD='<senha definida no seu ambiente de dev>'
+```
 
 **Antes de qualquer deploy em produção**, essa migration deve ser revisada e isolada
 por profile — isso está documentado como pendência em `CONTINUAR-PROJETO.md`.
@@ -185,7 +196,7 @@ por profile — isso está documentado como pendência em `CONTINUAR-PROJETO.md`
 | Preço sempre buscado do catálogo e congelado no pedido (nunca aceito do frontend) | Implementado e testado |
 | Máquina de estado completa de `Order` e `OrderItem` | Implementado |
 | **Módulo `kitchen`**: painel de produção (`/api/kitchen/tasks`) | Implementado |
-| WebSocket (STOMP) para atualização em tempo real do painel da cozinha | Implementado — **sem autenticação no handshake ainda** (ver pendência abaixo) |
+| WebSocket (STOMP) para atualização em tempo real do painel da cozinha | Implementado — handshake autenticado por JWT (mesmo token do REST, validado no frame CONNECT) |
 | Status do pedido recalculado automaticamente a partir dos itens da cozinha | Implementado e testado |
 | **Módulo `payments`**: registro de pagamento, saldo do pedido | Implementado |
 | **Regra "comanda não fecha com saldo devedor"** | Implementado e testado — fechamento automático da comanda ao completar o pagamento |
@@ -205,8 +216,9 @@ por profile — isso está documentado como pendência em `CONTINUAR-PROJETO.md`
 
 **Com a Fase 2, todos os módulos previstos no escopo original do projeto estão implementados.**
 O que resta são refinamentos: dívidas técnicas registradas ao longo do desenvolvimento
-(ver `CONTINUAR-PROJETO.md`), testes de carga/concorrência mais realistas, e frontend
-completo (hoje só a tela de login existe — as demais telas consomem a API já pronta).
+(ver `CONTINUAR-PROJETO.md`), testes de carga/concorrência mais realistas, e a conclusão
+da migração do frontend para Angular (staff e jornada do cliente já portados; aposentar o
+React após confirmação de paridade).
 
 **🎉 Com a Etapa 9, o MVP definido na Etapa 2 está completo:**
 `identity → organization → catalog → dinein → ordering → kitchen → payments → cashregister`
@@ -262,19 +274,19 @@ curl http://localhost:8080/api/reports/top-products?unitId=1 -H "Authorization: 
 curl http://localhost:8080/api/reports/low-stock?unitId=1 -H "Authorization: Bearer $TOKEN"
 ```
 
-### ⚠️ Pendência de segurança conhecida: WebSocket sem autenticação
+### Segurança do WebSocket
 
-O endpoint `/ws` (painel da cozinha em tempo real) ainda não valida o JWT no
-handshake. Todo o resto da API exige autenticação, mas esta conexão específica
-não. **Não expor esta porta publicamente sem resolver isso antes de qualquer
-uso real** — ver detalhes e recomendação de correção em `CONTINUAR-PROJETO.md`.
+O endpoint `/ws` (painel da cozinha em tempo real) valida o JWT no handshake STOMP:
+`WebSocketAuthChannelInterceptor` verifica o header `Authorization: Bearer <token>` no
+frame `CONNECT` usando o mesmo `JwtService` do REST. Conexões sem token válido são
+recusadas — o painel em tempo real exige login, como o restante da API.
 
 ### Testando o fluxo de pedido + cozinha manualmente
 
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@demo.local","password":"admin123"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
+  -d "{\"email\":\"$DEMO_EMAIL\",\"password\":\"$DEMO_PASSWORD\"}" | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
 
 # Após abrir atendimento e comanda (ver seção de salão), criar um pedido:
 curl -X POST http://localhost:8080/api/orders \
@@ -287,7 +299,7 @@ curl -X POST http://localhost:8080/api/orders \
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@demo.local","password":"admin123"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
+  -d "{\"email\":\"$DEMO_EMAIL\",\"password\":\"$DEMO_PASSWORD\"}" | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
 
 # Abrir atendimento na mesa 1 (mesa "01" do seed, deve estar LIVRE)
 curl -X POST http://localhost:8080/api/services \
@@ -300,7 +312,7 @@ curl -X POST http://localhost:8080/api/services \
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@demo.local","password":"admin123"}' | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
+  -d "{\"email\":\"$DEMO_EMAIL\",\"password\":\"$DEMO_PASSWORD\"}" | python3 -c "import sys,json;print(json.load(sys.stdin)['token'])")
 
 curl http://localhost:8080/api/products?unitId=1 -H "Authorization: Bearer $TOKEN"
 ```
@@ -310,7 +322,7 @@ curl http://localhost:8080/api/products?unitId=1 -H "Authorization: Bearer $TOKE
 ```bash
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@demo.local","password":"admin123"}'
+  -d "{\"email\":\"$DEMO_EMAIL\",\"password\":\"$DEMO_PASSWORD\"}"
 ```
 
 Deve retornar um JSON com `token`, `tokenType`, `expiresInMinutes` e os dados do usuário.
