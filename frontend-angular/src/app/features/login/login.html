@@ -1,8 +1,8 @@
 <div class="min-h-screen flex items-center justify-center p-6">
-  <div class="max-w-sm w-full space-y-6">
+  <div class="max-w-sm w-full space-y-6 animate-rise">
     <div class="text-center">
       <div class="inline-flex items-center gap-2.5 mb-2">
-        <span class="grid place-items-center w-11 h-11 rounded-2xl btn-brand text-xl">🍔</span>
+        <span class="grid place-items-center w-12 h-12 rounded-2xl btn-brand text-2xl shadow-lg">🍔</span>
         <div class="text-left">
           <h1 class="text-2xl font-bold tracking-tight brand-text leading-none">Bueno's House</h1>
           <p class="text-[11px] uppercase tracking-[0.2em] text-neutral-500 mt-1">Gestão do restaurante</p>
@@ -11,16 +11,20 @@
     </div>
 
     <div class="glass rounded-2xl p-5 space-y-3">
-      <p class="text-xs text-neutral-400">Acesso rápido (ambiente de demonstração)</p>
+      <p class="text-xs text-neutral-400 flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
+        Acesso rápido · ambiente de demonstração
+      </p>
       <div class="grid grid-cols-2 gap-2">
         @for (p of quickAccess; track p.email) {
           <button
             type="button"
             [disabled]="loading()"
             (click)="quickLogin(p.email)"
-            class="glass glass-hover rounded-xl py-2.5 text-sm text-neutral-200 transition disabled:opacity-50"
+            class="glass glass-hover rounded-xl py-2.5 px-3 text-sm text-neutral-200 flex items-center gap-2 disabled:opacity-50"
           >
-            {{ p.label }}
+            <span class="text-base leading-none">{{ p.icon }}</span>
+            <span>{{ p.label }}</span>
           </button>
         }
       </div>
@@ -33,25 +37,27 @@
     </div>
 
     <form (ngSubmit)="submit()" class="glass rounded-2xl p-8 space-y-4">
-      <div class="space-y-1">
+      <div class="space-y-1.5">
         <label class="text-sm text-neutral-300">E-mail</label>
         <input
           type="email"
           name="email"
           [(ngModel)]="email"
           required
-          class="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-500/60 transition"
+          autocomplete="username"
+          class="w-full rounded-xl bg-black/30 border border-white/10 px-3.5 py-2.5 text-sm outline-none focus:border-brand-500/60 focus:bg-black/40 transition"
         />
       </div>
 
-      <div class="space-y-1">
+      <div class="space-y-1.5">
         <label class="text-sm text-neutral-300">Senha</label>
         <input
           type="password"
           name="password"
           [(ngModel)]="password"
           required
-          class="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-500/60 transition"
+          autocomplete="current-password"
+          class="w-full rounded-xl bg-black/30 border border-white/10 px-3.5 py-2.5 text-sm outline-none focus:border-brand-500/60 focus:bg-black/40 transition"
         />
       </div>
 
@@ -68,10 +74,10 @@
       >
         {{ loading() ? 'Entrando...' : 'Entrar' }}
       </button>
-
-      <p class="text-xs text-neutral-600 text-center">
-        admin&#64;demo.local / admin123
-      </p>
     </form>
+
+    <p class="text-center text-[11px] text-neutral-600">
+      © Bueno's House · sistema de gestão
+    </p>
   </div>
 </div>

@@ -14,17 +14,22 @@
       @for (item of navItems; track item.to) {
         <a
           [routerLink]="item.to"
-          routerLinkActive="!bg-brand-500/15 !text-brand-300 border-brand-500/30"
+          routerLinkActive="!bg-brand-500/15 !text-brand-300 !border-brand-500/30 is-active"
           [routerLinkActiveOptions]="{ exact: false }"
-          class="block rounded-xl px-3 py-2 text-sm text-neutral-400 border border-transparent hover:bg-white/5 hover:text-neutral-200 transition"
+          class="group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-neutral-400 border border-transparent hover:bg-white/5 hover:text-neutral-200 transition"
         >
-          {{ item.label }}
+          <span
+            class="absolute left-0 top-1/2 -translate-y-1/2 h-0 w-0.5 rounded-full bg-brand-400 transition-all duration-200 group-[.is-active]:h-5"
+          ></span>
+          <span class="text-base leading-none opacity-90">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
         </a>
       }
     </nav>
 
     <div class="p-3 border-t border-white/10 space-y-2">
       @if (units().length > 0) {
+        <label class="text-[10px] uppercase tracking-wider text-neutral-600 px-1">Unidade</label>
         <select
           [value]="unitId() ?? ''"
           (change)="onUnitChange($any($event.target).value)"
@@ -35,12 +40,21 @@
           }
         </select>
       }
-      <button
-        (click)="logout()"
-        class="w-full text-left text-xs text-neutral-500 hover:text-neutral-300 px-1 transition"
-      >
-        Sair
-      </button>
+      <div class="flex items-center gap-2 pt-1">
+        <span class="grid place-items-center w-8 h-8 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-brand-300">
+          {{ (user()?.profileName || '?').charAt(0) }}
+        </span>
+        <div class="flex-1 min-w-0">
+          <p class="text-xs text-neutral-300 truncate">{{ user()?.email }}</p>
+        </div>
+        <button
+          (click)="logout()"
+          title="Sair"
+          class="text-neutral-500 hover:text-red-400 transition text-sm px-1.5 py-1 rounded-lg hover:bg-white/5"
+        >
+          ⎋
+        </button>
+      </div>
     </div>
   </aside>
 

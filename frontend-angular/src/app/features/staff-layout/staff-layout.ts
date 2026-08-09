@@ -5,11 +5,11 @@ import { AuthService } from '../../core/auth.service';
 import { UnitResponse } from '../../core/models';
 
 const NAV_ITEMS = [
-  { to: '/mesas', label: 'Mesas' },
-  { to: '/cozinha', label: 'Cozinha' },
-  { to: '/caixa', label: 'Caixa' },
-  { to: '/catalogo', label: 'Catálogo' },
-  { to: '/motoboy', label: 'Motoboy' },
+  { to: '/mesas', label: 'Mesas', icon: '🍽️' },
+  { to: '/cozinha', label: 'Cozinha', icon: '👨‍🍳' },
+  { to: '/caixa', label: 'Caixa', icon: '💳' },
+  { to: '/catalogo', label: 'Catálogo', icon: '📖' },
+  { to: '/motoboy', label: 'Motoboy', icon: '🛵' },
 ];
 
 @Component({

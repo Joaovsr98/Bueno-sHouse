@@ -9,12 +9,12 @@ import { defaultRouteForRole } from '../../core/routing';
 const DEMO_PASSWORD = 'admin123';
 
 const QUICK_ACCESS = [
-  { email: 'admin@demo.local', label: 'Administrador' },
-  { email: 'gerente@demo.local', label: 'Gerente' },
-  { email: 'garcom@demo.local', label: 'Garçom' },
-  { email: 'cozinha@demo.local', label: 'Cozinha' },
-  { email: 'caixa@demo.local', label: 'Caixa' },
-  { email: 'motoboy@demo.local', label: 'Motoboy' },
+  { email: 'admin@demo.local', label: 'Administrador', icon: '🛡️' },
+  { email: 'gerente@demo.local', label: 'Gerente', icon: '📊' },
+  { email: 'garcom@demo.local', label: 'Garçom', icon: '🍽️' },
+  { email: 'cozinha@demo.local', label: 'Cozinha', icon: '👨‍🍳' },
+  { email: 'caixa@demo.local', label: 'Caixa', icon: '💳' },
+  { email: 'motoboy@demo.local', label: 'Motoboy', icon: '🛵' },
 ];
 
 @Component({
