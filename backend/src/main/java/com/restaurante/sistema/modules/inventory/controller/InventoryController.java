@@ -52,4 +52,9 @@ public class InventoryController {
     public RecipeResponse saveRecipe(@Valid @RequestBody RecipeRequest request) {
         return inventoryService.saveRecipe(request);
     }
+
+    @GetMapping("/recipes/{productId}")
+    public RecipeResponse getRecipeByProduct(@PathVariable Long productId) {
+        return inventoryService.getRecipeByProduct(productId);
+    }
 }

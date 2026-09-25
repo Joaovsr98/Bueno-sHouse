@@ -2,12 +2,15 @@ package com.restaurante.sistema.modules.identity.controller;
 
 import com.restaurante.sistema.modules.identity.dto.LoginRequest;
 import com.restaurante.sistema.modules.identity.dto.LoginResponse;
+import com.restaurante.sistema.modules.identity.dto.RegisterRequest;
 import com.restaurante.sistema.modules.identity.service.AuthService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -23,5 +26,11 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LoginResponse register(@Valid @RequestBody RegisterRequest request) {
+        return authService.register(request);
     }
 }

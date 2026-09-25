@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { LoginResponse } from '../../core/models';
@@ -19,13 +19,14 @@ const QUICK_ACCESS = [
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './login.html',
 })
 export class Login {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   readonly quickAccess = QUICK_ACCESS;
   email = 'admin@demo.local';
@@ -49,7 +50,8 @@ export class Login {
     this.api.post<LoginResponse>('/auth/login', { email, password }).subscribe({
       next: (data) => {
         this.auth.login(data);
-        this.router.navigateByUrl(defaultRouteForRole(data.user.profileName));
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        this.router.navigateByUrl(returnUrl || defaultRouteForRole(data.user.profileName));
       },
       error: (err) => {
         this.error.set(apiErrorMessage(err, 'Erro ao entrar'));

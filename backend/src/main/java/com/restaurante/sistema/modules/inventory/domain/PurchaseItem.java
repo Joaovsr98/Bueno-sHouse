@@ -8,19 +8,19 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "recipe_items")
+@Table(name = "purchase_items")
 @Getter
 @Setter
 @NoArgsConstructor
-public class RecipeItem {
+public class PurchaseItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "recipe_id", nullable = false)
-    private Recipe recipe;
+    @JoinColumn(name = "purchase_id", nullable = false)
+    private Purchase purchase;
 
     @Column(name = "inventory_item_id", nullable = false)
     private Long inventoryItemId;
@@ -28,7 +28,9 @@ public class RecipeItem {
     @Column(nullable = false, precision = 15, scale = 3)
     private BigDecimal quantity;
 
-    /** Fator de correcao (perda por limpeza/preparo). RN08: sempre >= 1.0. */
-    @Column(name = "correction_factor", nullable = false, precision = 6, scale = 3)
-    private BigDecimal correctionFactor = BigDecimal.ONE;
+    @Column(name = "unit_price", nullable = false, precision = 15, scale = 4)
+    private BigDecimal unitPrice;
+
+    @Column(nullable = false, precision = 15, scale = 2)
+    private BigDecimal subtotal;
 }

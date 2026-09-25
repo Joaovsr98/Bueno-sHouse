@@ -68,12 +68,28 @@ public class ProductService {
                 .stream().map(this::toResponse).toList();
     }
 
+    /** Cardapio publico (RF-001): so produtos ATIVO/disponivel (RN09). */
+    @Cacheable(value = "products-public", key = "#unitId")
+    @Transactional(readOnly = true)
+    public List<ProductResponse> listPublicByUnit(Long unitId) {
+        return productRepository.findByUnitIdAndDeletedAtIsNullAndAvailableTrue(unitId)
+                .stream().map(this::toResponse).toList();
+    }
+
+    /** Cardapio publico (RF-001): so produtos ATIVO/disponivel (RN09). */
+    @Cacheable(value = "products-public", key = "#unitId + '-' + #categoryId")
+    @Transactional(readOnly = true)
+    public List<ProductResponse> listPublicByCategory(Long unitId, Long categoryId) {
+        return productRepository.findByUnitIdAndCategoryIdAndDeletedAtIsNullAndAvailableTrue(unitId, categoryId)
+                .stream().map(this::toResponse).toList();
+    }
+
     @Transactional(readOnly = true)
     public ProductResponse findById(Long id) {
         return toResponse(getOrThrow(id));
     }
 
-    @CacheEvict(value = "products", allEntries = true)
+    @CacheEvict(value = {"products", "products-public"}, allEntries = true)
     @Transactional
     public ProductResponse create(ProductRequest request) {
         Product product = new Product();
@@ -82,7 +98,7 @@ public class ProductService {
         return toResponse(productRepository.save(product));
     }
 
-    @CacheEvict(value = "products", allEntries = true)
+    @CacheEvict(value = {"products", "products-public"}, allEntries = true)
     @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
         Product product = getOrThrow(id);
@@ -90,7 +106,7 @@ public class ProductService {
         return toResponse(productRepository.save(product));
     }
 
-    @CacheEvict(value = "products", allEntries = true)
+    @CacheEvict(value = {"products", "products-public"}, allEntries = true)
     @Transactional
     public void softDelete(Long id) {
         Product product = getOrThrow(id);

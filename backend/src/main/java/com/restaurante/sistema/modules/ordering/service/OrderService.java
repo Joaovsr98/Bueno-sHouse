@@ -18,6 +18,7 @@ import com.restaurante.sistema.modules.delivery.domain.DeliveryZone;
 import com.restaurante.sistema.modules.delivery.repository.DeliveryRepository;
 import com.restaurante.sistema.modules.delivery.repository.DeliveryZoneRepository;
 import com.restaurante.sistema.modules.identity.security.CurrentUserProvider;
+import com.restaurante.sistema.modules.inventory.service.InventoryService;
 import com.restaurante.sistema.modules.kitchen.service.KitchenEventPublisher;
 import com.restaurante.sistema.modules.ordering.domain.Order;
 import com.restaurante.sistema.modules.ordering.domain.OrderItem;
@@ -90,6 +91,7 @@ public class OrderService {
     private final KitchenEventPublisher kitchenEventPublisher;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final CustomerService customerService;
+    private final InventoryService inventoryService;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -105,7 +107,8 @@ public class OrderService {
             CurrentUserProvider currentUserProvider,
             KitchenEventPublisher kitchenEventPublisher,
             ApplicationEventPublisher applicationEventPublisher,
-            CustomerService customerService
+            CustomerService customerService,
+            InventoryService inventoryService
     ) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -121,6 +124,7 @@ public class OrderService {
         this.kitchenEventPublisher = kitchenEventPublisher;
         this.applicationEventPublisher = applicationEventPublisher;
         this.customerService = customerService;
+        this.inventoryService = inventoryService;
     }
 
     @Transactional(readOnly = true)
@@ -300,9 +304,27 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         recordHistory(order.getId(), previous, newStatus, reason);
+
+        if ("CANCELADO".equals(newStatus)) {
+            // RF-018: estorna qualquer baixa de estoque ja feita (itens que
+            // chegaram a PRONTO antes do cancelamento) - idempotente e nao faz
+            // nada para itens que nunca baixaram estoque.
+            for (OrderItem item : orderItemRepository.findByOrderId(order.getId())) {
+                inventoryService.reverseDeductionForOrderItem(item.getId(), "Cancelamento do pedido " + order.getId() + ": " + reason);
+            }
+        }
+
         return toResponse(saved);
     }
 
+    /**
+     * RN04 (parcial): este endpoint de cancelamento dedicado ja e restrito a
+     * ADMINISTRADOR/GERENTE no controller. A parte "livre antes de EM_PREPARO"
+     * NAO esta diferenciada por role ainda - o endpoint generico de transicao
+     * (/transition) permite GARCOM/CAIXA levarem um pedido a CANCELADO em
+     * qualquer status permitido pela maquina de estados, sem essa distincao.
+     * Registrado como pendencia, nao resolvido nesta rodada.
+     */
     @Transactional
     public OrderResponse cancel(Long orderId, String reason) {
         Order order = getOrThrow(orderId);
@@ -311,6 +333,9 @@ public class OrderService {
             throw new BusinessException(
                     "Pedido nao pode mais ser cancelado diretamente (status atual: " + order.getStatus()
                             + "). Ja entrou em producao ou finalizou - requer fluxo de cancelamento com autorizacao.");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessException("O motivo do cancelamento e obrigatorio");
         }
 
         return transitionTo(orderId, "CANCELADO", reason);

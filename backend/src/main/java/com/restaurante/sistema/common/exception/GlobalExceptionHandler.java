@@ -46,6 +46,12 @@ public class GlobalExceptionHandler {
                         req.getRequestURI()));
     }
 
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleEmailAlreadyExists(EmailAlreadyExistsException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of(409, "E-mail ja cadastrado", ex.getMessage(), req.getRequestURI()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
         List<ApiError.FieldError> errors = ex.getBindingResult().getFieldErrors().stream()

@@ -8,4 +8,6 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByUnitIdAndDeletedAtIsNull(Long unitId);
     List<Product> findByUnitIdAndCategoryIdAndDeletedAtIsNull(Long unitId, Long categoryId);
+    List<Product> findByUnitIdAndDeletedAtIsNullAndAvailableTrue(Long unitId);
+    List<Product> findByUnitIdAndCategoryIdAndDeletedAtIsNullAndAvailableTrue(Long unitId, Long categoryId);
 }

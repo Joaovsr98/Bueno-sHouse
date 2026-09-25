@@ -8,6 +8,7 @@ import com.restaurante.sistema.modules.reports.service.ReportService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -39,5 +40,10 @@ public class ReportController {
     @GetMapping("/low-stock")
     public List<InventoryItemResponse> lowStock(@RequestParam Long unitId) {
         return reportService.lowStock(unitId);
+    }
+
+    @GetMapping("/average-food-cost")
+    public BigDecimal averageFoodCost(@RequestParam Long unitId) {
+        return reportService.averageFoodCost(unitId);
     }
 }

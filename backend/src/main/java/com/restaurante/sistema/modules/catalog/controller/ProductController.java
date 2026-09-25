@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,14 +23,31 @@ public class ProductController {
         this.productService = productService;
     }
 
+    /**
+     * Sem login: cardapio publico (RF-001), so produtos ATIVO (RN09). Staff
+     * autenticado continua vendo o catalogo completo (inclusive inativos) para
+     * poder gerenciar disponibilidade.
+     */
     @GetMapping
     public List<ProductResponse> list(
             @RequestParam Long unitId,
             @RequestParam(required = false) Long categoryId
     ) {
-        return categoryId != null
-                ? productService.listByCategory(unitId, categoryId)
-                : productService.listByUnit(unitId);
+        boolean staff = isAuthenticatedStaff();
+        if (categoryId != null) {
+            return staff ? productService.listByCategory(unitId, categoryId)
+                          : productService.listPublicByCategory(unitId, categoryId);
+        }
+        return staff ? productService.listByUnit(unitId) : productService.listPublicByUnit(unitId);
+    }
+
+    /** CLIENTE tambem e "autenticado", mas ve o mesmo cardapio publico que um visitante (RN09). */
+    private boolean isAuthenticatedStaff() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return false;
+        }
+        return auth.getAuthorities().stream().noneMatch(a -> "ROLE_CLIENTE".equals(a.getAuthority()));
     }
 
     @GetMapping("/{id}")

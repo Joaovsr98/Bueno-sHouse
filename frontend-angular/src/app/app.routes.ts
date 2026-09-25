@@ -7,8 +7,14 @@ export const routes: Routes = [
     loadComponent: () => import('./features/login/login').then((m) => m.Login),
   },
   {
+    path: 'registrar',
+    loadComponent: () => import('./features/register/register').then((m) => m.Register),
+  },
+  {
     path: 'app',
-    canActivate: [authGuard],
+    // Sem authGuard no pai: cardapio publico (RF-001/RF-002, sem login).
+    // Carrinho/pedidos exigem login (RF-005/RF-006/RF-007/RF-008), guardados
+    // individualmente abaixo.
     loadComponent: () =>
       import('./features/customer/customer-layout').then((m) => m.CustomerLayout),
     children: [
@@ -18,16 +24,19 @@ export const routes: Routes = [
       },
       {
         path: 'carrinho',
+        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/customer/customer-checkout').then((m) => m.CustomerCheckout),
       },
       {
         path: 'pedidos',
+        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/customer/customer-orders').then((m) => m.CustomerOrders),
       },
       {
         path: 'pedidos/:orderId',
+        canActivate: [authGuard],
         loadComponent: () =>
           import('./features/customer/customer-order-track').then((m) => m.CustomerOrderTrack),
       },

@@ -83,4 +83,10 @@ public class ReportService {
     public List<InventoryItemResponse> lowStock(Long unitId) {
         return inventoryService.listBelowMinimum(unitId);
     }
+
+    /** RF-034: food cost medio dos produtos com ficha tecnica cadastrada. */
+    @Transactional(readOnly = true)
+    public BigDecimal averageFoodCost(Long unitId) {
+        return inventoryService.averageFoodCostPercent(unitId);
+    }
 }

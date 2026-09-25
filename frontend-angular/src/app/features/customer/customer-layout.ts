@@ -14,6 +14,7 @@ export class CustomerLayout {
   private readonly router = inject(Router);
 
   readonly cartCount = this.cart.count;
+  readonly isLoggedIn = this.auth.isLoggedIn;
 
   logout(): void {
     this.auth.logout();

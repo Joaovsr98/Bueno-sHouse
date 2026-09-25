@@ -3,6 +3,7 @@ package com.restaurante.sistema.config;
 import com.restaurante.sistema.modules.identity.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -67,7 +68,14 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/health", "/actuator/health").permitAll()
-                .requestMatchers("/api/auth/login").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                // Cardapio publico (RF-001, RF-002): leitura sem login; escrita
+                // continua exigindo ADMINISTRADOR/GERENTE via @PreAuthorize nos
+                // controllers (RN09: so pratos ATIVO aparecem, ja filtrado no Service).
+                // /api/units GET tambem precisa ser publico: e como o cardapio
+                // descobre qual unidade exibir antes do cliente logar.
+                .requestMatchers(HttpMethod.GET, "/api/categories", "/api/products", "/api/products/**", "/api/units", "/api/units/**")
+                    .permitAll()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

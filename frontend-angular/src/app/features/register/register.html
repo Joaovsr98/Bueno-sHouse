@@ -5,38 +5,24 @@
         <span class="grid place-items-center w-12 h-12 rounded-2xl btn-brand text-2xl shadow-lg">🍔</span>
         <div class="text-left">
           <h1 class="text-2xl font-bold tracking-tight brand-text leading-none">Bueno's House</h1>
-          <p class="text-[11px] uppercase tracking-[0.2em] text-neutral-500 mt-1">Gestão do restaurante</p>
+          <p class="text-[11px] uppercase tracking-[0.2em] text-neutral-500 mt-1">Criar conta de cliente</p>
         </div>
       </div>
     </div>
 
-    <div class="glass rounded-2xl p-5 space-y-3">
-      <p class="text-xs text-neutral-400 flex items-center gap-1.5">
-        <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
-        Acesso rápido · ambiente de demonstração
-      </p>
-      <div class="grid grid-cols-2 gap-2">
-        @for (p of quickAccess; track p.email) {
-          <button
-            type="button"
-            [disabled]="loading()"
-            (click)="quickLogin(p.email)"
-            class="glass glass-hover rounded-xl py-2.5 px-3 text-sm text-neutral-200 flex items-center gap-2 disabled:opacity-50"
-          >
-            <span class="text-base leading-none">{{ p.icon }}</span>
-            <span>{{ p.label }}</span>
-          </button>
-        }
-      </div>
-    </div>
-
-    <div class="flex items-center gap-3 text-xs text-neutral-600">
-      <div class="flex-1 h-px bg-white/10"></div>
-      ou entre manualmente
-      <div class="flex-1 h-px bg-white/10"></div>
-    </div>
-
     <form (ngSubmit)="submit()" class="glass rounded-2xl p-8 space-y-4">
+      <div class="space-y-1.5">
+        <label class="text-sm text-neutral-300">Nome completo</label>
+        <input
+          type="text"
+          name="fullName"
+          [(ngModel)]="fullName"
+          required
+          autocomplete="name"
+          class="w-full rounded-xl bg-black/30 border border-white/10 px-3.5 py-2.5 text-sm outline-none focus:border-brand-500/60 focus:bg-black/40 transition"
+        />
+      </div>
+
       <div class="space-y-1.5">
         <label class="text-sm text-neutral-300">E-mail</label>
         <input
@@ -50,13 +36,27 @@
       </div>
 
       <div class="space-y-1.5">
+        <label class="text-sm text-neutral-300">Telefone</label>
+        <input
+          type="tel"
+          name="phone"
+          [(ngModel)]="phone"
+          required
+          autocomplete="tel"
+          placeholder="11999998888"
+          class="w-full rounded-xl bg-black/30 border border-white/10 px-3.5 py-2.5 text-sm outline-none focus:border-brand-500/60 focus:bg-black/40 transition"
+        />
+      </div>
+
+      <div class="space-y-1.5">
         <label class="text-sm text-neutral-300">Senha</label>
         <input
           type="password"
           name="password"
           [(ngModel)]="password"
           required
-          autocomplete="current-password"
+          minlength="6"
+          autocomplete="new-password"
           class="w-full rounded-xl bg-black/30 border border-white/10 px-3.5 py-2.5 text-sm outline-none focus:border-brand-500/60 focus:bg-black/40 transition"
         />
       </div>
@@ -72,17 +72,13 @@
         [disabled]="loading()"
         class="w-full btn-brand rounded-xl py-2.5 text-sm"
       >
-        {{ loading() ? 'Entrando...' : 'Entrar' }}
+        {{ loading() ? 'Criando conta...' : 'Criar conta' }}
       </button>
     </form>
 
     <p class="text-center text-sm text-neutral-400">
-      É cliente e quer pedir?
-      <a routerLink="/registrar" class="text-brand-400 hover:underline">Criar conta</a>
-    </p>
-
-    <p class="text-center text-[11px] text-neutral-600">
-      © Bueno's House · sistema de gestão
+      Já tem conta?
+      <a routerLink="/login" class="text-brand-400 hover:underline">Entrar</a>
     </p>
   </div>
 </div>
