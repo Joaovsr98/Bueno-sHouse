@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.inventory.controller;
 
+import com.restaurante.sistema.config.Paging;
+import org.springframework.http.ResponseEntity;
 import com.restaurante.sistema.modules.inventory.dto.PurchaseRequest;
 import com.restaurante.sistema.modules.inventory.dto.PurchaseResponse;
 import com.restaurante.sistema.modules.inventory.service.PurchaseService;
@@ -22,8 +24,11 @@ public class PurchaseController {
     }
 
     @GetMapping
-    public List<PurchaseResponse> list(@RequestParam Long unitId) {
-        return purchaseService.listByUnit(unitId);
+    public ResponseEntity<List<PurchaseResponse>> list(
+            @RequestParam Long unitId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
+        return Paging.respond(purchaseService.listByUnit(unitId), page, size);
     }
 
     @GetMapping("/{id}")

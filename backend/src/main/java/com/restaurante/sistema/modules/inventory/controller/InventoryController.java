@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.inventory.controller;
 
+import com.restaurante.sistema.config.Paging;
+import org.springframework.http.ResponseEntity;
 import com.restaurante.sistema.modules.inventory.dto.*;
 import com.restaurante.sistema.modules.inventory.service.InventoryService;
 import jakarta.validation.Valid;
@@ -21,8 +23,11 @@ public class InventoryController {
     }
 
     @GetMapping("/items")
-    public List<InventoryItemResponse> list(@RequestParam Long unitId) {
-        return inventoryService.listByUnit(unitId);
+    public ResponseEntity<List<InventoryItemResponse>> list(
+            @RequestParam Long unitId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
+        return Paging.respond(inventoryService.listByUnit(unitId), page, size);
     }
 
     @GetMapping("/items/below-minimum")

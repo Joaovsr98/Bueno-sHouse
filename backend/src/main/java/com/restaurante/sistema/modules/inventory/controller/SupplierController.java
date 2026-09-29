@@ -1,9 +1,11 @@
 package com.restaurante.sistema.modules.inventory.controller;
 
+import com.restaurante.sistema.config.Paging;
 import com.restaurante.sistema.modules.inventory.dto.*;
 import com.restaurante.sistema.modules.inventory.service.SupplierService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,8 +23,11 @@ public class SupplierController {
     }
 
     @GetMapping
-    public List<SupplierResponse> list(@RequestParam Long unitId) {
-        return supplierService.listByUnit(unitId);
+    public ResponseEntity<List<SupplierResponse>> list(
+            @RequestParam Long unitId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
+        return Paging.respond(supplierService.listByUnit(unitId), page, size);
     }
 
     @PostMapping

@@ -1,6 +1,7 @@
-import { Component, inject, signal, effect, untracked } from '@angular/core';
+import { Component, computed, inject, signal, effect, untracked } from '@angular/core';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
+import { ChartComponent } from './chart';
 
 interface DailyRevenue { day: string; revenue: number; }
 interface TopProduct { productName: string; totalSold: number; }
@@ -8,6 +9,7 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
 
 @Component({
   selector: 'app-dashboard',
+  imports: [ChartComponent],
   template: `
     <h1>Dashboard</h1>
     @if (error()) { <p>{{ error() }}</p> }
@@ -16,12 +18,14 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
     <p>Food cost médio: {{ foodCost() ?? '-' }}%</p>
 
     <h2>Faturamento por dia</h2>
+    <app-chart type="line" label="Faturamento" [labels]="revenueLabels()" [values]="revenueValues()" />
     <table border="1">
       <tr><th>Dia</th><th>Faturamento</th></tr>
       @for (r of revenue(); track r.day) { <tr><td>{{ r.day }}</td><td>{{ r.revenue }}</td></tr> }
     </table>
 
     <h2>Top 5 produtos</h2>
+    <app-chart type="bar" label="Vendidos" [labels]="topLabels()" [values]="topValues()" />
     <table border="1">
       <tr><th>Produto</th><th>Vendidos</th></tr>
       @for (p of top(); track p.productName) { <tr><td>{{ p.productName }}</td><td>{{ p.totalSold }}</td></tr> }
@@ -47,6 +51,11 @@ export class Dashboard {
   orderCount = signal(0);
   foodCost = signal<number | null>(null);
   error = signal<string | null>(null);
+
+  revenueLabels = computed(() => this.revenue().map((r) => r.day));
+  revenueValues = computed(() => this.revenue().map((r) => r.revenue));
+  topLabels = computed(() => this.top().map((p) => p.productName));
+  topValues = computed(() => this.top().map((p) => p.totalSold));
 
   constructor() {
     effect(() => {

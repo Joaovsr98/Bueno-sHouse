@@ -1,5 +1,6 @@
 package com.restaurante.sistema.modules.catalog.controller;
 
+import com.restaurante.sistema.config.Paging;
 import com.restaurante.sistema.modules.catalog.dto.ProductRequest;
 import com.restaurante.sistema.modules.catalog.dto.ProductResponse;
 import com.restaurante.sistema.modules.catalog.service.ProductService;
@@ -29,16 +30,21 @@ public class ProductController {
      * poder gerenciar disponibilidade.
      */
     @GetMapping
-    public List<ProductResponse> list(
+    public ResponseEntity<List<ProductResponse>> list(
             @RequestParam Long unitId,
-            @RequestParam(required = false) Long categoryId
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "20") int size
     ) {
         boolean staff = isAuthenticatedStaff();
+        List<ProductResponse> all;
         if (categoryId != null) {
-            return staff ? productService.listByCategory(unitId, categoryId)
-                          : productService.listPublicByCategory(unitId, categoryId);
+            all = staff ? productService.listByCategory(unitId, categoryId)
+                        : productService.listPublicByCategory(unitId, categoryId);
+        } else {
+            all = staff ? productService.listByUnit(unitId) : productService.listPublicByUnit(unitId);
         }
-        return staff ? productService.listByUnit(unitId) : productService.listPublicByUnit(unitId);
+        return Paging.respond(all, page, size);
     }
 
     /** CLIENTE tambem e "autenticado", mas ve o mesmo cardapio publico que um visitante (RN09). */
