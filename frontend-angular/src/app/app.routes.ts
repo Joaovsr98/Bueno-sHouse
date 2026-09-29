@@ -78,6 +78,22 @@ export const routes: Routes = [
         path: 'motoboy',
         loadComponent: () => import('./features/courier/courier').then((m) => m.Courier),
       },
+      {
+        path: 'fornecedores',
+        loadComponent: () => import('./features/suppliers/suppliers').then((m) => m.Suppliers),
+      },
+      {
+        path: 'fichas-tecnicas',
+        loadComponent: () => import('./features/recipes/recipes').then((m) => m.Recipes),
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
+      },
+      {
+        path: 'usuarios',
+        loadComponent: () => import('./features/users/users').then((m) => m.Users),
+      },
       { path: '', redirectTo: 'mesas', pathMatch: 'full' },
     ],
   },

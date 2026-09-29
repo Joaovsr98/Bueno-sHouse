@@ -68,6 +68,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/health", "/actuator/health").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
                 // Cardapio publico (RF-001, RF-002): leitura sem login; escrita
                 // continua exigindo ADMINISTRADOR/GERENTE via @PreAuthorize nos

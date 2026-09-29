@@ -29,12 +29,24 @@ public class OrderController {
         this.customerService = customerService;
     }
 
+    /**
+     * Sem `page`/`size` devolve a lista completa (compativel com os paineis atuais).
+     * Com `page` (0-based) e `size` (max 100) pagina e devolve o total em X-Total-Count.
+     */
     @GetMapping
-    public List<OrderResponse> list(
+    public org.springframework.http.ResponseEntity<List<OrderResponse>> list(
             @RequestParam Long unitId,
-            @RequestParam(required = false) List<String> status
+            @RequestParam(required = false) List<String> status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "20") int size
     ) {
-        return orderService.listByUnit(unitId, status);
+        if (page == null) {
+            return org.springframework.http.ResponseEntity.ok(orderService.listByUnit(unitId, status));
+        }
+        var result = orderService.listByUnitPaged(unitId, status, page, size);
+        return org.springframework.http.ResponseEntity.ok()
+                .header("X-Total-Count", String.valueOf(result.getTotalElements()))
+                .body(result.getContent());
     }
 
     /** Pedidos do cliente logado (app do cliente). */

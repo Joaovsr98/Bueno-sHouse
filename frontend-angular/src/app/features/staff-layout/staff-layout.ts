@@ -10,6 +10,10 @@ const NAV_ITEMS = [
   { to: '/caixa', label: 'Caixa', icon: '💳' },
   { to: '/catalogo', label: 'Catálogo', icon: '📖' },
   { to: '/motoboy', label: 'Motoboy', icon: '🛵' },
+  { to: '/fornecedores', label: 'Fornecedores e compras', icon: '📦' },
+  { to: '/fichas-tecnicas', label: 'Fichas técnicas', icon: '🧾' },
+  { to: '/dashboard', label: 'Dashboard', icon: '📊' },
+  { to: '/usuarios', label: 'Usuários', icon: '👤' },
 ];
 
 @Component({

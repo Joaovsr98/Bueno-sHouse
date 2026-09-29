@@ -11,6 +11,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByUnitIdAndStatusIn(Long unitId, List<String> statuses);
 
+    org.springframework.data.domain.Page<Order> findByUnitIdAndStatusIn(Long unitId, List<String> statuses,
+            org.springframework.data.domain.Pageable pageable);
+
     List<Order> findByCommandId(Long commandId);
 
     List<Order> findByCustomerIdOrderByCreatedAtDesc(Long customerId);

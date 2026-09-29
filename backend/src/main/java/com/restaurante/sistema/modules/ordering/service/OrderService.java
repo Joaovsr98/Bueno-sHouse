@@ -135,6 +135,19 @@ public class OrderService {
         return orderRepository.findByUnitIdAndStatusIn(unitId, filter).stream().map(this::toResponse).toList();
     }
 
+    /** Versao paginada (RNF08 / RF-019): mais recentes primeiro. */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<OrderResponse> listByUnitPaged(
+            Long unitId, List<String> statuses, int page, int size) {
+        List<String> filter = (statuses == null || statuses.isEmpty())
+                ? List.of("RECEBIDO", "ENVIADO_PARA_COZINHA", "EM_PREPARO", "PARCIALMENTE_PRONTO", "PRONTO")
+                : statuses;
+        var pageable = org.springframework.data.domain.PageRequest.of(
+                Math.max(page, 0), Math.min(Math.max(size, 1), 100),
+                org.springframework.data.domain.Sort.by("createdAt").descending());
+        return orderRepository.findByUnitIdAndStatusIn(unitId, filter, pageable).map(this::toResponse);
+    }
+
     @Transactional(readOnly = true)
     public OrderResponse findById(Long id) {
         return toResponse(getOrThrow(id));

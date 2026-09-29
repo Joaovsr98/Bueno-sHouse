@@ -179,3 +179,14 @@ categorias, produtos, mesas e zonas de entrega.
 ## Licença
 
 Projeto de portfólio. Uso e distribuição sob consulta ao autor.
+
+---
+
+## API docs, paginação e usuários internos
+
+- **Swagger UI:** `http://localhost:8080/swagger-ui.html` (JSON em `/v3/api-docs`).
+- **Paginação de pedidos:** `GET /api/orders?unitId=1&page=0&size=20` devolve a página e o total
+  no header `X-Total-Count`. Sem `page`, devolve a lista completa (comportamento anterior).
+- **Usuários internos (só ADMINISTRADOR):** `GET/POST /api/users`, `PATCH /api/users/{id}`
+  (troca de perfil, ativar/desativar, redefinir senha). Perfil `CLIENTE` só via cadastro público.
+- **Login de demonstração (dev):** `admin@demo.local` / `admin123` (seed `V900`; nunca usar em produção).
