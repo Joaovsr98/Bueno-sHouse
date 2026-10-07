@@ -143,3 +143,64 @@ body {
   background: rgba(255, 255, 255, 0.15);
   border-radius: 4px;
 }
+
+/*
+ * Base visual para as telas simples (usuarios, fornecedores, fichas tecnicas,
+ * dashboard): estiliza HTML cru sem exigir classes em cada elemento.
+ * Aplicado via host: { class: 'page-basic' } no componente.
+ */
+.page-basic {
+  display: block;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+.page-basic h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 1.25rem; }
+.page-basic h2 { font-size: 1rem; font-weight: 600; margin: 1.75rem 0 0.75rem; color: #fdba74; }
+.page-basic h3 { font-size: 0.9rem; font-weight: 600; margin: 1rem 0 0.5rem; }
+.page-basic p { font-size: 0.875rem; color: #a3a8b8; margin: 0.25rem 0; }
+.page-basic form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1rem; }
+.page-basic input, .page-basic select, .page-basic textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.6rem;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.45rem 0.7rem;
+}
+.page-basic select option { background: #12151f; }
+.page-basic button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.6rem;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.page-basic button:hover { background: rgba(249, 115, 22, 0.25); }
+.page-basic button[type="submit"] {
+  background-image: linear-gradient(135deg, #fdba74, #f97316 45%, #ea580c);
+  color: #1a1204;
+  font-weight: 600;
+  border: none;
+}
+.page-basic table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.8rem;
+  overflow: hidden;
+}
+.page-basic th { text-align: left; font-weight: 600; color: #a3a8b8; background: rgba(255, 255, 255, 0.04); }
+.page-basic th, .page-basic td { padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.page-basic tr:last-child td { border-bottom: none; }
+.page-basic td button { margin-right: 0.35rem; }
+.page-basic ul { padding-left: 1.1rem; font-size: 0.875rem; }

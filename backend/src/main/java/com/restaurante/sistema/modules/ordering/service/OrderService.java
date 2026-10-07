@@ -330,13 +330,16 @@ public class OrderService {
         return toResponse(saved);
     }
 
+    /** RN04: true se o pedido ainda pode ser cancelado por qualquer perfil (antes de EM_PREPARO). */
+    @Transactional(readOnly = true)
+    public boolean canCancelFreely(Long orderId) {
+        return !NOT_CANCELLABLE.contains(getOrThrow(orderId).getStatus());
+    }
+
     /**
-     * RN04 (parcial): este endpoint de cancelamento dedicado ja e restrito a
-     * ADMINISTRADOR/GERENTE no controller. A parte "livre antes de EM_PREPARO"
-     * NAO esta diferenciada por role ainda - o endpoint generico de transicao
-     * (/transition) permite GARCOM/CAIXA levarem um pedido a CANCELADO em
-     * qualquer status permitido pela maquina de estados, sem essa distincao.
-     * Registrado como pendencia, nao resolvido nesta rodada.
+     * RN04: este endpoint dedicado e restrito a ADMINISTRADOR/GERENTE no controller.
+     * No endpoint generico /transitions, OrderController aplica a mesma regra: apos
+     * EM_PREPARO so GERENTE/ADMIN cancelam (ver canCancelFreely).
      */
     @Transactional
     public OrderResponse cancel(Long orderId, String reason) {

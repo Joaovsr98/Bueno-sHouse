@@ -13,6 +13,7 @@ const PROFILES = ['ADMINISTRADOR', 'GERENTE', 'CAIXA', 'GARCOM', 'COZINHA', 'MOT
 
 @Component({
   selector: 'app-users',
+  host: { class: 'page-basic' },
   imports: [FormsModule],
   template: `
     <h1>Usuários internos</h1>

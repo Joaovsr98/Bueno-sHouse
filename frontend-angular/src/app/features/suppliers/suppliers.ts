@@ -18,6 +18,7 @@ interface Line { inventoryItemId: number | null; quantity: number; unitPrice: nu
 
 @Component({
   selector: 'app-suppliers',
+  host: { class: 'page-basic' },
   imports: [FormsModule],
   template: `
     <h1>Fornecedores e compras</h1>

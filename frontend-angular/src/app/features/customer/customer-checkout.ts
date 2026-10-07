@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
@@ -8,7 +9,7 @@ import { currency } from '../../core/format';
 
 @Component({
   selector: 'app-customer-checkout',
-  imports: [RouterLink],
+  imports: [RouterLink, FormsModule],
   templateUrl: './customer-checkout.html',
 })
 export class CustomerCheckout {
@@ -24,6 +25,10 @@ export class CustomerCheckout {
   selectedAddressId = signal<number | null>(null);
   error = signal<string | null>(null);
   placing = signal(false);
+  customerId = signal<number | null>(null);
+  showAddressForm = signal(false);
+  savingAddress = signal(false);
+  addr = { label: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', zipCode: '' };
 
   constructor() {
     this.loadAddresses();
@@ -32,11 +37,42 @@ export class CustomerCheckout {
   private async loadAddresses(): Promise<void> {
     try {
       const me = await firstValueFrom(this.api.get<CustomerResponse>('/customers/me'));
+      this.customerId.set(me.id);
       this.addresses.set(me.addresses);
+      if (me.addresses.length === 0) this.showAddressForm.set(true);
       const def = me.addresses.find((a) => a.isDefault) ?? me.addresses[0];
       if (def) this.selectedAddressId.set(def.id);
     } catch (e) {
       this.error.set(apiErrorMessage(e, 'Erro ao carregar seus endereços'));
+    }
+  }
+
+  async saveAddress(): Promise<void> {
+    const id = this.customerId();
+    const a = this.addr;
+    if (id == null) return;
+    if (!a.street || !a.number || !a.neighborhood || !a.city || !a.state || !a.zipCode) {
+      this.error.set('Preencha rua, número, bairro, cidade, UF e CEP');
+      return;
+    }
+    this.savingAddress.set(true);
+    this.error.set(null);
+    try {
+      const created = await firstValueFrom(
+        this.api.post<CustomerAddressResponse>(`/customers/${id}/addresses`, {
+          ...a,
+          label: a.label || 'Casa',
+          isDefault: this.addresses().length === 0,
+        }),
+      );
+      this.addresses.update((list) => [...list, created]);
+      this.selectedAddressId.set(created.id);
+      this.showAddressForm.set(false);
+      this.addr = { label: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', zipCode: '' };
+    } catch (e) {
+      this.error.set(apiErrorMessage(e, 'Erro ao salvar o endereço'));
+    } finally {
+      this.savingAddress.set(false);
     }
   }
 

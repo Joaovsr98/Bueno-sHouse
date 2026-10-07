@@ -15,6 +15,7 @@ interface Recipe {
 
 @Component({
   selector: 'app-recipes',
+  host: { class: 'page-basic' },
   imports: [ReactiveFormsModule],
   template: `
     <h1>Fichas técnicas</h1>

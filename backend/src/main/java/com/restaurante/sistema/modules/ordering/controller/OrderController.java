@@ -83,6 +83,15 @@ public class OrderController {
     @PostMapping("/{id}/transitions")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','GARCOM','CAIXA')")
     public OrderResponse transition(@PathVariable Long id, @Valid @RequestBody OrderTransitionRequest request) {
+        // RN04: cancelar apos EM_PREPARO so GERENTE/ADMIN (antes disso, qualquer perfil do endpoint).
+        if ("CANCELADO".equals(request.status())) {
+            String profile = currentUserProvider.getCurrentUser().getProfile().getName();
+            boolean manager = "ADMINISTRADOR".equals(profile) || "GERENTE".equals(profile);
+            if (!manager && !orderService.canCancelFreely(id)) {
+                throw new com.restaurante.sistema.common.exception.BusinessException(
+                        "Pedido ja entrou em producao: so GERENTE ou ADMINISTRADOR podem cancelar");
+            }
+        }
         return orderService.transitionTo(id, request.status(), request.reason());
     }
 

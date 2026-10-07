@@ -37,17 +37,38 @@
       <p class="text-sm text-neutral-500">Nenhum endereço cadastrado.</p>
     }
     <div class="space-y-2">
-      @for (addr of addresses(); track addr.id) {
+      @for (a of addresses(); track addr.id) {
         <button
-          (click)="selectAddress(addr.id)"
+          (click)="selectAddress(a.id)"
           class="w-full text-left rounded-xl border p-3 text-sm transition"
-          [class]="selectedAddressId() === addr.id ? 'border-brand-500/60 bg-brand-500/10' : 'border-white/10 hover:bg-white/5'"
+          [class]="selectedAddressId() === a.id ? 'border-brand-500/60 bg-brand-500/10' : 'border-white/10 hover:bg-white/5'"
         >
-          <span class="font-medium">{{ addr.label || 'Endereço' }}</span>
-          <span class="text-neutral-400"> — {{ addr.street }}, {{ addr.number }} · {{ addr.neighborhood }}</span>
+          <span class="font-medium">{{ a.label || 'Endereço' }}</span>
+          <span class="text-neutral-400"> — {{ a.street }}, {{ a.number }} · {{ a.neighborhood }}</span>
         </button>
       }
     </div>
+
+    @if (!showAddressForm()) {
+      <button (click)="showAddressForm.set(true)" class="mt-3 text-sm text-brand-300 hover:underline">+ Novo endereço</button>
+    } @else {
+      <form (ngSubmit)="saveAddress()" class="mt-4 grid grid-cols-2 gap-2 text-sm">
+        <input name="label" [(ngModel)]="addr.label" placeholder="Apelido (Casa, Trabalho)" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+        <input name="street" [(ngModel)]="addr.street" placeholder="Rua" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+        <input name="number" [(ngModel)]="addr.number" placeholder="Número" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+        <input name="complement" [(ngModel)]="addr.complement" placeholder="Complemento" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+        <input name="neighborhood" [(ngModel)]="addr.neighborhood" placeholder="Bairro" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+        <input name="city" [(ngModel)]="addr.city" placeholder="Cidade" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+        <input name="state" [(ngModel)]="addr.state" placeholder="UF" maxlength="2" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+        <input name="zipCode" [(ngModel)]="addr.zipCode" placeholder="CEP" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+        <div class="col-span-2 flex gap-2">
+          <button type="submit" [disabled]="savingAddress()" class="btn-brand rounded-xl px-4 py-2">{{ savingAddress() ? 'Salvando...' : 'Salvar endereço' }}</button>
+          @if (addresses().length > 0) {
+            <button type="button" (click)="showAddressForm.set(false)" class="rounded-xl px-4 py-2 bg-white/10">Cancelar</button>
+          }
+        </div>
+      </form>
+    }
   </div>
 
   <div class="glass rounded-2xl p-5">

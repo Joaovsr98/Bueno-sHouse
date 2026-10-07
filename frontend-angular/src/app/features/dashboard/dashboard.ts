@@ -9,6 +9,7 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
 
 @Component({
   selector: 'app-dashboard',
+  host: { class: 'page-basic' },
   imports: [ChartComponent],
   template: `
     <h1>Dashboard</h1>
