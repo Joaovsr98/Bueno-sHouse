@@ -92,7 +92,7 @@ docker compose logs -f backend
 
 Acesse:
 
-- **Frontend:** http://localhost:5173
+- **Frontend:** http://localhost:4200
 - **API (health check):** http://localhost:8080/api/health
 
 Para parar tudo: `docker compose down` (adicione `-v` para apagar também os dados do banco).
@@ -107,6 +107,8 @@ cd backend && mvn spring-boot:run
 
 # Frontend (Angular)
 cd frontend-angular && npm install && npm start
+
+# Seed de demonstração (admin@demo.local / admin123): rode o backend com SPRING_PROFILES_ACTIVE=dev
 ```
 
 ---
@@ -137,7 +139,8 @@ restaurante-sistema/
 │   │   └── modules/             # domínios de negócio (identity, ordering, kitchen, ...)
 │   ├── src/main/resources/
 │   │   ├── application.yml
-│   │   └── db/migration/        # migrations Flyway (schema + dados de demonstração)
+│   │   ├── db/migration/        # migrations Flyway (schema + perfis de acesso) — rodam em todo ambiente
+│   │   └── db/seed/             # dados de demonstração — só com SPRING_PROFILES_ACTIVE=dev
 │   ├── src/test/                # testes de integração (Testcontainers)
 │   ├── pom.xml
 │   └── Dockerfile
@@ -145,7 +148,8 @@ restaurante-sistema/
 │   └── src/app/
 │       ├── core/                # auth, guards, interceptors, serviços base
 │       └── features/            # telas por domínio (login, mesas, cozinha, caixa, cliente, ...)
-├── docker-compose.yml
+├── docker-compose.yml           # ambiente local
+├── docker-compose.prod.yml      # produção (HTTPS via Caddy) — ver docs/DEPLOY.md
 ├── .env.example
 └── README.md
 ```

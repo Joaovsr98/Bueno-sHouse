@@ -10,6 +10,7 @@ interface ProductForm {
   name: string;
   description: string;
   basePrice: string;
+  available: boolean;
 }
 
 @Component({
@@ -101,7 +102,7 @@ export class Catalog {
   }
 
   openNewProduct(): void {
-    this.productForm.set({ id: null, name: '', description: '', basePrice: '' });
+    this.productForm.set({ id: null, name: '', description: '', basePrice: '', available: false });
   }
 
   openEditProduct(p: ProductResponse): void {
@@ -110,6 +111,7 @@ export class Catalog {
       name: p.name,
       description: p.description ?? '',
       basePrice: String(p.basePrice),
+      available: p.available,
     });
   }
 
@@ -126,6 +128,7 @@ export class Catalog {
       name: form.name,
       description: form.description || null,
       basePrice: Number(form.basePrice),
+      available: form.available,
     };
     this.savingProduct.set(true);
     const req = form.id

@@ -1,5 +1,6 @@
 package com.restaurante.sistema.modules.catalog.service;
 
+import com.restaurante.sistema.common.exception.BusinessException;
 import com.restaurante.sistema.common.exception.ResourceNotFoundException;
 import com.restaurante.sistema.modules.catalog.domain.*;
 import com.restaurante.sistema.modules.catalog.dto.*;
@@ -7,6 +8,7 @@ import com.restaurante.sistema.modules.catalog.repository.AdditionalGroupReposit
 import com.restaurante.sistema.modules.catalog.repository.CategoryRepository;
 import com.restaurante.sistema.modules.catalog.repository.KitchenSectorRepository;
 import com.restaurante.sistema.modules.catalog.repository.ProductRepository;
+import com.restaurante.sistema.modules.inventory.repository.RecipeRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -42,17 +44,20 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final KitchenSectorRepository kitchenSectorRepository;
     private final AdditionalGroupRepository additionalGroupRepository;
+    private final RecipeRepository recipeRepository;
 
     public ProductService(
             ProductRepository productRepository,
             CategoryRepository categoryRepository,
             KitchenSectorRepository kitchenSectorRepository,
-            AdditionalGroupRepository additionalGroupRepository
+            AdditionalGroupRepository additionalGroupRepository,
+            RecipeRepository recipeRepository
     ) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.kitchenSectorRepository = kitchenSectorRepository;
         this.additionalGroupRepository = additionalGroupRepository;
+        this.recipeRepository = recipeRepository;
     }
 
     @Cacheable(value = "products", key = "#unitId")
@@ -94,7 +99,9 @@ public class ProductService {
     public ProductResponse create(ProductRequest request) {
         Product product = new Product();
         product.setUnitId(request.unitId());
-        applyRequest(product, request);
+        product.setAvailable(false); // estado inicial; applyRequest valida a ativacao
+        // RN01: prato novo nasce inativo (sem ficha tecnica ainda); so ativa depois de ter ficha.
+        applyRequest(product, request, request.available() != null && request.available());
         return toResponse(productRepository.save(product));
     }
 
@@ -102,7 +109,21 @@ public class ProductService {
     @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
         Product product = getOrThrow(id);
-        applyRequest(product, request);
+        // available ausente = mantem o estado atual (nao reativa sem querer ao editar outros campos).
+        boolean available = request.available() != null ? request.available() : product.isAvailable();
+        applyRequest(product, request, available);
+        return toResponse(productRepository.save(product));
+    }
+
+    /** Ativa/desativa o prato. Ativar exige ficha tecnica (RN01). */
+    @CacheEvict(value = {"products", "products-public"}, allEntries = true)
+    @Transactional
+    public ProductResponse setAvailability(Long id, boolean available) {
+        Product product = getOrThrow(id);
+        if (available && !product.isAvailable()) {
+            assertCanBeActive(product);
+        }
+        product.setAvailable(available);
         return toResponse(productRepository.save(product));
     }
 
@@ -115,7 +136,18 @@ public class ProductService {
         productRepository.save(product);
     }
 
-    private void applyRequest(Product product, ProductRequest request) {
+    /** RN01: um prato so pode ficar ATIVO (available) se tiver ficha tecnica cadastrada. */
+    private void assertCanBeActive(Product product) {
+        boolean hasRecipe = product.getId() != null && recipeRepository.findByProductId(product.getId()).isPresent();
+        if (!hasRecipe) {
+            throw new BusinessException("Cadastre a ficha tecnica do prato antes de ativa-lo (RN01)");
+        }
+    }
+
+    private void applyRequest(Product product, ProductRequest request, boolean available) {
+        if (available && !product.isAvailable()) {
+            assertCanBeActive(product);
+        }
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", request.categoryId()));
         product.setCategory(category);
@@ -125,7 +157,7 @@ public class ProductService {
         product.setBasePrice(request.basePrice());
         product.setImageUrl(request.imageUrl());
         product.setPrepTimeMinutes(request.prepTimeMinutes());
-        product.setAvailable(request.available() == null || request.available());
+        product.setAvailable(available);
         product.setFeatured(request.featured() != null && request.featured());
 
         if (request.kitchenSectorId() != null) {
@@ -136,8 +168,9 @@ public class ProductService {
             product.setKitchenSector(null);
         }
 
-        product.getVariations().clear();
+        // variations ausente = preserva as existentes (o formulario simples do catalogo nao as envia).
         if (request.variations() != null) {
+            product.getVariations().clear();
             request.variations().forEach(v -> {
                 ProductVariation variation = new ProductVariation();
                 variation.setProduct(product);

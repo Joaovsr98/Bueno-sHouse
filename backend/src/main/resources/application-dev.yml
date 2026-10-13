@@ -1,12 +1,15 @@
-# Profile "dev": habilita a migration de dados de demonstracao (V900__seed_demo_data.sql)
-# e aumenta o nivel de log. Nunca usar este profile em producao.
+# Profile "dev": inclui o seed de demonstracao (db/seed/V900__seed_demo_data.sql) alem das
+# migrations e aumenta o nivel de log. Nunca usar este profile em producao.
 #
 # Ativacao: SPRING_PROFILES_ACTIVE=dev (ja configurado no docker-compose.yml para o
 # ambiente local).
+#
+# Banco local criado ANTES desta separacao: o V900 mudou de conteudo e o Flyway acusara
+# checksum divergente. Resolva com `DROP DATABASE`/recriar, ou `mvn flyway:repair`.
 
 spring:
   flyway:
-    target: latest
+    locations: classpath:db/migration,classpath:db/seed
 
 logging:
   level:

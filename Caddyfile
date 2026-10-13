@@ -1,0 +1,5 @@
+# HTTPS automatico para {$DOMAIN}. O nginx do Angular ja encaminha /api e /ws ao backend.
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy frontend-angular:80
+}

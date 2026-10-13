@@ -1,17 +1,7 @@
--- ATENCAO: esta migration contem dados de DEMONSTRACAO/DESENVOLVIMENTO.
--- Ela roda no ambiente local via Flyway normalmente (Flyway nao possui
--- filtro nativo por profile), mas foi numerada na faixa 900+ para deixar
--- explicito que e "dado de exemplo", nao estrutura.
---
--- Antes de publicar em producao: NAO aplique esta migration no banco de
--- producao. Uma estrategia recomendada para a Etapa 5+ e mover este arquivo
--- para uma pasta separada (ex.: classpath:db/seed) habilitada apenas quando
--- SPRING_PROFILES_ACTIVE=dev, via configuracao adicional do Flyway por
--- profile no application-dev.yml. Por ora, ela e comentada/documentada aqui
--- e devera ser revisada antes do primeiro deploy real.
---
--- Senha do usuario admin de desenvolvimento: "admin123" (hash BCrypt abaixo).
--- NUNCA usar esta senha ou este usuario em producao.
+-- DADOS DE DEMONSTRACAO/DESENVOLVIMENTO. Fica em db/seed (fora de db/migration):
+-- so e aplicado com SPRING_PROFILES_ACTIVE=dev (ver application-dev.yml).
+-- Os perfis de acesso NAO ficam aqui: sao criados por V16__seed_profiles.sql (obrigatorio).
+-- Senha dos usuarios demo: "admin123" (BCrypt abaixo). NUNCA usar em producao.
 
 INSERT INTO restaurants (legal_name, trade_name, document)
 VALUES ('Restaurante Demonstracao LTDA', 'Sabor Demo', '00000000000100');
@@ -19,27 +9,18 @@ VALUES ('Restaurante Demonstracao LTDA', 'Sabor Demo', '00000000000100');
 INSERT INTO units (restaurant_id, name, address, phone, timezone)
 VALUES (1, 'Unidade Centro', 'Rua Exemplo, 123 - Centro', '(11) 90000-0000', 'America/Sao_Paulo');
 
-INSERT INTO profiles (name, description) VALUES
-    ('ADMINISTRADOR', 'Acesso total ao sistema'),
-    ('GERENTE', 'Gestao operacional da unidade'),
-    ('CAIXA', 'Operacao de caixa e pagamentos'),
-    ('GARCOM', 'Atendimento de mesas e comandas'),
-    ('COZINHA', 'Painel de producao'),
-    ('MOTOBOY', 'Entregas'),
-    ('CLIENTE', 'Cliente do delivery (app do cliente)');
-
 -- Senha "admin123" com BCrypt real (hash gerado e verificado nesta etapa) -
 -- reaproveitada para todos os usuarios de demonstracao abaixo, um por perfil,
 -- para permitir login com 1 clique na tela de login (botoes de acesso rapido).
 -- NUNCA usar estes usuarios/senha em producao - apenas ambiente de desenvolvimento.
 INSERT INTO users (public_id, email, password_hash, profile_id, active) VALUES
-    (UUID(), 'admin@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 1, TRUE),
-    (UUID(), 'gerente@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 2, TRUE),
-    (UUID(), 'caixa@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 3, TRUE),
-    (UUID(), 'garcom@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 4, TRUE),
-    (UUID(), 'cozinha@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 5, TRUE),
-    (UUID(), 'motoboy@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 6, TRUE),
-    (UUID(), 'cliente@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', 7, TRUE);
+    (UUID(), 'admin@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', (SELECT id FROM profiles WHERE name='ADMINISTRADOR'), TRUE),
+    (UUID(), 'gerente@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', (SELECT id FROM profiles WHERE name='GERENTE'), TRUE),
+    (UUID(), 'caixa@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', (SELECT id FROM profiles WHERE name='CAIXA'), TRUE),
+    (UUID(), 'garcom@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', (SELECT id FROM profiles WHERE name='GARCOM'), TRUE),
+    (UUID(), 'cozinha@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', (SELECT id FROM profiles WHERE name='COZINHA'), TRUE),
+    (UUID(), 'motoboy@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', (SELECT id FROM profiles WHERE name='MOTOBOY'), TRUE),
+    (UUID(), 'cliente@demo.local', '$2a$10$qDtse0v5jBU576Bfo4/LNOzXRwL4GhO4/JOBxW4YoXLAgsa/QCS4C', (SELECT id FROM profiles WHERE name='CLIENTE'), TRUE);
 
 INSERT INTO employees (user_id, unit_id, full_name, role) VALUES
     (1, 1, 'Administrador Demo', 'ADMINISTRADOR'),

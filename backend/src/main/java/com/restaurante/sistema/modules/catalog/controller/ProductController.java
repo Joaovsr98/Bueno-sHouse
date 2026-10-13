@@ -74,6 +74,13 @@ public class ProductController {
         return productService.update(id, request);
     }
 
+    /** Ativa/desativa o prato (RN01: ativar exige ficha tecnica). Corpo: {"available": true}. */
+    @PatchMapping("/{id}/availability")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE')")
+    public ProductResponse setAvailability(@PathVariable Long id, @RequestBody java.util.Map<String, Boolean> body) {
+        return productService.setAvailability(id, Boolean.TRUE.equals(body.get("available")));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

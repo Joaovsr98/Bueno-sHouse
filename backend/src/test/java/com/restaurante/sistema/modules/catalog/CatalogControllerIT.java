@@ -86,7 +86,7 @@ class CatalogControllerIT {
 
         ProductRequest productRequest = new ProductRequest(
                 DEMO_UNIT_ID, categoryId, "Combo Teste", "Descricao de teste",
-                new BigDecimal("39.90"), null, 15, null, true, false, List.of(), null
+                new BigDecimal("39.90"), null, 15, null, false, false, List.of(), null
         );
 
         ResponseEntity<ProductResponse> productResponse = restTemplate.exchange(
@@ -96,6 +96,21 @@ class CatalogControllerIT {
         assertThat(productResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(productResponse.getBody().name()).isEqualTo("Combo Teste");
         assertThat(productResponse.getBody().basePrice()).isEqualByComparingTo("39.90");
+    }
+
+    @Test
+    void createActiveProductWithoutRecipeReturns422() {
+        HttpHeaders headers = authHeaders();
+        ProductRequest productRequest = new ProductRequest(
+                DEMO_UNIT_ID, 1L, "Prato sem ficha", "RN01",
+                new BigDecimal("10.00"), null, 10, null, true, false, List.of(), null
+        );
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/api/products", HttpMethod.POST,
+                new HttpEntity<>(productRequest, headers), String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     @Test
