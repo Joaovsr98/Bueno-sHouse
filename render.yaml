@@ -32,9 +32,9 @@ services:
       # dev = aplica o seed de demonstracao (usuarios @demo.local do login rapido).
       - key: SPRING_PROFILES_ACTIVE
         value: dev
-      # Ha divergencias de tipo conhecidas entre entidades e migrations (ver
-      # CONTINUAR-PROJETO.md, secao 0); o Flyway continua dono do schema.
+      # O Flyway e dono do schema; o Hibernate so confere se as entidades batem com ele
+      # (validado no CI com MySQL real). Nunca usar update/create aqui.
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
-        value: none
+        value: validate
       - key: CORS_ALLOWED_ORIGINS
         value: https://bueno-s-house.vercel.app
