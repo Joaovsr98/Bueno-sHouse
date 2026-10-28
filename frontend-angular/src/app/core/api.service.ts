@@ -35,5 +35,11 @@ export class ApiService {
 /** Extrai a mensagem de erro do ApiError do backend, com fallback. */
 export function apiErrorMessage(err: unknown, fallback: string): string {
   const e = err as { error?: { message?: string }; status?: number };
+  if (e?.status && [502, 503, 504].includes(e.status)) {
+    return 'O servidor está iniciando (plano gratuito). Aguarde alguns segundos e tente de novo.';
+  }
+  if (e?.status === 0) {
+    return 'Sem conexão com o servidor. Verifique sua internet e tente de novo.';
+  }
   return e?.error?.message || (e?.status ? `Erro HTTP ${e.status}` : fallback);
 }

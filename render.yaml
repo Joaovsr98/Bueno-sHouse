@@ -8,6 +8,11 @@ services:
     branch: feat/migracao-angular
     dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
+    # So redeploya quando o backend muda: push so de frontend/docs nao derruba a API.
+    buildFilter:
+      paths:
+        - backend/**
+        - render.yaml
     healthCheckPath: /api/health
     envVars:
       - key: DB_HOST

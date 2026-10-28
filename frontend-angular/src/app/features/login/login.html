@@ -10,7 +10,7 @@
     <div class="relative max-w-xl">
       <p class="eyebrow reveal reveal-1">Dark kitchen · Gestão de ponta a ponta</p>
       <h1 class="mt-6 text-6xl xl:text-7xl font-bold leading-[0.95] uppercase reveal reveal-2">
-        A cozinha<br />inteira em<br /><span class="text-ember">uma tela.</span>
+        Do pedido<br />ao lucro, tudo<br /><span class="text-ember">sob controle.</span>
       </h1>
       <p class="mt-6 text-neutral-400 leading-relaxed max-w-md reveal reveal-3">
         Cardápio digital, pedidos, cozinha, ficha técnica com food cost e estoque com baixa automática —
@@ -50,7 +50,7 @@
         }
 
         <button type="submit" [disabled]="loading()" class="w-full btn-brand rounded-xl py-3 text-sm inline-flex items-center justify-center gap-2">
-          {{ loading() ? 'Entrando...' : 'Entrar' }}
+          {{ loading() ? (slow() ? 'Acordando o servidor...' : 'Entrando...') : 'Entrar' }}
           @if (!loading()) { <app-icon name="arrow" [size]="16" /> }
         </button>
       </form>

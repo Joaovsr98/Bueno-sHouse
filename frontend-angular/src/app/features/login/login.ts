@@ -37,6 +37,14 @@ export class Login {
   password = '';
   error = signal<string | null>(null);
   loading = signal(false);
+  /** Login demorando: o backend gratuito provavelmente esta acordando. */
+  slow = signal(false);
+  private slowTimer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    // Acorda o backend (Render gratuito dorme sem uso) enquanto a pessoa digita.
+    this.api.get('/health').subscribe({ error: () => undefined });
+  }
 
   submit(): void {
     this.doLogin(this.email, this.password);
@@ -51,8 +59,11 @@ export class Login {
   private doLogin(email: string, password: string): void {
     this.error.set(null);
     this.loading.set(true);
+    this.slow.set(false);
+    this.slowTimer = setTimeout(() => this.slow.set(true), 4000);
     this.api.post<LoginResponse>('/auth/login', { email, password }).subscribe({
       next: (data) => {
+        this.stopSlowTimer();
         this.auth.login(data);
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
         this.router.navigateByUrl(returnUrl || defaultRouteForRole(data.user.profileName));
@@ -60,7 +71,13 @@ export class Login {
       error: (err) => {
         this.error.set(apiErrorMessage(err, 'Erro ao entrar'));
         this.loading.set(false);
+        this.stopSlowTimer();
       },
     });
+  }
+
+  private stopSlowTimer(): void {
+    if (this.slowTimer) clearTimeout(this.slowTimer);
+    this.slow.set(false);
   }
 }
