@@ -1,6 +1,12 @@
 # DER (gerado das migrations V1–V15)
 
-43 tabelas, 71 chaves estrangeiras. Renderiza no GitHub, VS Code (Mermaid) e Obsidian.
+43 tabelas, 71 chaves estrangeiras.
+
+**Imagem:** [DER.svg](DER.svg) (gerada a partir do Mermaid abaixo).
+
+![DER do banco](DER.svg)
+
+O diagrama em texto abaixo renderiza no GitHub, VS Code (Mermaid) e Obsidian.
 
 ```mermaid
 erDiagram

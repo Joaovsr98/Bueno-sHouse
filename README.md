@@ -14,6 +14,33 @@ em tempo real).
 
 ---
 
+## Sistema no ar
+
+| | URL |
+|---|---|
+| **Aplicação (Angular, Vercel)** | https://bueno-s-house.vercel.app |
+| **API (Spring Boot, Render)** | https://bueno-s-house-api.onrender.com/api/health |
+| **Swagger** | https://bueno-s-house-api.onrender.com/swagger-ui.html |
+| **Banco** | MySQL 8 gerenciado (Aiven) |
+
+> O backend roda no plano gratuito do Render e "dorme" após ~15 min sem uso: o primeiro
+> acesso pode levar cerca de 1 minuto.
+
+**Logins de demonstração**
+
+| Perfil | E-mail | Senha |
+|---|---|---|
+| Administrador | `admin@email.com` | `senha123` |
+| Administrador, Gerente, Caixa, Garçom, Cozinha, Motoboy, Cliente | `admin@demo.local`, `gerente@demo.local`, `caixa@demo.local`, `garcom@demo.local`, `cozinha@demo.local`, `motoboy@demo.local`, `cliente@demo.local` | `admin123` |
+
+O cardápio (`/app/cardapio`) é público; clientes novos se cadastram em `/registrar`.
+
+**Arquitetura de produção:** `Angular (Vercel) → /api (rewrite da Vercel) → Spring Boot (Render, Docker) → MySQL (Aiven)`.
+Variáveis do backend no Render: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`,
+`SPRING_PROFILES_ACTIVE`, `CORS_ALLOWED_ORIGINS` (ver [render.yaml](render.yaml)). DER do banco: [docs/DER.md](docs/DER.md).
+
+---
+
 ## Destaques
 
 - **Multiperfil e multiunidade** — Administrador, Gerente, Caixa, Garçom, Cozinha, Motoboy e
@@ -174,9 +201,8 @@ Em ambiente de desenvolvimento, a carga inicial cria automaticamente um restaura
 unidade de exemplo, os perfis de acesso, usuários de demonstração (um por perfil), além de
 categorias, produtos, mesas e zonas de entrega.
 
-> As credenciais de demonstração existem **apenas no ambiente de desenvolvimento** e não são
-> documentadas neste README. Consulte a configuração local de desenvolvimento para
-> inicializá-las.
+> As credenciais de demonstração (tabela em **Sistema no ar**) existem apenas com o perfil
+> `dev`. Em produção real use `SPRING_PROFILES_ACTIVE=prod` e o `BOOTSTRAP_ADMIN_*` (ver [docs/DEPLOY.md](docs/DEPLOY.md)).
 
 ---
 
@@ -193,4 +219,4 @@ Projeto de portfólio. Uso e distribuição sob consulta ao autor.
   no header `X-Total-Count`. Sem `page`, devolve a lista completa (comportamento anterior).
 - **Usuários internos (só ADMINISTRADOR):** `GET/POST /api/users`, `PATCH /api/users/{id}`
   (troca de perfil, ativar/desativar, redefinir senha). Perfil `CLIENTE` só via cadastro público.
-- **Login de demonstração (dev):** `admin@demo.local` / `admin123` (seed `V900`; nunca usar em produção).
+- **Login de demonstração (dev):** `admin@email.com` / `senha123` ou `admin@demo.local` / `admin123` (nunca usar em produção).
