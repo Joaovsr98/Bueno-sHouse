@@ -41,6 +41,23 @@ Variáveis do backend no Render: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB
 
 ---
 
+## Escopo: guia da disciplina × extensões
+
+| Obrigatório (guia Comanda Digital) | Extensões deste projeto |
+|---|---|
+| Cardápio público, carrinho, cadastro, checkout, acompanhamento e histórico do cliente | Salão: mesas, atendimentos e comandas |
+| CRUD de cardápio, ficha técnica, custo e food cost | Caixa: abertura, fechamento, sangria e suprimento |
+| Pedidos e cozinha (RECEBIDO → CONFIRMADO → EM_PREPARO → PRONTO → SAIU_ENTREGA → FINALIZADO) | Delivery com entregador e código de confirmação |
+| Baixa de estoque na confirmação e estorno no cancelamento | Multiunidade |
+| Fornecedores, cotação e compras | Perfis extras: Caixa, Garçom e Motoboy |
+| Controle de estoque e dashboard | Notificações internas e painel da cozinha em tempo real |
+| Login JWT e RBAC (Admin, Gerente, Cozinha e Cliente) | |
+
+No código, o status `CONFIRMADO` do guia corresponde a `ENVIADO_PARA_COZINHA` (exibido como
+"Confirmado") e o perfil `COZINHEIRO` corresponde a `COZINHA`.
+
+---
+
 ## Destaques
 
 - **Multiperfil e multiunidade** — Administrador, Gerente, Caixa, Garçom, Cozinha, Motoboy e
@@ -53,11 +70,14 @@ Variáveis do backend no Render: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB
   entregador com aceite concorrente seguro (optimistic locking) e confirmação por código.
 - **Financeiro** — pagamentos, saldo de pedido, abertura/fechamento de caixa, sangria,
   suprimento e conferência; a comanda não fecha com saldo devedor.
-- **Estoque** — ingredientes, fichas técnicas e **baixa automática de insumos** ao concluir
-  cada item na cozinha.
-- **Relatórios** — faturamento diário, ticket médio, produtos mais vendidos e estoque baixo.
+- **Estoque** — ingredientes, fichas técnicas e **baixa automática de insumos ao confirmar
+  o pedido** (atualização atômica, sem saldo negativo), com estorno no cancelamento e quando
+  a cozinha marca um item como indisponível.
+- **Relatórios** — vendas diárias (30 dias) e mensais (12 meses), ticket médio, produtos mais
+  vendidos, food cost médio e estoque baixo.
 - **Jornada do cliente** — cardápio digital, carrinho, checkout com endereço e acompanhamento
-  do pedido em uma timeline (recebido → em preparo → pronto → a caminho → entregue).
+  do pedido em uma timeline (recebido → confirmado → em preparo → pronto → saiu para entrega →
+  entregue).
 - **Segurança por padrão** — senhas com BCrypt, sessão stateless via JWT, bloqueio de conta
   após tentativas incorretas, CORS configurável e preço sempre congelado a partir do catálogo
   (nunca aceito do frontend).
@@ -142,16 +162,21 @@ cd frontend-angular && npm install && npm start
 
 ## Testes
 
-Os testes de integração usam Testcontainers e sobem um MySQL descartável automaticamente
-(basta ter o Docker disponível):
+Os testes de integração (`*IT`) usam Testcontainers e sobem um MySQL descartável
+automaticamente (basta ter o Docker disponível). Eles rodam na fase `verify` (Failsafe):
 
 ```bash
 cd backend
-mvn test
+mvn verify
 ```
 
-Isso valida, contra um MySQL real, que todas as migrations Flyway e os principais fluxos de
-negócio funcionam de ponta a ponta.
+Isso valida, contra um MySQL real e com `ddl-auto=validate`, que todas as migrations Flyway
+batem com as entidades e que os fluxos principais funcionam de ponta a ponta: login, catálogo,
+salão, pedido → cozinha, pagamento → caixa, delivery completo, baixa e estorno de estoque,
+estoque insuficiente (422) e autorização por perfil (401/403/404).
+
+O **GitHub Actions** ([.github/workflows/backend-tests.yml](.github/workflows/backend-tests.yml))
+roda a suíte a cada push que mexe no backend.
 
 ---
 

@@ -5,10 +5,10 @@ Pré-requisitos: Docker Desktop (ou JDK 21 + Maven + Node 20 + MySQL 8).
 ## 1. Compilar e rodar testes automatizados
 ```bash
 cd backend && mvn -Dmaven.test.skip=true compile   # só compila
-mvn test                                           # precisa de Docker (Testcontainers)
+mvn verify                                         # testes de integracao, precisa de Docker (Testcontainers)
 cd ../frontend-angular && npm install && npm run build
 ```
-Se algo falhar aqui, é o primeiro item a corrigir (nada disso foi compilado ainda).
+A mesma suíte roda no GitHub Actions a cada push do backend.
 
 ## 2. Subir tudo
 ```bash
@@ -38,4 +38,4 @@ H="Authorization: Bearer $TOKEN"
 | 7 | Abrir `/swagger-ui.html` | documentação carrega |
 
 ## 4. Telas Angular a percorrer
-`/cardapio` (sem login) → `/cadastro` → login → carrinho/pedidos; como admin: `/usuarios`, `/fornecedores`, `/fichas-tecnicas`, `/dashboard`.
+`/` (escolha cliente × restaurante) → `/app/cardapio` (sem login) → `/registrar` → login → `/app/carrinho` e `/app/pedidos`; como admin (`admin@email.com` / `senha123`): `/pedidos`, `/cozinha`, `/estoque`, `/fichas-tecnicas`, `/fornecedores`, `/dashboard`, `/usuarios`.

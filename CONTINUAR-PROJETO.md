@@ -1,5 +1,9 @@
 # Continuar o Projeto — Guia de Retomada
 
+> **Documento histórico.** Registra as decisões tomadas ao longo do desenvolvimento (inclusive a
+> fase em React, depois migrada para Angular). O estado atual do sistema está no
+> [README.md](README.md) e a última auditoria técnica em [docs/AUDITORIA-TECNICA.md](docs/AUDITORIA-TECNICA.md).
+
 > Leia este arquivo antes de pedir para o Claude continuar o desenvolvimento em outra
 > máquina ou outra conversa. Ele resume exatamente onde o projeto parou.
 

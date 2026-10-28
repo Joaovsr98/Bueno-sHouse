@@ -1,5 +1,8 @@
 # DER (gerado das migrations V1–V15)
 
+> Depois da geração vieram V16 (perfis de acesso), V17 (`inventory_items.active`) e V18 (índice
+> único em `stock_movements`); nenhuma delas cria tabela ou relacionamento novo.
+
 43 tabelas, 71 chaves estrangeiras.
 
 **Imagem:** [DER.svg](DER.svg) (gerada a partir do Mermaid abaixo).
