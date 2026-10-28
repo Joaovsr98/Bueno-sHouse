@@ -56,7 +56,7 @@ export class OrderPayment {
           );
           cashRegisterId = reg.id;
         } catch {
-          this.errored.emit('Nenhum caixa aberto — abra o caixa antes de receber em dinheiro.');
+          this.errored.emit('Nenhum caixa aberto. Abra o caixa antes de receber em dinheiro.');
           this.saving.set(false);
           return;
         }

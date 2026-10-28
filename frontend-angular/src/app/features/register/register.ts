@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -8,6 +8,8 @@ import { CustomerResponse, DeliveryZoneResponse, LoginResponse, UnitResponse } f
 import { defaultRouteForRole } from '../../core/routing';
 import { currency } from '../../core/format';
 import { Logo } from '../../shared/logo';
+import { Icon } from '../../shared/icon';
+import { groupZones } from '../../core/zones';
 
 /**
  * Cadastro publico de Cliente (RF-004): dados pessoais + endereco de entrega.
@@ -16,7 +18,7 @@ import { Logo } from '../../shared/logo';
  */
 @Component({
   selector: 'app-register',
-  imports: [FormsModule, RouterLink, Logo],
+  imports: [FormsModule, RouterLink, Logo, Icon],
   templateUrl: './register.html',
 })
 export class Register {
@@ -32,8 +34,15 @@ export class Register {
   email = '';
   password = '';
   phone = '';
-  addr = { street: '', number: '', complement: '', neighborhood: '', city: '', state: '', zipCode: '' };
+  addr = { street: '', number: '', complement: '', neighborhood: '', city: 'São Paulo', state: 'SP', zipCode: '' };
   zones = signal<DeliveryZoneResponse[]>([]);
+  readonly zoneGroups = computed(() => groupZones(this.zones()));
+  readonly zoneCount = computed(() => this.zones().length);
+
+  /** Zona do bairro escolhido (o select usa ngModel simples, entao lemos o valor atual). */
+  selectedZone(): DeliveryZoneResponse | undefined {
+    return this.zones().find((z) => z.neighborhood === this.addr.neighborhood);
+  }
   error = signal<string | null>(null);
   loading = signal(false);
 

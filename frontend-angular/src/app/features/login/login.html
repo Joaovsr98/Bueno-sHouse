@@ -13,8 +13,8 @@
         Do pedido<br />ao lucro, tudo<br /><span class="text-ember">sob controle.</span>
       </h1>
       <p class="mt-6 text-neutral-400 leading-relaxed max-w-md reveal reveal-3">
-        Cardápio digital, pedidos, cozinha, ficha técnica com food cost e estoque com baixa automática —
-        do primeiro clique do cliente ao dashboard do dono.
+        Cardápio digital, pedidos, cozinha, ficha técnica com food cost e estoque com baixa automática.
+        Tudo conectado, do primeiro clique do cliente ao dashboard do dono.
       </p>
     </div>
 
@@ -58,7 +58,7 @@
       <div class="space-y-3">
         <p class="eyebrow-plain text-[0.62rem] flex items-center gap-2">
           <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
-          Acesso rápido · demonstração
+          Acesso rápido · equipe e cliente (demonstração)
         </p>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
           @for (p of quickAccess; track p.email) {
@@ -73,6 +73,21 @@
             </button>
           }
         </div>
+        <button
+          type="button"
+          [disabled]="loading()"
+          (click)="quickLogin('cliente@demo.local')"
+          class="w-full rounded-xl py-3 px-4 text-sm flex items-center justify-between gap-3 border border-brand-500/40 bg-brand-500/[0.08] hover:bg-brand-500/15 hover:border-brand-500/70 transition disabled:opacity-50"
+        >
+          <span class="flex items-center gap-3">
+            <span class="text-brand-400"><app-icon name="cart" [size]="18" /></span>
+            <span class="text-left">
+              <span class="block text-neutral-100 font-medium">Entrar como cliente</span>
+              <span class="block text-xs text-neutral-500">Cardápio, carrinho e acompanhamento do pedido</span>
+            </span>
+          </span>
+          <span class="text-brand-400"><app-icon name="arrow" [size]="16" /></span>
+        </button>
       </div>
 
       <div class="flex items-center justify-between text-sm border-t border-white/10 pt-5">

@@ -51,7 +51,7 @@
           [class]="selectedAddressId() === a.id ? 'border-brand-500/60 bg-brand-500/10' : 'border-white/10 hover:bg-white/5'"
         >
           <span class="font-medium">{{ a.label || 'Endereço' }}</span>
-          <span class="text-neutral-400"> — {{ a.street }}, {{ a.number }} · {{ a.neighborhood }}</span>
+          <span class="text-neutral-400"> · {{ a.street }}, {{ a.number }} · {{ a.neighborhood }}</span>
         </button>
       }
     </div>
@@ -65,9 +65,13 @@
         <input name="number" [(ngModel)]="addr.number" placeholder="Número" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
         <input name="complement" [(ngModel)]="addr.complement" placeholder="Complemento" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
         <select name="neighborhood" [(ngModel)]="addr.neighborhood" class="col-span-2 rounded-lg bg-ink-850 border border-white/10 px-3 py-2">
-          <option value="" disabled>Bairro (só atendemos estes)</option>
-          @for (z of zones(); track z.id) {
-            <option [value]="z.neighborhood">{{ z.neighborhood }} — entrega {{ currency(z.fee) }}</option>
+          <option value="" disabled>Selecione seu bairro</option>
+          @for (g of zoneGroups(); track g.region) {
+            <optgroup [label]="g.region">
+              @for (z of g.zones; track z.id) {
+                <option [value]="z.neighborhood">{{ z.neighborhood }} · entrega {{ currency(z.fee) }} · ~{{ z.estimatedMinutes }} min</option>
+              }
+            </optgroup>
           }
         </select>
         <input name="city" [(ngModel)]="addr.city" placeholder="Cidade" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />

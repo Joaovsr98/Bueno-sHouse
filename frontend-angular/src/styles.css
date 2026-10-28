@@ -227,13 +227,12 @@ body {
 
 h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.02em; }
 
-/* Rotulo tecnico com traço de destaque (padrao THV/Mondel): "OPERACAO · HOJE" */
+/* Rotulo tecnico em caixa alta (padrao THV/Mondel): "OPERACAO · HOJE" */
 .eyebrow {
-  display: inline-flex; align-items: center; gap: 0.75rem;
+  display: inline-flex; align-items: center;
   font-family: var(--font-mono); font-size: 0.68rem; font-weight: 500;
   letter-spacing: 0.22em; text-transform: uppercase; color: #ff8c3a;
 }
-.eyebrow::before { content: ""; width: 1.75rem; height: 1px; background: #ff6a1a; }
 .eyebrow-plain {
   font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.24em;
   text-transform: uppercase; color: #8b90a0;

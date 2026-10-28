@@ -24,7 +24,7 @@
   } @else {
     <div class="glass rounded-2xl p-6 space-y-4">
       <div class="flex items-center justify-between">
-        <h2 class="text-sm font-semibold">Entrega #{{ active()!.id }} — Pedido #{{ active()!.orderId }}</h2>
+        <h2 class="text-sm font-semibold">Entrega #{{ active()!.id }} · Pedido #{{ active()!.orderId }}</h2>
         <span class="text-xs uppercase tracking-wide text-brand-300">{{ statusLabels[active()!.status] ?? active()!.status }}</span>
       </div>
 

@@ -68,7 +68,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
                 <tr>
                   <td>{{ s.name }}</td>
                   <td>{{ s.document }}</td>
-                  <td>{{ s.phone || '—' }}</td>
+                  <td>{{ s.phone || '-' }}</td>
                   <td class="num">
                     <button class="btn-ghost" (click)="openCatalog(s)">
                       {{ selected()?.id === s.id ? 'Aberto' : 'Abrir catálogo' }}

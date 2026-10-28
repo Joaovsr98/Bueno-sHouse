@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -12,6 +12,7 @@ import {
   UnitResponse,
 } from '../../core/models';
 import { currency } from '../../core/format';
+import { groupZones } from '../../core/zones';
 
 @Component({
   selector: 'app-customer-checkout',
@@ -34,7 +35,7 @@ export class CustomerCheckout {
   customerId = signal<number | null>(null);
   showAddressForm = signal(false);
   savingAddress = signal(false);
-  addr = { label: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', zipCode: '' };
+  addr = { label: '', street: '', number: '', complement: '', neighborhood: '', city: 'São Paulo', state: 'SP', zipCode: '' };
 
   /** RF-006: pagamento simulado - nenhuma cobranca real, a forma escolhida vai nas observacoes do pedido. */
   readonly paymentMethods = [
@@ -48,6 +49,7 @@ export class CustomerCheckout {
 
   /** Bairros atendidos: o backend so aceita pedido se o bairro bater com uma zona. */
   zones = signal<DeliveryZoneResponse[]>([]);
+  readonly zoneGroups = computed(() => groupZones(this.zones()));
 
   constructor() {
     this.loadAddresses();
@@ -107,7 +109,7 @@ export class CustomerCheckout {
       this.addresses.update((list) => [...list, created]);
       this.selectedAddressId.set(created.id);
       this.showAddressForm.set(false);
-      this.addr = { label: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', zipCode: '' };
+      this.addr = { label: '', street: '', number: '', complement: '', neighborhood: '', city: 'São Paulo', state: 'SP', zipCode: '' };
     } catch (e) {
       this.error.set(apiErrorMessage(e, 'Erro ao salvar o endereço'));
     } finally {

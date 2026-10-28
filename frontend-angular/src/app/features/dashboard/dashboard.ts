@@ -32,7 +32,7 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
           <p class="kpi-label mt-2">Faturamento no período</p>
         </div>
         <div class="border-t border-white/10 pt-4">
-          <p class="kpi-value">@if (avgTicket() != null) { <app-count-up [value]="avgTicket()!" [format]="money" /> } @else { — }</p>
+          <p class="kpi-value">@if (avgTicket() != null) { <app-count-up [value]="avgTicket()!" [format]="money" /> } @else { - }</p>
           <p class="kpi-label mt-2">Ticket médio</p>
         </div>
         <div class="border-t border-white/10 pt-4">

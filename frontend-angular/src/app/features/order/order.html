@@ -73,7 +73,7 @@
               </div>
               <ul class="text-xs text-neutral-400 space-y-0.5">
                 @for (item of order.items; track item.id) {
-                  <li>{{ item.quantity }}x {{ item.productName }} — {{ currency(item.subtotal) }}</li>
+                  <li>{{ item.quantity }}x {{ item.productName }} · {{ currency(item.subtotal) }}</li>
                 }
               </ul>
               <p class="text-sm font-semibold mt-2 mb-3 text-brand-300">{{ currency(order.total) }}</p>

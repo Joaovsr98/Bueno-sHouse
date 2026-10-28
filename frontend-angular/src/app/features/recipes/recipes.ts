@@ -137,11 +137,11 @@ export class Recipes {
   product = computed(() => this.products().find((p) => p.id === this.selectedId()) ?? null);
   costLabel = computed(() => {
     const c = this.recipe()?.costPerServing;
-    return c != null ? currency(c) : '—';
+    return c != null ? currency(c) : '-';
   });
   foodCostLabel = computed(() => {
     const f = this.recipe()?.foodCostPercent;
-    return f != null ? `${Number(f).toFixed(1).replace('.', ',')}%` : '—';
+    return f != null ? `${Number(f).toFixed(1).replace('.', ',')}%` : '-';
   });
 
   productId = this.fb.control('');

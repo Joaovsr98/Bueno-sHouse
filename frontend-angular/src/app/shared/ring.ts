@@ -39,6 +39,6 @@ export class Ring {
   });
   readonly label = computed(() => {
     const v = this.value();
-    return v == null ? '—' : `${Math.round(v)}%`;
+    return v == null ? '-' : `${Math.round(v)}%`;
   });
 }

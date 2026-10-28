@@ -1,107 +1,122 @@
-<div class="min-h-screen flex items-center justify-center p-6">
-  <div class="max-w-md w-full space-y-6 reveal">
-    <div class="flex flex-col items-center text-center gap-5">
-      <a routerLink="/app/cardapio"><app-logo [size]="48" /></a>
-      <div>
-        <p class="eyebrow">Nova conta</p>
-        <h1 class="mt-3 text-3xl font-bold">Peça em <span class="text-ember">poucos cliques</span></h1>
-      </div>
+<div class="min-h-screen grid lg:grid-cols-[1fr_1.1fr]">
+  <!-- Lado da marca: mesmo padrao do login -->
+  <section class="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden border-r border-white/10">
+    <div class="absolute -left-40 top-1/2 -translate-y-1/2 w-[38rem] h-[38rem] rounded-full border border-brand-500/15"></div>
+    <div class="absolute -left-24 top-1/2 -translate-y-1/2 w-[28rem] h-[28rem] rounded-full border border-brand-500/20"></div>
+
+    <a routerLink="/app/cardapio" class="relative reveal"><app-logo [size]="52" /></a>
+
+    <div class="relative max-w-lg">
+      <p class="eyebrow reveal reveal-1">Nova conta · Cliente</p>
+      <h1 class="mt-6 text-6xl font-bold leading-[0.95] uppercase reveal reveal-2">
+        Seu pedido,<br />do jeito<br /><span class="text-ember">que você gosta.</span>
+      </h1>
+      <ol class="mt-10 space-y-5 reveal reveal-3">
+        <li class="flex gap-4"><span class="font-mono text-xs text-brand-400 pt-1">01</span>
+          <div><p class="font-display font-bold uppercase">Crie sua conta</p><p class="text-sm text-neutral-400">Nome, contato e o endereço de entrega.</p></div></li>
+        <li class="flex gap-4"><span class="font-mono text-xs text-brand-400 pt-1">02</span>
+          <div><p class="font-display font-bold uppercase">Monte o carrinho</p><p class="text-sm text-neutral-400">Com observações em cada item.</p></div></li>
+        <li class="flex gap-4"><span class="font-mono text-xs text-brand-400 pt-1">03</span>
+          <div><p class="font-display font-bold uppercase">Acompanhe ao vivo</p><p class="text-sm text-neutral-400">Do preparo até a sua porta, com código de entrega.</p></div></li>
+      </ol>
     </div>
 
-    <form (ngSubmit)="submit()" class="glass rounded-2xl p-8 space-y-4">
-      <div class="space-y-1.5">
-        <label class="text-sm text-neutral-300">Nome completo</label>
-        <input
-          type="text"
-          name="fullName"
-          [(ngModel)]="fullName"
-          required
-          autocomplete="name"
-          class="w-full rounded-xl bg-black/30 border border-white/10 px-3.5 py-2.5 text-sm outline-none focus:border-brand-500/60 focus:bg-black/40 transition"
-        />
+    <p class="relative eyebrow-plain text-[0.62rem] reveal reveal-4">Entregas em {{ zoneCount() }} bairros de São Paulo</p>
+  </section>
+
+  <!-- Formulario -->
+  <section class="flex items-center justify-center p-6 sm:p-10">
+    <form (ngSubmit)="submit()" class="w-full max-w-lg space-y-6 reveal">
+      <div class="lg:hidden flex justify-center"><a routerLink="/app/cardapio"><app-logo [size]="48" /></a></div>
+
+      <div>
+        <p class="eyebrow">Cadastro</p>
+        <h2 class="mt-3 text-3xl font-bold">Criar conta de cliente</h2>
       </div>
 
-      <div class="space-y-1.5">
-        <label class="text-sm text-neutral-300">E-mail</label>
-        <input
-          type="email"
-          name="email"
-          [(ngModel)]="email"
-          required
-          autocomplete="username"
-          class="w-full rounded-xl bg-black/30 border border-white/10 px-3.5 py-2.5 text-sm outline-none focus:border-brand-500/60 focus:bg-black/40 transition"
-        />
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2 space-y-1.5">
+          <label class="field-label" for="fullName">Nome completo</label>
+          <input id="fullName" name="fullName" [(ngModel)]="fullName" required autocomplete="name" class="field py-3" />
+        </div>
+        <div class="space-y-1.5">
+          <label class="field-label" for="email">E-mail</label>
+          <input id="email" type="email" name="email" [(ngModel)]="email" required autocomplete="username" class="field py-3" />
+        </div>
+        <div class="space-y-1.5">
+          <label class="field-label" for="phone">Telefone</label>
+          <input id="phone" type="tel" name="phone" [(ngModel)]="phone" required autocomplete="tel" placeholder="(11) 99999-8888" class="field py-3" />
+        </div>
+        <div class="sm:col-span-2 space-y-1.5">
+          <label class="field-label" for="password">Senha</label>
+          <input id="password" type="password" name="password" [(ngModel)]="password" required minlength="6" autocomplete="new-password"
+            placeholder="Mínimo 6 caracteres" class="field py-3" />
+        </div>
       </div>
 
-      <div class="space-y-1.5">
-        <label class="text-sm text-neutral-300">Telefone</label>
-        <input
-          type="tel"
-          name="phone"
-          [(ngModel)]="phone"
-          required
-          autocomplete="tel"
-          placeholder="11999998888"
-          class="w-full rounded-xl bg-black/30 border border-white/10 px-3.5 py-2.5 text-sm outline-none focus:border-brand-500/60 focus:bg-black/40 transition"
-        />
-      </div>
-
-      <div class="space-y-1.5">
-        <label class="text-sm text-neutral-300">Senha</label>
-        <input
-          type="password"
-          name="password"
-          [(ngModel)]="password"
-          required
-          minlength="6"
-          autocomplete="new-password"
-          class="w-full rounded-xl bg-black/30 border border-white/10 px-3.5 py-2.5 text-sm outline-none focus:border-brand-500/60 focus:bg-black/40 transition"
-        />
-      </div>
-
-      <div class="pt-2 border-t border-white/10 space-y-2">
-        <p class="text-sm text-neutral-300">Endereço de entrega</p>
-        <div class="grid grid-cols-3 gap-2 text-sm">
-          <input name="street" [(ngModel)]="addr.street" required placeholder="Rua" autocomplete="address-line1"
-            class="col-span-2 rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60" />
-          <input name="number" [(ngModel)]="addr.number" required placeholder="Nº"
-            class="rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60" />
-          <input name="complement" [(ngModel)]="addr.complement" placeholder="Complemento (opcional)" autocomplete="address-line2"
-            class="col-span-3 rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60" />
-          <select name="neighborhood" [(ngModel)]="addr.neighborhood" required
-            class="col-span-3 rounded-xl bg-ink-850 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60">
-            <option value="" disabled>Bairro (só atendemos estes)</option>
-            @for (z of zones(); track z.id) {
-              <option [value]="z.neighborhood">{{ z.neighborhood }} — entrega {{ currency(z.fee) }}</option>
+      <div class="space-y-4 border-t border-white/10 pt-5">
+        <p class="section-title !mb-0">Endereço de entrega</p>
+        <div class="grid grid-cols-6 gap-3">
+          <div class="col-span-6 space-y-1.5">
+            <label class="field-label" for="neighborhood">Bairro</label>
+            <select id="neighborhood" name="neighborhood" [(ngModel)]="addr.neighborhood" required class="field py-3">
+              <option value="" disabled>Selecione seu bairro</option>
+              @for (g of zoneGroups(); track g.region) {
+                <optgroup [label]="g.region">
+                  @for (z of g.zones; track z.id) {
+                    <option [value]="z.neighborhood">{{ z.neighborhood }} · entrega {{ currency(z.fee) }} · ~{{ z.estimatedMinutes }} min</option>
+                  }
+                </optgroup>
+              }
+            </select>
+            @if (selectedZone(); as z) {
+              <p class="text-xs text-neutral-400">Entrega em ~{{ z.estimatedMinutes }} min · taxa {{ currency(z.fee) }} · pedido mínimo {{ currency(z.minimumOrderValue) }}</p>
+            } @else {
+              <p class="text-xs text-neutral-500">Atendemos {{ zoneCount() }} bairros de São Paulo, com taxa conforme a distância.</p>
             }
-          </select>
-          <input name="city" [(ngModel)]="addr.city" required placeholder="Cidade" autocomplete="address-level2"
-            class="col-span-2 rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60" />
-          <input name="state" [(ngModel)]="addr.state" required placeholder="UF" maxlength="2" autocomplete="address-level1"
-            class="rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60 uppercase" />
-          <input name="zipCode" [(ngModel)]="addr.zipCode" required placeholder="CEP" autocomplete="postal-code"
-            class="col-span-3 rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60" />
+          </div>
+          <div class="col-span-6 sm:col-span-4 space-y-1.5">
+            <label class="field-label" for="street">Rua</label>
+            <input id="street" name="street" [(ngModel)]="addr.street" required autocomplete="address-line1" class="field py-3" />
+          </div>
+          <div class="col-span-2 space-y-1.5">
+            <label class="field-label" for="number">Número</label>
+            <input id="number" name="number" [(ngModel)]="addr.number" required class="field py-3" />
+          </div>
+          <div class="col-span-4 sm:col-span-6 space-y-1.5">
+            <label class="field-label" for="complement">Complemento</label>
+            <input id="complement" name="complement" [(ngModel)]="addr.complement" placeholder="Apto, bloco (opcional)" autocomplete="address-line2" class="field py-3" />
+          </div>
+          <div class="col-span-6 sm:col-span-2 space-y-1.5">
+            <label class="field-label" for="zipCode">CEP</label>
+            <input id="zipCode" name="zipCode" [(ngModel)]="addr.zipCode" required placeholder="00000-000" autocomplete="postal-code" class="field py-3" />
+          </div>
+          <div class="col-span-4 sm:col-span-3 space-y-1.5">
+            <label class="field-label" for="city">Cidade</label>
+            <input id="city" name="city" [(ngModel)]="addr.city" required autocomplete="address-level2" class="field py-3" />
+          </div>
+          <div class="col-span-2 sm:col-span-1 space-y-1.5">
+            <label class="field-label" for="state">UF</label>
+            <input id="state" name="state" [(ngModel)]="addr.state" required maxlength="2" autocomplete="address-level1" class="field py-3 uppercase" />
+          </div>
         </div>
       </div>
 
       @if (error()) {
-        <div class="rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300">
-          {{ error() }}
-        </div>
+        <div class="alert-error">{{ error() }}</div>
       }
 
-      <button
-        type="submit"
-        [disabled]="loading()"
-        class="w-full btn-brand rounded-xl py-2.5 text-sm"
-      >
+      <button type="submit" [disabled]="loading()" class="w-full btn-brand rounded-xl py-3 text-sm inline-flex items-center justify-center gap-2">
         {{ loading() ? 'Criando conta...' : 'Criar conta' }}
+        @if (!loading()) { <app-icon name="arrow" [size]="16" /> }
       </button>
-    </form>
 
-    <p class="text-center text-sm text-neutral-400">
-      Já tem conta?
-      <a routerLink="/login" [queryParams]="returnUrl ? { returnUrl: returnUrl } : {}" class="text-brand-400 hover:underline">Entrar</a>
-    </p>
-  </div>
+      <div class="flex items-center justify-between text-sm border-t border-white/10 pt-5">
+        <span class="text-neutral-400">Já tem conta?</span>
+        <a routerLink="/login" [queryParams]="returnUrl ? { returnUrl: returnUrl } : {}" class="text-brand-400 hover:text-brand-300 inline-flex items-center gap-1.5">
+          Entrar <app-icon name="arrow" [size]="14" />
+        </a>
+      </div>
+    </form>
+  </section>
 </div>
