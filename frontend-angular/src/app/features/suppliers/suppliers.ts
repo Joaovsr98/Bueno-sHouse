@@ -1,10 +1,13 @@
-import { Component, inject, signal, effect, untracked } from '@angular/core';
+import { Component, computed, inject, signal, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { currency } from '../../core/format';
+import { ChartComponent } from '../dashboard/chart';
 
-interface Supplier { id: number; name: string; phone: string | null; document: string; }
+interface Supplier { id: number; name: string; phone: string | null; document: string; active: boolean; }
+/** RF-026: preco pago por ingrediente em cada compra recebida. */
+interface PricePoint { inventoryItemId: number; itemName: string; date: string; unitPrice: number; }
 interface SupplierProduct { id: number; inventoryItemName: string; price: number; unitOfMeasure: string; }
 interface StockItem { id: number; name: string; unitOfMeasure: string; }
 interface Quote { supplierId: number; supplierName: string; price: number; unitOfMeasure: string; }
@@ -26,7 +29,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 
 @Component({
   selector: 'app-suppliers',
-  imports: [FormsModule],
+  imports: [FormsModule, ChartComponent],
   template: `
     <div class="page">
       <div class="mb-6">
@@ -40,8 +43,11 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 
       <!-- Fornecedores -->
       <section class="glass rounded-2xl p-5 mb-6">
-        <h2 class="section-title">Novo fornecedor</h2>
-        <form (ngSubmit)="createSupplier()" class="grid grid-cols-1 md:grid-cols-[1fr_12rem_14rem_auto] gap-3 items-end">
+        <div class="flex items-center justify-between">
+          <h2 class="section-title">{{ editingId() ? 'Editar fornecedor' : 'Novo fornecedor' }}</h2>
+          @if (editingId()) { <button class="btn-ghost" (click)="cancelEdit()">Cancelar edição</button> }
+        </div>
+        <form (ngSubmit)="saveSupplier()" class="grid grid-cols-1 md:grid-cols-[1fr_12rem_14rem_auto] gap-3 items-end">
           <div>
             <label class="field-label" for="s-name">Nome</label>
             <input id="s-name" class="field" name="sname" [(ngModel)]="sName" placeholder="Razão social ou nome fantasia" required />
@@ -54,7 +60,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
             <label class="field-label" for="s-doc">CNPJ</label>
             <input id="s-doc" class="field" name="sdoc" [(ngModel)]="sDoc" placeholder="Somente números" required />
           </div>
-          <button type="submit" class="btn-brand rounded-xl px-4 py-2 text-sm">Criar</button>
+          <button type="submit" class="btn-brand rounded-xl px-4 py-2 text-sm">{{ editingId() ? 'Salvar' : 'Criar' }}</button>
         </form>
       </section>
 
@@ -62,26 +68,60 @@ const STATUS: Record<string, { label: string; cls: string }> = {
         <div class="px-5 pt-5"><h2 class="section-title">Fornecedores</h2></div>
         <div class="table-wrap">
           <table class="data-table">
-            <thead><tr><th>Nome</th><th>CNPJ</th><th>Telefone</th><th class="num">Catálogo</th></tr></thead>
+            <thead><tr><th>Nome</th><th>CNPJ</th><th>Telefone</th><th>Situação</th><th class="num">Ações</th></tr></thead>
             <tbody>
               @for (s of suppliers(); track s.id) {
-                <tr>
+                <tr [class.opacity-60]="!s.active">
                   <td>{{ s.name }}</td>
                   <td>{{ s.document }}</td>
                   <td>{{ s.phone || '-' }}</td>
+                  <td><span class="badge" [class]="s.active ? 'badge-green' : 'badge-gray'">{{ s.active ? 'Ativo' : 'Inativo' }}</span></td>
                   <td class="num">
-                    <button class="btn-ghost" (click)="openCatalog(s)">
-                      {{ selected()?.id === s.id ? 'Aberto' : 'Abrir catálogo' }}
-                    </button>
+                    <div class="inline-flex flex-wrap justify-end gap-2">
+                      <button class="btn-ghost" (click)="openCatalog(s)">{{ selected()?.id === s.id ? 'Catálogo aberto' : 'Catálogo' }}</button>
+                      <button class="btn-ghost" (click)="openHistory(s)">Preços</button>
+                      <button class="btn-ghost" (click)="startEdit(s)">Editar</button>
+                      <button class="btn-ghost" [class.btn-danger]="s.active" (click)="toggleActive(s)">
+                        {{ s.active ? 'Desativar' : 'Reativar' }}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               } @empty {
-                <tr><td colspan="4" class="empty">Nenhum fornecedor cadastrado.</td></tr>
+                <tr><td colspan="5" class="empty">Nenhum fornecedor cadastrado.</td></tr>
               }
             </tbody>
           </table>
         </div>
       </section>
+
+      @if (historyOf(); as hs) {
+        <section class="glass rounded-2xl p-5 mb-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <h2 class="section-title !mb-0">Histórico de preços de {{ hs.name }}</h2>
+            <div class="flex items-center gap-2">
+              <select class="field !w-56" [ngModel]="historyItem()" (ngModelChange)="historyItem.set($event)" name="historyItem" aria-label="Ingrediente do histórico">
+                @for (it of historyItems(); track it.id) { <option [ngValue]="it.id">{{ it.name }}</option> }
+              </select>
+              <button class="btn-ghost" (click)="historyOf.set(null)">Fechar</button>
+            </div>
+          </div>
+          @if (historyItems().length === 0) {
+            <p class="text-sm text-neutral-500">Nenhuma compra recebida deste fornecedor ainda: o histórico nasce do preço pago em cada recebimento.</p>
+          } @else {
+            @let pts = historyPoints();
+            <app-chart type="line" [labels]="pts.labels" [values]="pts.values" label="Preço pago"
+              [formatValue]="currency" [beginAtZero]="false" />
+            <div class="mt-3 flex flex-wrap gap-6 text-sm">
+              <span class="text-neutral-400">Primeira compra: <strong class="text-neutral-100">{{ currency(pts.values[0]) }}</strong></span>
+              <span class="text-neutral-400">Última compra: <strong class="text-neutral-100">{{ currency(pts.values[pts.values.length - 1]) }}</strong></span>
+              <span class="text-neutral-400">Variação:
+                <strong [class]="pts.change > 0 ? 'text-red-400' : 'text-green-400'">{{ pts.change > 0 ? '+' : '' }}{{ pts.change.toFixed(1) }}%</strong>
+              </span>
+            </div>
+          }
+        </section>
+      }
 
       @if (selected(); as sel) {
         <section class="glass rounded-2xl p-5 mb-6">
@@ -157,7 +197,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
         <label class="field-label" for="p-sup">Fornecedor</label>
         <select id="p-sup" class="field md:max-w-md mb-4" [(ngModel)]="pSupplier">
           <option [ngValue]="null">Escolha um fornecedor…</option>
-          @for (s of suppliers(); track s.id) { <option [ngValue]="s.id">{{ s.name }}</option> }
+          @for (s of activeSuppliers(); track s.id) { <option [ngValue]="s.id">{{ s.name }}</option> }
         </select>
 
         <div class="space-y-2">
@@ -236,6 +276,32 @@ export class Suppliers {
   selected = signal<Supplier | null>(null);
   error = signal<string | null>(null);
 
+  /** Compras novas so com fornecedor ativo (o backend tambem recusa). */
+  readonly activeSuppliers = computed(() => this.suppliers().filter((s) => s.active));
+
+  /** Fornecedor em edicao no formulario de cima (null = criando um novo). */
+  editingId = signal<number | null>(null);
+
+  historyOf = signal<Supplier | null>(null);
+  history = signal<PricePoint[]>([]);
+  historyItem = signal<number | null>(null);
+  readonly historyItems = computed(() => {
+    const seen = new Map<number, string>();
+    this.history().forEach((p) => seen.set(p.inventoryItemId, p.itemName));
+    return [...seen].map(([id, name]) => ({ id, name }));
+  });
+  readonly historyPoints = computed(() => {
+    const pts = this.history().filter((p) => p.inventoryItemId === this.historyItem());
+    const values = pts.map((p) => Number(p.unitPrice));
+    const first = values[0] ?? 0;
+    const last = values[values.length - 1] ?? 0;
+    return {
+      labels: pts.map((p) => p.date.split('-').reverse().join('/')),
+      values,
+      change: first ? ((last - first) / first) * 100 : 0,
+    };
+  });
+
   sName = '';
   sPhone = '';
   sDoc = '';
@@ -288,17 +354,53 @@ export class Suppliers {
     });
   }
 
-  createSupplier(): void {
+  saveSupplier(): void {
     this.error.set(null);
+    const id = this.editingId();
     const body = { unitId: this.auth.unitId(), name: this.sName, phone: this.sPhone, document: this.sDoc };
-    this.api.post('/suppliers', body).subscribe({
+    const req = id ? this.api.put(`/suppliers/${id}`, body) : this.api.post('/suppliers', body);
+    req.subscribe({
       next: () => {
-        this.sName = '';
-        this.sPhone = '';
-        this.sDoc = '';
+        this.cancelEdit();
         this.loadSuppliers();
       },
-      error: (e) => this.fail(e, 'Erro ao criar fornecedor'),
+      error: (e) => this.fail(e, id ? 'Erro ao salvar fornecedor' : 'Erro ao criar fornecedor'),
+    });
+  }
+
+  startEdit(s: Supplier): void {
+    this.editingId.set(s.id);
+    this.sName = s.name;
+    this.sPhone = s.phone ?? '';
+    this.sDoc = s.document;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  cancelEdit(): void {
+    this.editingId.set(null);
+    this.sName = '';
+    this.sPhone = '';
+    this.sDoc = '';
+  }
+
+  toggleActive(s: Supplier): void {
+    if (s.active && !confirm(`Desativar "${s.name}"? Ele sai das novas compras, mas o histórico continua.`)) return;
+    this.error.set(null);
+    this.api.patch(`/suppliers/${s.id}/active`, { active: !s.active }).subscribe({
+      next: () => this.loadSuppliers(),
+      error: (e) => this.fail(e, 'Erro ao alterar a situação do fornecedor'),
+    });
+  }
+
+  openHistory(s: Supplier): void {
+    this.historyOf.set(s);
+    this.history.set([]);
+    this.api.get<PricePoint[]>(`/suppliers/${s.id}/price-history`).subscribe({
+      next: (h) => {
+        this.history.set(h);
+        this.historyItem.set(this.historyItems()[0]?.id ?? null);
+      },
+      error: (e) => this.fail(e, 'Erro ao carregar histórico de preços'),
     });
   }
 

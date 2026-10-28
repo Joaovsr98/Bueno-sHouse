@@ -11,6 +11,7 @@ interface ProductForm {
   kitchenSectorId: number | null;
   name: string;
   description: string;
+  preparationMethod: string;
   basePrice: string;
   imageUrl: string;
   prepTimeMinutes: string;
@@ -37,6 +38,8 @@ export class Catalog {
   error = signal<string | null>(null);
 
   newCategoryName = '';
+  editingCategoryId = signal<number | null>(null);
+  editingCategoryName = '';
   productForm = signal<ProductForm | null>(null);
   savingProduct = signal(false);
 
@@ -102,6 +105,24 @@ export class Catalog {
     });
   }
 
+  startEditCategory(cat: CategoryResponse): void {
+    this.editingCategoryId.set(cat.id);
+    this.editingCategoryName = cat.name;
+  }
+
+  saveCategory(cat: CategoryResponse): void {
+    const name = this.editingCategoryName.trim();
+    if (!name) return;
+    this.api.put<CategoryResponse>(`/categories/${cat.id}`, { unitId: this.unitId(), name, displayOrder: cat.displayOrder }).subscribe({
+      next: () => {
+        this.editingCategoryId.set(null);
+        this.loadCategories();
+        this.loadProducts();
+      },
+      error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao renomear categoria')),
+    });
+  }
+
   deleteCategory(cat: CategoryResponse): void {
     if (!confirm(`Excluir a categoria "${cat.name}"?`)) return;
     this.api.delete<void>(`/categories/${cat.id}`).subscribe({
@@ -121,6 +142,7 @@ export class Catalog {
       kitchenSectorId: this.sectors()[0]?.id ?? null,
       name: '',
       description: '',
+      preparationMethod: '',
       basePrice: '',
       imageUrl: '',
       prepTimeMinutes: '',
@@ -135,6 +157,7 @@ export class Catalog {
       kitchenSectorId: p.kitchenSectorId,
       name: p.name,
       description: p.description ?? '',
+      preparationMethod: p.preparationMethod ?? '',
       basePrice: String(p.basePrice),
       imageUrl: p.imageUrl ?? '',
       prepTimeMinutes: p.prepTimeMinutes != null ? String(p.prepTimeMinutes) : '',
@@ -155,6 +178,7 @@ export class Catalog {
       kitchenSectorId: form.kitchenSectorId,
       name: form.name,
       description: form.description || null,
+      preparationMethod: form.preparationMethod.trim() || null,
       basePrice: Number(form.basePrice),
       imageUrl: form.imageUrl.trim() || null,
       prepTimeMinutes: form.prepTimeMinutes ? Number(form.prepTimeMinutes) : null,

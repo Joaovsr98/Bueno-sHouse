@@ -8,6 +8,7 @@ import { Ring } from '../../shared/ring';
 
 interface DailyRevenue { day: string; revenue: number; }
 interface MonthlyRevenue { month: string; revenue: number; orders: number; }
+interface TodaySummary { date: string; revenue: number; orders: number; completedOrders: number; inProgress: number; averageTicket: number; }
 
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 interface TopProduct { productName: string; totalSold: number; }
@@ -21,26 +22,27 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
       <header class="mb-8 reveal">
         <p class="eyebrow">Visão geral</p>
         <h1 class="page-title mt-3">Dashboard</h1>
-        <p class="page-sub mt-2">Faturamento, ticket médio, food cost e alertas de estoque.</p>
+        <p class="page-sub mt-2">O dia em tempo real e a evolução das vendas, food cost e alertas de estoque.</p>
       </header>
 
       @if (error()) {
         <div class="alert-error mb-4"><span>{{ error() }}</span><button (click)="error.set(null)" class="text-red-400">×</button></div>
       }
 
-      <!-- Faixa de indicadores (numeros grandes + legenda mono) -->
-      <section class="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6 mb-8 reveal reveal-1">
+      <!-- RF-034: indicadores do dia (fuso de Sao Paulo) -->
+      <p class="eyebrow-plain text-[0.65rem] mb-3 reveal reveal-1">Hoje, {{ todayLabel() }}</p>
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6 mb-6 reveal reveal-1">
         <div class="border-t border-white/10 pt-4">
-          <p class="kpi-value text-ember"><app-count-up [value]="totalRevenue()" [format]="money" /></p>
-          <p class="kpi-label mt-2">Faturamento em 30 dias</p>
+          <p class="kpi-value text-ember"><app-count-up [value]="today()?.revenue ?? 0" [format]="money" /></p>
+          <p class="kpi-label mt-2">Faturamento de hoje</p>
         </div>
         <div class="border-t border-white/10 pt-4">
-          <p class="kpi-value">@if (avgTicket() != null) { <app-count-up [value]="avgTicket()!" [format]="money" /> } @else { - }</p>
-          <p class="kpi-label mt-2">Ticket médio</p>
+          <p class="kpi-value"><app-count-up [value]="today()?.orders ?? 0" /></p>
+          <p class="kpi-label mt-2">Pedidos de hoje ({{ today()?.inProgress ?? 0 }} em andamento)</p>
         </div>
         <div class="border-t border-white/10 pt-4">
-          <p class="kpi-value"><app-count-up [value]="orderCount()" /></p>
-          <p class="kpi-label mt-2">Pedidos</p>
+          <p class="kpi-value"><app-count-up [value]="today()?.averageTicket ?? 0" [format]="money" /></p>
+          <p class="kpi-label mt-2">Ticket médio de hoje</p>
         </div>
         <div class="border-t border-white/10 pt-4 flex items-center gap-4">
           <app-ring [value]="foodCost()" [size]="64" />
@@ -50,6 +52,22 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
               <span class="badge mt-2" [class]="foodCostClass()">{{ foodCostLevel() }}</span>
             }
           </div>
+        </div>
+      </section>
+
+      <!-- Periodo maior, para comparar com o dia -->
+      <section class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8 reveal reveal-2">
+        <div class="glass rounded-2xl px-5 py-4">
+          <p class="kpi-label">Faturamento nos últimos 30 dias</p>
+          <p class="mt-1 font-display text-xl font-bold tabular-nums">{{ money(totalRevenue()) }}</p>
+        </div>
+        <div class="glass rounded-2xl px-5 py-4">
+          <p class="kpi-label">Ticket médio desde o início</p>
+          <p class="mt-1 font-display text-xl font-bold tabular-nums">{{ avgTicket() != null ? money(avgTicket()!) : '-' }}</p>
+        </div>
+        <div class="glass rounded-2xl px-5 py-4">
+          <p class="kpi-label">Pedidos finalizados desde o início</p>
+          <p class="mt-1 font-display text-xl font-bold tabular-nums">{{ orderCount().toLocaleString('pt-BR') }}</p>
         </div>
       </section>
 
@@ -137,6 +155,13 @@ export class Dashboard {
   foodCost = signal<number | null>(null);
   error = signal<string | null>(null);
 
+  /** RF-034: resumo do dia vindo do backend (dia de Sao Paulo). */
+  today = signal<TodaySummary | null>(null);
+  todayLabel = computed(() => {
+    const d = this.today()?.date;
+    return d ? d.split('-').reverse().join('/') : '';
+  });
+
   monthly = signal<MonthlyRevenue[]>([]);
   revenueLabels = computed(() => this.revenue().map((r) => r.day.slice(8, 10) + '/' + r.day.slice(5, 7)));
   monthlyLabels = computed(() => this.monthly().map((m) => MONTHS[Number(m.month.slice(5, 7)) - 1] + '/' + m.month.slice(2, 4)));
@@ -173,6 +198,7 @@ export class Dashboard {
 
   private load(u: number): void {
     const fail = (e: unknown) => this.error.set(apiErrorMessage(e, 'Erro ao carregar relatórios'));
+    this.api.get<TodaySummary>(`/reports/today?unitId=${u}`).subscribe({ next: (r) => this.today.set(r), error: fail });
     this.api.get<DailyRevenue[]>(`/reports/daily-revenue?unitId=${u}&days=30`).subscribe({ next: (r) => this.revenue.set(r), error: fail });
     this.api.get<MonthlyRevenue[]>(`/reports/monthly-revenue?unitId=${u}&months=12`).subscribe({ next: (r) => this.monthly.set(r), error: fail });
     this.api.get<TopProduct[]>(`/reports/top-products?unitId=${u}&limit=5`).subscribe({ next: (r) => this.top.set(r), error: fail });

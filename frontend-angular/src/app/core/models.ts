@@ -39,6 +39,8 @@ export interface ProductResponse {
   categoryName: string;
   name: string;
   description: string | null;
+  /** RF-014: modo de preparo. */
+  preparationMethod: string | null;
   basePrice: number;
   imageUrl: string | null;
   prepTimeMinutes: number | null;

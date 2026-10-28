@@ -20,7 +20,7 @@ em tempo real).
 |---|---|
 | **Aplicação (Angular, Vercel)** | https://bueno-s-house.vercel.app |
 | **API (Spring Boot, Render)** | https://bueno-s-house-api.onrender.com/api/health |
-| **Swagger** | https://bueno-s-house-api.onrender.com/swagger-ui.html |
+| **Swagger** | https://bueno-s-house.vercel.app/swagger-ui.html (botão "Authorize" aceita o token do login) |
 | **Banco** | MySQL 8 gerenciado (Aiven) |
 
 > O backend roda no plano gratuito do Render e "dorme" após ~15 min sem uso: o primeiro
@@ -33,7 +33,9 @@ em tempo real).
 | Administrador | `admin@email.com` | `senha123` |
 | Administrador, Gerente, Caixa, Garçom, Cozinha, Motoboy, Cliente | `admin@demo.local`, `gerente@demo.local`, `caixa@demo.local`, `garcom@demo.local`, `cozinha@demo.local`, `motoboy@demo.local`, `cliente@demo.local` | `admin123` |
 
-O cardápio (`/app/cardapio`) é público; clientes novos se cadastram em `/registrar`.
+Os botões de acesso rápido do login só escolhem a conta (preenchem o e-mail): a senha sempre é digitada.
+
+O cardápio (`/app/cardapio`) e a página de cada prato (`/app/cardapio/:id`) são públicos; clientes novos se cadastram em `/registrar`.
 
 **Arquitetura de produção:** `Angular (Vercel) → /api (rewrite da Vercel) → Spring Boot (Render, Docker) → MySQL (Aiven)`.
 Variáveis do backend no Render: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`,

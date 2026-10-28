@@ -30,6 +30,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/customer/customer-menu').then((m) => m.CustomerMenu),
       },
       {
+        // Detalhe do prato (RF-002), publico como o cardapio.
+        path: 'cardapio/:productId',
+        loadComponent: () => import('./features/customer/customer-product').then((m) => m.CustomerProduct),
+      },
+      {
         path: 'carrinho',
         canActivate: [authGuard],
         loadComponent: () =>

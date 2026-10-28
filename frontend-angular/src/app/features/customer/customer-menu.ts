@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { CartService } from '../../core/cart.service';
@@ -12,10 +12,10 @@ interface MenuGroup {
   products: ProductResponse[];
 }
 
-/** Cardapio publico (RF-001) com filtro por categoria e detalhe do prato (RF-002). */
+/** Cardapio publico (RF-001) com filtro por categoria e link para a pagina do prato (RF-002). */
 @Component({
   selector: 'app-customer-menu',
-  imports: [FormsModule],
+  imports: [RouterLink],
   templateUrl: './customer-menu.html',
 })
 export class CustomerMenu {
@@ -33,10 +33,6 @@ export class CustomerMenu {
     const id = this.categoryId();
     return id == null ? this.groups() : this.groups().filter((g) => g.category.id === id);
   });
-
-  detail = signal<ProductResponse | null>(null);
-  detailQty = 1;
-  detailNotes = '';
 
   constructor() {
     this.load();
@@ -63,28 +59,6 @@ export class CustomerMenu {
     } finally {
       this.loading.set(false);
     }
-  }
-
-  openDetail(product: ProductResponse): void {
-    this.detail.set(product);
-    this.detailQty = 1;
-    this.detailNotes = '';
-  }
-
-  closeDetail(): void {
-    this.detail.set(null);
-  }
-
-  changeDetailQty(delta: number): void {
-    this.detailQty = Math.max(1, this.detailQty + delta);
-  }
-
-  addFromDetail(): void {
-    const product = this.detail();
-    if (!product) return;
-    this.cart.add(product, this.detailQty, this.detailNotes.trim());
-    this.toast.success(`${this.detailQty}x ${product.name} adicionado ao carrinho`);
-    this.closeDetail();
   }
 
   quickAdd(product: ProductResponse): void {

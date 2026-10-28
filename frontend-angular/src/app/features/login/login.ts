@@ -10,7 +10,6 @@ import { Icon } from '../../shared/icon';
 import { Backdrop } from '../../shared/backdrop';
 import { Burners } from '../../shared/burners';
 
-const DEMO_PASSWORD = 'admin123';
 
 const QUICK_ACCESS = [
   { email: 'admin@demo.local', label: 'Administrador', icon: 'shield' },
@@ -53,6 +52,8 @@ export class Login {
   loading = signal(false);
   showPassword = signal(false);
   showForgot = signal(false);
+  /** Conta escolhida no acesso rapido (destaca o botao e mostra o aviso da senha). */
+  picked = signal<string | null>(null);
   /** Login demorando: o backend gratuito provavelmente esta acordando. */
   slow = signal(false);
   private slowTimer: ReturnType<typeof setTimeout> | null = null;
@@ -66,10 +67,16 @@ export class Login {
     this.doLogin(this.email, this.password);
   }
 
-  quickLogin(email: string): void {
+  /**
+   * Acesso rapido: so escolhe a conta (preenche o e-mail). A senha continua sendo
+   * digitada, para ninguem entrar como administrador com um clique no site publicado.
+   */
+  pickAccount(email: string): void {
     this.email = email;
-    this.password = DEMO_PASSWORD;
-    this.doLogin(email, DEMO_PASSWORD);
+    this.password = '';
+    this.error.set(null);
+    this.picked.set(email);
+    setTimeout(() => document.getElementById('password')?.focus());
   }
 
   private doLogin(email: string, password: string): void {

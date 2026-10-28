@@ -22,6 +22,8 @@ export class ChartComponent implements OnDestroy {
   label = input('');
   /** Formata o valor no tooltip e no eixo Y (ex.: moeda). */
   formatValue = input<(v: number) => string>((v) => String(v));
+  /** false para series em que a variacao importa mais que o total (ex.: historico de precos). */
+  beginAtZero = input(true);
 
   private readonly canvas = viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   private chart?: Chart;
@@ -58,7 +60,7 @@ export class ChartComponent implements OnDestroy {
           },
           scales: {
             x: { ticks: { color: TICK }, grid: { display: false } },
-            y: { beginAtZero: true, ticks: { color: TICK, callback: (v) => fmt(Number(v)) }, grid: { color: GRID } },
+            y: { beginAtZero: this.beginAtZero(), ticks: { color: TICK, callback: (v) => fmt(Number(v)) }, grid: { color: GRID } },
           },
         },
       };

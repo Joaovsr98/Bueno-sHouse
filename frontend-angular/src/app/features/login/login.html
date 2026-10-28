@@ -87,13 +87,17 @@
           <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
           Acesso rápido para {{ side === 'equipe' ? 'equipe' : side === 'cliente' ? 'cliente' : 'equipe e cliente' }} (demonstração)
         </p>
+        <p class="text-xs text-neutral-400 -mt-1" aria-live="polite">
+          @if (picked()) { Conta <strong class="text-neutral-200">{{ picked() }}</strong> selecionada: digite a senha e clique em Entrar. }
+          @else { Escolha a conta: o e-mail é preenchido e você digita a senha. }
+        </p>
         @if (side !== 'cliente') {
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
           @for (p of quickAccess; track p.email) {
             <button
               type="button"
               [disabled]="loading()"
-              (click)="quickLogin(p.email)"
+              (click)="pickAccount(p.email)" [class.!border-brand-500]="picked() === p.email" [attr.aria-pressed]="picked() === p.email"
               class="glass glass-hover rounded-xl py-2 px-3 text-sm text-neutral-200 flex items-center gap-2 disabled:opacity-50"
             >
               <span class="text-brand-400"><app-icon [name]="p.icon" [size]="16" /></span>
@@ -106,7 +110,7 @@
         <button
           type="button"
           [disabled]="loading()"
-          (click)="quickLogin('cliente@demo.local')"
+          (click)="pickAccount('cliente@demo.local')" [attr.aria-pressed]="picked() === 'cliente@demo.local'"
           class="w-full rounded-xl py-2.5 px-4 text-sm flex items-center justify-between gap-3 border border-brand-500/40 bg-brand-500/[0.08] hover:bg-brand-500/15 hover:border-brand-500/70 transition disabled:opacity-50"
         >
           <span class="flex items-center gap-3">
