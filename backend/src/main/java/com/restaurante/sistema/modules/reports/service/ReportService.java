@@ -4,6 +4,7 @@ import com.restaurante.sistema.modules.inventory.dto.InventoryItemResponse;
 import com.restaurante.sistema.modules.inventory.service.InventoryService;
 import com.restaurante.sistema.modules.reports.dto.AverageTicketResponse;
 import com.restaurante.sistema.modules.reports.dto.DailyRevenueResponse;
+import com.restaurante.sistema.modules.reports.dto.MonthlyRevenueResponse;
 import com.restaurante.sistema.modules.reports.dto.TopProductResponse;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -36,16 +37,41 @@ public class ReportService {
 
     @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
-    public List<DailyRevenueResponse> dailyRevenue(Long unitId) {
+    public List<DailyRevenueResponse> dailyRevenue(Long unitId, int days) {
         Query query = entityManager.createQuery(
                 "SELECT FUNCTION('DATE', o.completedAt), SUM(o.total) " +
-                "FROM Order o WHERE o.status = 'FINALIZADO' AND o.unitId = :unitId " +
-                "GROUP BY FUNCTION('DATE', o.completedAt) ORDER BY FUNCTION('DATE', o.completedAt) DESC");
+                "FROM Order o WHERE o.status = 'FINALIZADO' AND o.unitId = :unitId AND o.completedAt >= :since " +
+                "GROUP BY FUNCTION('DATE', o.completedAt) ORDER BY FUNCTION('DATE', o.completedAt) ASC");
         query.setParameter("unitId", unitId);
+        query.setParameter("since", java.time.Instant.now().minus(java.time.Duration.ofDays(Math.max(1, days))));
 
         List<Object[]> rows = query.getResultList();
         return rows.stream()
                 .map(r -> new DailyRevenueResponse(String.valueOf(r[0]), (BigDecimal) r[1]))
+                .toList();
+    }
+
+    /** RF-037: vendas por mes (ultimos N meses), em ordem cronologica. */
+    @Transactional(readOnly = true)
+    @SuppressWarnings("unchecked")
+    public List<MonthlyRevenueResponse> monthlyRevenue(Long unitId, int months) {
+        java.time.Instant since = java.time.LocalDate.now().withDayOfMonth(1)
+                .minusMonths(Math.max(1, months) - 1L)
+                .atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+        Query query = entityManager.createQuery(
+                "SELECT FUNCTION('YEAR', o.completedAt), FUNCTION('MONTH', o.completedAt), SUM(o.total), COUNT(o) " +
+                "FROM Order o WHERE o.status = 'FINALIZADO' AND o.unitId = :unitId AND o.completedAt >= :since " +
+                "GROUP BY FUNCTION('YEAR', o.completedAt), FUNCTION('MONTH', o.completedAt) " +
+                "ORDER BY FUNCTION('YEAR', o.completedAt), FUNCTION('MONTH', o.completedAt)");
+        query.setParameter("unitId", unitId);
+        query.setParameter("since", since);
+
+        List<Object[]> rows = query.getResultList();
+        return rows.stream()
+                .map(r -> new MonthlyRevenueResponse(
+                        String.format("%04d-%02d", ((Number) r[0]).intValue(), ((Number) r[1]).intValue()),
+                        (BigDecimal) r[2],
+                        ((Number) r[3]).longValue()))
                 .toList();
     }
 

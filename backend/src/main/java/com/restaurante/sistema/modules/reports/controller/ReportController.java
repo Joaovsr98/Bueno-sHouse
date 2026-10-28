@@ -3,6 +3,7 @@ package com.restaurante.sistema.modules.reports.controller;
 import com.restaurante.sistema.modules.inventory.dto.InventoryItemResponse;
 import com.restaurante.sistema.modules.reports.dto.AverageTicketResponse;
 import com.restaurante.sistema.modules.reports.dto.DailyRevenueResponse;
+import com.restaurante.sistema.modules.reports.dto.MonthlyRevenueResponse;
 import com.restaurante.sistema.modules.reports.dto.TopProductResponse;
 import com.restaurante.sistema.modules.reports.service.ReportService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,8 +24,15 @@ public class ReportController {
     }
 
     @GetMapping("/daily-revenue")
-    public List<DailyRevenueResponse> dailyRevenue(@RequestParam Long unitId) {
-        return reportService.dailyRevenue(unitId);
+    public List<DailyRevenueResponse> dailyRevenue(@RequestParam Long unitId,
+                                                   @RequestParam(defaultValue = "30") int days) {
+        return reportService.dailyRevenue(unitId, days);
+    }
+
+    @GetMapping("/monthly-revenue")
+    public List<MonthlyRevenueResponse> monthlyRevenue(@RequestParam Long unitId,
+                                                       @RequestParam(defaultValue = "12") int months) {
+        return reportService.monthlyRevenue(unitId, months);
     }
 
     @GetMapping("/average-ticket")

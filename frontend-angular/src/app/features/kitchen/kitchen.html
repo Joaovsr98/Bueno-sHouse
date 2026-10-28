@@ -1,64 +1,82 @@
 @if (unitId() == null) {
-  <div class="p-6 text-sm text-neutral-400">Carregando unidade...</div>
+  <div class="page text-sm text-neutral-400">Carregando unidade...</div>
 } @else {
-  <div class="p-6">
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-lg font-semibold">Painel da Cozinha</h1>
-      @if (sectors().length > 0) {
-        <select
-          [value]="sectorId() ?? ''"
-          (change)="onSectorChange($any($event.target).value)"
-          class="rounded-xl bg-black/30 border border-white/10 px-3 py-1.5 text-sm text-neutral-300 outline-none focus:border-brand-500/60"
-        >
-          @for (s of sectors(); track s.id) {
-            <option [value]="s.id">{{ s.name }}</option>
-          }
-        </select>
-      }
-    </div>
+  <div class="page">
+    <header class="flex flex-wrap items-end justify-between gap-4 mb-6">
+      <div class="reveal">
+        <p class="eyebrow">Operação · Produção</p>
+        <h1 class="page-title mt-3">Painel da cozinha</h1>
+        <p class="page-sub mt-2">Itens dos pedidos confirmados. Atualiza sozinho a cada 15 segundos.</p>
+      </div>
+      <div class="flex gap-6 reveal reveal-1">
+        <div class="text-right"><p class="kpi-value">{{ countBy('ENVIADO') }}</p><p class="kpi-label">Na fila</p></div>
+        <div class="text-right"><p class="kpi-value text-ember">{{ countBy('EM_PREPARO') }}</p><p class="kpi-label">Em preparo</p></div>
+      </div>
+    </header>
 
-    @if (sectors().length === 0) {
+    @if (sectors().length > 0) {
+      <div class="flex gap-2 overflow-x-auto pb-2 mb-5 reveal reveal-2">
+        <button
+          (click)="selectSector(null)"
+          class="shrink-0 rounded-full px-4 py-1.5 text-sm border transition"
+          [class]="sectorId() == null ? 'btn-brand border-transparent' : 'border-white/15 text-neutral-300 hover:bg-white/5'"
+        >
+          Todos os setores
+        </button>
+        @for (s of sectors(); track s.id) {
+          <button
+            (click)="selectSector(s.id)"
+            class="shrink-0 rounded-full px-4 py-1.5 text-sm border transition"
+            [class]="sectorId() === s.id ? 'btn-brand border-transparent' : 'border-white/15 text-neutral-300 hover:bg-white/5'"
+          >
+            {{ sectorLabel(s.name) }}
+          </button>
+        }
+      </div>
+    } @else {
       <p class="text-sm text-neutral-500">Nenhum setor de cozinha cadastrado para esta unidade.</p>
     }
 
     @if (error()) {
-      <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+      <div class="alert-error mb-4">
         <span>{{ error() }}</span>
         <button (click)="error.set(null)" class="text-red-400">×</button>
       </div>
     }
 
-    @if (tasks().length === 0 && sectors().length > 0) {
-      <p class="text-sm text-neutral-500">Nenhum item pendente neste setor.</p>
+    @if (visibleTasks().length === 0 && sectors().length > 0) {
+      <div class="glass rounded-2xl"><p class="empty">Nenhum item na fila {{ sectorId() == null ? 'da cozinha' : 'deste setor' }}.</p></div>
     }
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      @for (task of tasks(); track task.orderItemId) {
-        <div
-          class="rounded-2xl border p-4 flex flex-col gap-2 backdrop-blur-sm"
-          [class]="statusStyles[task.status] ?? 'border-white/10 bg-white/5'"
-        >
-          <div class="flex items-start justify-between">
-            <span class="text-sm font-semibold">Pedido #{{ task.orderNumber }}</span>
-            <span class="text-xs text-neutral-400">{{ elapsedMinutes(task.orderCreatedAt) }} min</span>
+      @for (task of visibleTasks(); track task.orderItemId) {
+        <div class="glass rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden"
+          [class.ring-1]="task.status === 'EM_PREPARO'" [class.ring-brand-500]="task.status === 'EM_PREPARO'">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <p class="kpi-label">{{ sectorLabel(task.sectorName) }}</p>
+              <p class="font-display text-lg font-bold mt-1">Pedido #{{ task.orderNumber }}</p>
+            </div>
+            <span class="inline-flex items-center gap-1.5 text-xs tabular-nums"
+              [class]="elapsedMinutes(task.orderCreatedAt) >= 20 ? 'text-red-300' : 'text-neutral-400'">
+              <app-icon name="clock" [size]="14" /> {{ elapsedMinutes(task.orderCreatedAt) }} min
+            </span>
           </div>
-          <p class="text-sm">{{ task.quantity }}x {{ task.productName }}</p>
+          <p class="text-base"><span class="font-display font-bold text-brand-400">{{ task.quantity }}x</span> {{ task.productName }}</p>
           @if (task.notes) {
-            <p class="text-xs text-neutral-400 italic">{{ task.notes }}</p>
+            <p class="text-xs text-gold-400 bg-gold-400/10 border border-gold-400/20 rounded-lg px-2.5 py-1.5">{{ task.notes }}</p>
           }
-          <span class="text-xs uppercase tracking-wide text-neutral-400">{{ statusLabels[task.status] ?? task.status }}</span>
+          <span class="badge w-fit" [class]="statusBadge[task.status] ?? 'badge-gray'">{{ statusLabels[task.status] ?? task.status }}</span>
 
-          <div class="flex gap-2 mt-2">
+          <div class="flex gap-2 mt-auto pt-1">
             @if (task.status === 'ENVIADO') {
-              <button (click)="start(task.orderItemId)" class="flex-1 text-xs btn-brand rounded-lg py-1.5">Iniciar</button>
+              <button (click)="start(task.orderItemId)" class="flex-1 text-sm btn-brand rounded-xl py-2">Iniciar preparo</button>
             }
             @if (task.status === 'EM_PREPARO') {
-              <button (click)="complete(task.orderItemId)" class="flex-1 text-xs btn-brand rounded-lg py-1.5">Concluir</button>
+              <button (click)="complete(task.orderItemId)" class="flex-1 text-sm btn-brand rounded-xl py-2">Concluir</button>
             }
             @if (canToggle(task.status)) {
-              <button (click)="markUnavailable(task.orderItemId)" class="text-xs rounded-lg border border-current/30 px-2 py-1.5 hover:bg-white/5 transition">
-                Indisponível
-              </button>
+              <button (click)="markUnavailable(task.orderItemId)" class="btn-ghost btn-danger">Indisponível</button>
             }
           </div>
         </div>

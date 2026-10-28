@@ -1,27 +1,40 @@
-import { Component, inject, signal, effect, untracked, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, effect, untracked, OnDestroy } from '@angular/core';
+import { forkJoin, map } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { KitchenSectorResponse, KitchenTaskResponse } from '../../core/models';
 import { elapsedMinutes } from '../../core/format';
+import { Icon } from '../../shared/icon';
 
 const STATUS_LABELS: Record<string, string> = {
   PENDENTE: 'Pendente',
-  ENVIADO: 'Aguardando início',
+  ENVIADO: 'Na fila',
   EM_PREPARO: 'Em preparo',
   PRONTO: 'Pronto',
   ENTREGUE: 'Entregue',
   CANCELADO: 'Cancelado',
 };
 
-const STATUS_STYLES: Record<string, string> = {
-  ENVIADO: 'border-amber-800 bg-amber-950/60',
-  EM_PREPARO: 'border-blue-800 bg-blue-950/60',
-  PRONTO: 'border-green-800 bg-green-950/60',
+const STATUS_BADGE: Record<string, string> = {
+  ENVIADO: 'badge-yellow',
+  EM_PREPARO: 'badge-blue',
+  PRONTO: 'badge-green',
 };
 
+/** Nomes dos setores como aparecem na tela (o cadastro guarda em caixa alta). */
+const SECTOR_LABELS: Record<string, string> = {
+  CHAPA: 'Chapa', BEBIDAS: 'Bebidas', SOBREMESAS: 'Sobremesas', EXPEDICAO: 'Expedição',
+};
+
+type SectorTask = KitchenTaskResponse & { sectorId: number; sectorName: string };
+
+/**
+ * Painel de producao: abre com TODOS os setores juntos (mais antigos primeiro)
+ * e so filtra quando a cozinha escolhe um setor.
+ */
 @Component({
   selector: 'app-kitchen',
-  imports: [],
+  imports: [Icon],
   templateUrl: './kitchen.html',
 })
 export class Kitchen implements OnDestroy {
@@ -30,13 +43,19 @@ export class Kitchen implements OnDestroy {
 
   readonly unitId = this.auth.unitId;
   readonly statusLabels = STATUS_LABELS;
-  readonly statusStyles = STATUS_STYLES;
+  readonly statusBadge = STATUS_BADGE;
   readonly elapsedMinutes = elapsedMinutes;
 
   sectors = signal<KitchenSectorResponse[]>([]);
+  /** null = todos os setores. */
   sectorId = signal<number | null>(null);
-  tasks = signal<KitchenTaskResponse[]>([]);
+  tasks = signal<SectorTask[]>([]);
   error = signal<string | null>(null);
+
+  readonly visibleTasks = computed(() => {
+    const id = this.sectorId();
+    return id == null ? this.tasks() : this.tasks().filter((t) => t.sectorId === id);
+  });
 
   private pollHandle: ReturnType<typeof setInterval> | null = null;
 
@@ -46,43 +65,53 @@ export class Kitchen implements OnDestroy {
       if (u == null) return;
       untracked(() => this.loadSectors());
     });
-    // Auto-refresh das tarefas a cada 15s (equivalente ao refetchInterval do React).
-    effect(() => {
-      const s = this.sectorId();
-      if (s == null) return;
-      untracked(() => this.loadTasks());
-    });
-    this.pollHandle = setInterval(() => {
-      if (this.sectorId() != null) this.loadTasks();
-    }, 15000);
+    // Auto-refresh das tarefas a cada 15s.
+    this.pollHandle = setInterval(() => this.loadTasks(), 15000);
   }
 
   ngOnDestroy(): void {
     if (this.pollHandle) clearInterval(this.pollHandle);
   }
 
+  sectorLabel(name: string): string {
+    return SECTOR_LABELS[name] ?? name;
+  }
+
+  countBy(status: string): number {
+    return this.visibleTasks().filter((t) => t.status === status).length;
+  }
+
+  selectSector(id: number | null): void {
+    this.sectorId.set(id);
+  }
+
   private loadSectors(): void {
     this.api.get<KitchenSectorResponse[]>('/kitchen-sectors').subscribe({
       next: (all) => {
-        const mine = all.filter((s) => s.unitId === this.unitId());
-        this.sectors.set(mine);
-        if (this.sectorId() == null && mine.length > 0) this.sectorId.set(mine[0].id);
+        this.sectors.set(all.filter((s) => s.unitId === this.unitId()));
+        this.loadTasks();
       },
       error: () => this.sectors.set([]),
     });
   }
 
+  /** Busca a fila de cada setor e junta tudo, do pedido mais antigo para o mais novo. */
   loadTasks(): void {
-    const s = this.sectorId();
-    if (s == null) return;
-    this.api.get<KitchenTaskResponse[]>(`/kitchen/tasks?sectorId=${s}`).subscribe({
-      next: (t) => this.tasks.set(t),
+    const sectors = this.sectors();
+    if (sectors.length === 0) return;
+    forkJoin(
+      sectors.map((s) =>
+        this.api
+          .get<KitchenTaskResponse[]>(`/kitchen/tasks?sectorId=${s.id}`)
+          .pipe(map((list) => list.map((t) => ({ ...t, sectorId: s.id, sectorName: s.name })))),
+      ),
+    ).subscribe({
+      next: (lists) =>
+        this.tasks.set(
+          lists.flat().sort((a, b) => new Date(a.orderCreatedAt).getTime() - new Date(b.orderCreatedAt).getTime()),
+        ),
       error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao carregar tarefas')),
     });
-  }
-
-  onSectorChange(value: string): void {
-    this.sectorId.set(Number(value));
   }
 
   start(id: number): void {

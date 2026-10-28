@@ -7,6 +7,9 @@ import { CountUp } from '../../shared/count-up';
 import { Ring } from '../../shared/ring';
 
 interface DailyRevenue { day: string; revenue: number; }
+interface MonthlyRevenue { month: string; revenue: number; orders: number; }
+
+const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 interface TopProduct { productName: string; totalSold: number; }
 interface LowStock { id: number; name: string; currentQuantity: number; minimumQuantity: number; unitOfMeasure: string; }
 
@@ -29,7 +32,7 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6 mb-8 reveal reveal-1">
         <div class="border-t border-white/10 pt-4">
           <p class="kpi-value text-ember"><app-count-up [value]="totalRevenue()" [format]="money" /></p>
-          <p class="kpi-label mt-2">Faturamento no período</p>
+          <p class="kpi-label mt-2">Faturamento · 30 dias</p>
         </div>
         <div class="border-t border-white/10 pt-4">
           <p class="kpi-value">@if (avgTicket() != null) { <app-count-up [value]="avgTicket()!" [format]="money" /> } @else { - }</p>
@@ -51,12 +54,21 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
       </section>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6 reveal reveal-2">
-        <section class="glass accent-card rounded-2xl p-6">
-          <h2 class="section-title">Faturamento por dia</h2>
+        <section class="glass accent-card rounded-2xl p-6 lg:col-span-2">
+          <h2 class="section-title">Vendas diárias · últimos 30 dias</h2>
           @if (revenue().length === 0) {
             <p class="empty">Sem vendas no período.</p>
           } @else {
             <app-chart type="line" label="Faturamento" [labels]="revenueLabels()" [values]="revenueValues()" [formatValue]="money" />
+          }
+        </section>
+        <section class="glass accent-card rounded-2xl p-6">
+          <h2 class="section-title">Vendas mensais · últimos 12 meses</h2>
+          @if (monthly().length === 0) {
+            <p class="empty">Sem vendas no período.</p>
+          } @else {
+            <app-chart type="bar" label="Faturamento" [labels]="monthlyLabels()" [values]="monthlyValues()" [formatValue]="money" />
+            <p class="kpi-label mt-3">{{ monthlyOrders() }} pedidos · melhor mês {{ bestMonth() }}</p>
           }
         </section>
         <section class="glass accent-card rounded-2xl p-6">
@@ -125,7 +137,15 @@ export class Dashboard {
   foodCost = signal<number | null>(null);
   error = signal<string | null>(null);
 
-  revenueLabels = computed(() => this.revenue().map((r) => r.day));
+  monthly = signal<MonthlyRevenue[]>([]);
+  revenueLabels = computed(() => this.revenue().map((r) => r.day.slice(8, 10) + '/' + r.day.slice(5, 7)));
+  monthlyLabels = computed(() => this.monthly().map((m) => MONTHS[Number(m.month.slice(5, 7)) - 1] + '/' + m.month.slice(2, 4)));
+  monthlyValues = computed(() => this.monthly().map((m) => Number(m.revenue)));
+  monthlyOrders = computed(() => this.monthly().reduce((sum, m) => sum + m.orders, 0).toLocaleString('pt-BR'));
+  bestMonth = computed(() => {
+    const best = [...this.monthly()].sort((a, b) => Number(b.revenue) - Number(a.revenue))[0];
+    return best ? MONTHS[Number(best.month.slice(5, 7)) - 1] + '/' + best.month.slice(2, 4) + ' (' + currency(Number(best.revenue)) + ')' : '-';
+  });
   revenueValues = computed(() => this.revenue().map((r) => r.revenue));
   topLabels = computed(() => this.top().map((p) => p.productName));
   topValues = computed(() => this.top().map((p) => p.totalSold));
@@ -153,7 +173,8 @@ export class Dashboard {
 
   private load(u: number): void {
     const fail = (e: unknown) => this.error.set(apiErrorMessage(e, 'Erro ao carregar relatórios'));
-    this.api.get<DailyRevenue[]>(`/reports/daily-revenue?unitId=${u}`).subscribe({ next: (r) => this.revenue.set(r), error: fail });
+    this.api.get<DailyRevenue[]>(`/reports/daily-revenue?unitId=${u}&days=30`).subscribe({ next: (r) => this.revenue.set(r), error: fail });
+    this.api.get<MonthlyRevenue[]>(`/reports/monthly-revenue?unitId=${u}&months=12`).subscribe({ next: (r) => this.monthly.set(r), error: fail });
     this.api.get<TopProduct[]>(`/reports/top-products?unitId=${u}&limit=5`).subscribe({ next: (r) => this.top.set(r), error: fail });
     this.api.get<LowStock[]>(`/reports/low-stock?unitId=${u}`).subscribe({ next: (r) => this.low.set(r), error: fail });
     this.api.get<{ averageTicket: number; orderCount: number }>(`/reports/average-ticket?unitId=${u}`).subscribe({
