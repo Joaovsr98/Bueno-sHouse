@@ -30,6 +30,26 @@ jobs:
       - name: Testes (unitários + integração)
         run: mvn -B verify
 
+      # Resume as falhas como anotacoes (aparecem no resumo do job, sem abrir o log inteiro).
+      - name: Resumo das falhas
+        if: failure()
+        run: |
+          shopt -s nullglob
+          for f in target/surefire-reports/*.txt target/failsafe-reports/*.txt; do
+            if grep -qE "FAILURE|ERROR" "$f"; then
+              msg=$(grep -E "<<< (FAILURE|ERROR)|Caused by|Exception:|expected|Expecting" "$f" | head -8 | tr '\n' ' ' | cut -c1-900)
+              echo "::error title=$(basename "$f" .txt)::$msg"
+            fi
+          done
+          for f in target/failsafe-reports/*-output.txt target/surefire-reports/*-output.txt; do
+            cause=$(grep -m3 -E "Caused by|Schema-validation|wrong column type|FlywayException|Migration .* failed" "$f" | tr '\n' ' ' | cut -c1-900)
+            [ -n "$cause" ] && echo "::error title=causa $(basename "$f" -output.txt)::$cause"
+          done
+          if [ ! -d target/failsafe-reports ] && [ ! -d target/surefire-reports ]; then
+            echo "::error title=build::Falhou antes dos testes (compilacao?). Veja o passo anterior."
+          fi
+          true
+
       - name: Relatórios dos testes
         if: always()
         uses: actions/upload-artifact@v4
