@@ -1,5 +1,5 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
 import { defaultRouteForRole } from '../core/routing';
 import { Logo } from './logo';
@@ -13,7 +13,8 @@ const BURNERS = 3;
  * Abertura "esquentando a chapa" (inspirada na largada do Paddock 22): as bocas
  * acendem uma a uma e, com a chapa quente, a pessoa escolhe o lado: matar a fome
  * (cardapio) ou acender a chapa (equipe). Aparece toda vez que se entra pela
- * pagina inicial; em outra tela so no primeiro acesso da sessao, e ai fecha
+ * pagina inicial (ao abrir o site ou ao voltar ao inicio por dentro dele); em
+ * outra tela so no primeiro acesso da sessao, e ai fecha
  * sozinha. Quem prefere menos movimento so ve a abertura na pagina inicial.
  */
 @Component({
@@ -123,7 +124,22 @@ export class Intro implements OnDestroy {
 
   constructor() {
     const home = this.onHome();
-    if (!home && (this.alreadySeen() || this.prefersReducedMotion())) return;
+    if (home || !(this.alreadySeen() || this.prefersReducedMotion())) this.start(home);
+    // Voltar ao inicio por dentro do site (logo, "Voltar ao inicio") tambem abre a escolha.
+    let first = true;
+    this.router.events.subscribe((e) => {
+      if (!(e instanceof NavigationEnd)) return;
+      if (!first && e.urlAfterRedirects.split(/[?#]/)[0] === '/') this.start(true);
+      first = false;
+    });
+  }
+
+  private start(home: boolean): void {
+    this.timers.forEach(clearTimeout);
+    this.timers = [];
+    this.leaving.set(false);
+    this.choosing.set(false);
+    this.lit.set(0);
     this.visible.set(true);
     const step = home && this.prefersReducedMotion() ? 120 : 380;
     this.burners.forEach((i) => this.timers.push(setTimeout(() => this.lit.set(i + 1), 350 + i * step)));
