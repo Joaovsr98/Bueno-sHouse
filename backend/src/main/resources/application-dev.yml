@@ -10,6 +10,9 @@
 spring:
   flyway:
     locations: classpath:db/migration,classpath:db/seed
+    # O seed e V900: sem isto, toda migration nova (V17, V18...) ficaria "abaixo" da
+    # ultima aplicada e o Flyway recusaria subir em bancos que ja rodaram o seed.
+    out-of-order: true
 
 logging:
   level:
