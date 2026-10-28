@@ -33,9 +33,21 @@ export class Login {
   private readonly route = inject(ActivatedRoute);
 
   readonly quickAccess = QUICK_ACCESS;
-  /** Login de demonstracao exigido pelo guia da disciplina. */
-  email = 'admin@email.com';
   readonly returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+  /**
+   * Por qual porta a pessoa chegou: "equipe" (Bora acender a chapa) mostra so os
+   * perfis de funcionario e barra conta de cliente; "cliente" (Quero matar minha
+   * fome, ou vindo de uma tela do cliente) mostra so entrar como cliente ou criar
+   * conta. Sem porta (link direto para /login), mostra tudo.
+   */
+  readonly side: 'equipe' | 'cliente' | null =
+    this.route.snapshot.queryParamMap.get('lado') === 'equipe'
+      ? 'equipe'
+      : this.route.snapshot.queryParamMap.get('lado') === 'cliente' || this.returnUrl?.startsWith('/app')
+        ? 'cliente'
+        : null;
+  /** Login de demonstracao exigido pelo guia da disciplina (equipe). */
+  email = this.side === 'cliente' ? '' : 'admin@email.com';
   password = '';
   error = signal<string | null>(null);
   loading = signal(false);
@@ -68,8 +80,15 @@ export class Login {
     this.api.post<LoginResponse>('/auth/login', { email, password }).subscribe({
       next: (data) => {
         this.stopSlowTimer();
+        const isCustomer = data.user.profileName === 'CLIENTE';
+        if (this.side === 'equipe' && isCustomer) {
+          this.error.set('Esta entrada é só para a equipe. Clientes entram por "Quero matar minha fome".');
+          this.loading.set(false);
+          return;
+        }
         this.auth.login(data);
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        // Funcionario que entrou pela porta do cliente vai para a propria area.
+        const returnUrl = this.side === 'cliente' && !isCustomer ? null : this.returnUrl;
         this.router.navigateByUrl(returnUrl || defaultRouteForRole(data.user.profileName));
       },
       error: (err) => {

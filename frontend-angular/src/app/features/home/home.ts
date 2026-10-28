@@ -31,21 +31,21 @@ import { Backdrop } from '../../shared/backdrop';
           <p class="mt-6 text-lg text-neutral-400 reveal reveal-3">
             Tecnologia para quem faz acontecer. Simplicidade para quem quer aproveitar.
           </p>
-          <p class="mt-10 eyebrow-plain text-[0.7rem] reveal reveal-3">Como você quer entrar?</p>
+          <p class="mt-12 font-display text-2xl sm:text-3xl font-bold uppercase reveal reveal-3">O que você <span class="text-ember">quer?</span></p>
         </div>
 
         <div class="mt-5 w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-5 reveal reveal-3">
-          <a [routerLink]="customerLink()" class="door group">
+          <a [routerLink]="customerLink()" [queryParams]="isCustomer() ? null : { returnUrl: '/app/cardapio' }" class="door group">
             <span class="door-icon"><app-icon name="cart" [size]="26" /></span>
             <span class="eyebrow-plain text-[0.62rem]">Para você</span>
             <span class="block font-display text-2xl xl:text-[1.7rem] font-bold uppercase mt-2 leading-tight">Quero matar minha fome</span>
             <span class="block text-sm text-neutral-400 mt-3 leading-relaxed">
               Escolha no cardápio, peça do seu jeito e acompanhe cada etapa até o lanche chegar na sua porta.
             </span>
-            <span class="door-cta">{{ isCustomer() ? 'Continuar pedindo' : 'Ver o cardápio' }} <app-icon name="arrow" [size]="16" /></span>
+            <span class="door-cta">{{ isCustomer() ? 'Continuar pedindo' : 'Entrar ou criar conta' }} <app-icon name="arrow" [size]="16" /></span>
           </a>
 
-          <a [routerLink]="staffLink()" class="door group">
+          <a [routerLink]="staffLink()" [queryParams]="isStaff() ? null : { lado: 'equipe' }" class="door group">
             <span class="door-icon"><app-icon name="chef" [size]="26" /></span>
             <span class="eyebrow-plain text-[0.62rem]">Para a equipe</span>
             <span class="block font-display text-2xl xl:text-[1.7rem] font-bold uppercase mt-2 leading-tight">Bora acender a chapa</span>
@@ -96,6 +96,9 @@ export class Home {
 
   readonly isCustomer = computed(() => this.profile() === 'CLIENTE');
   readonly isStaff = computed(() => !!this.profile() && this.profile() !== 'CLIENTE');
-  readonly customerLink = computed(() => '/app/cardapio');
+  /** Cliente logado vai direto ao cardapio; os demais entram ou criam conta e voltam para ele. */
+  readonly customerLink = computed(() =>
+    this.isCustomer() ? '/app/cardapio' : '/login',
+  );
   readonly staffLink = computed(() => (this.isStaff() ? defaultRouteForRole(this.profile()) : '/login'));
 }

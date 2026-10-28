@@ -67,7 +67,7 @@ import { Component, input } from '@angular/core';
     }
     .engraved { position: absolute; width: min(64rem, 120vmin); height: auto; opacity: .6;
       filter: drop-shadow(0 0 30px rgba(232,80,12,.12)); }
-    .engraved-center { left: 62%; top: 55%; transform: translate(-50%, -50%); }
+    .engraved-center { left: 26%; top: 54%; width: min(76rem, 135vmin); transform: translate(-50%, -50%); }
     .engraved-right { right: -14rem; top: 50%; transform: translateY(-50%); }
     .spark {
       position: absolute; bottom: -10px; width: 3px; height: 3px; border-radius: 999px;
