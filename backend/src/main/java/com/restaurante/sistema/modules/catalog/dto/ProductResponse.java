@@ -11,6 +11,7 @@ public record ProductResponse(
         String categoryName,
         String name,
         String description,
+        String preparationMethod,
         BigDecimal basePrice,
         String imageUrl,
         Integer prepTimeMinutes,

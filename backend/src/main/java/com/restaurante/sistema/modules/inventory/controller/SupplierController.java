@@ -41,6 +41,17 @@ public class SupplierController {
         return supplierService.update(id, request);
     }
 
+    @PatchMapping("/{id}/active")
+    public SupplierResponse setActive(@PathVariable Long id, @Valid @RequestBody SupplierActiveRequest request) {
+        return supplierService.setActive(id, request.active());
+    }
+
+    /** Historico de precos pagos ao fornecedor nas compras recebidas (RF-026). */
+    @GetMapping("/{id}/price-history")
+    public List<PriceHistoryPoint> priceHistory(@PathVariable Long id) {
+        return supplierService.priceHistory(id);
+    }
+
     @GetMapping("/{id}/products")
     public List<SupplierProductResponse> catalog(@PathVariable Long id) {
         return supplierService.listCatalog(id);

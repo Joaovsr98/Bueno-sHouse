@@ -6,6 +6,7 @@ import com.restaurante.sistema.common.validation.CnpjValidator;
 import com.restaurante.sistema.modules.inventory.domain.InventoryItem;
 import com.restaurante.sistema.modules.inventory.domain.Supplier;
 import com.restaurante.sistema.modules.inventory.domain.SupplierProduct;
+import com.restaurante.sistema.modules.inventory.dto.PriceHistoryPoint;
 import com.restaurante.sistema.modules.inventory.dto.QuoteResponse;
 import com.restaurante.sistema.modules.inventory.dto.SupplierProductRequest;
 import com.restaurante.sistema.modules.inventory.dto.SupplierProductResponse;
@@ -14,9 +15,13 @@ import com.restaurante.sistema.modules.inventory.dto.SupplierResponse;
 import com.restaurante.sistema.modules.inventory.repository.InventoryItemRepository;
 import com.restaurante.sistema.modules.inventory.repository.SupplierProductRepository;
 import com.restaurante.sistema.modules.inventory.repository.SupplierRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,6 +29,9 @@ import java.util.stream.Collectors;
 /** Fornecedores, catalogo por fornecedor e cotacao comparativa (RF-021 a 023). */
 @Service
 public class SupplierService {
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private final SupplierRepository supplierRepository;
     private final SupplierProductRepository supplierProductRepository;
@@ -62,6 +70,37 @@ public class SupplierService {
         return toResponse(supplierRepository.save(supplier));
     }
 
+
+    /** Ativa ou desativa o fornecedor; desativado nao recebe novas compras. */
+    @Transactional
+    public SupplierResponse setActive(Long id, boolean active) {
+        Supplier supplier = getOrThrow(id);
+        supplier.setActive(active);
+        return toResponse(supplierRepository.save(supplier));
+    }
+
+    /**
+     * RF-026: historico de precos do fornecedor, a partir das compras recebidas
+     * (o preco efetivamente pago), em ordem cronologica.
+     */
+    @Transactional(readOnly = true)
+    @SuppressWarnings("unchecked")
+    public List<PriceHistoryPoint> priceHistory(Long supplierId) {
+        getOrThrow(supplierId);
+        List<Object[]> rows = entityManager.createQuery(
+                "SELECT pi.inventoryItemId, p.purchasedAt, pi.unitPrice FROM PurchaseItem pi JOIN pi.purchase p " +
+                "WHERE p.supplierId = :supplierId AND p.status = 'RECEBIDO' AND p.purchasedAt IS NOT NULL " +
+                "ORDER BY p.purchasedAt ASC, pi.id ASC")
+                .setParameter("supplierId", supplierId)
+                .getResultList();
+        Map<Long, String> names = inventoryItemRepository.findAllById(
+                rows.stream().map(r -> (Long) r[0]).distinct().toList()
+        ).stream().collect(Collectors.toMap(InventoryItem::getId, InventoryItem::getName));
+        return rows.stream()
+                .map(r -> new PriceHistoryPoint((Long) r[0], names.getOrDefault((Long) r[0], "?"),
+                        (LocalDate) r[1], (BigDecimal) r[2]))
+                .toList();
+    }
     @Transactional
     public SupplierProductResponse upsertProduct(Long supplierId, SupplierProductRequest request) {
         getOrThrow(supplierId); // valida que o fornecedor existe
@@ -125,7 +164,7 @@ public class SupplierService {
     }
 
     private SupplierResponse toResponse(Supplier s) {
-        return new SupplierResponse(s.getId(), s.getUnitId(), s.getName(), s.getPhone(), s.getDocument());
+        return new SupplierResponse(s.getId(), s.getUnitId(), s.getName(), s.getPhone(), s.getDocument(), s.isActive());
     }
 
     private SupplierProductResponse toProductResponse(SupplierProduct sp) {

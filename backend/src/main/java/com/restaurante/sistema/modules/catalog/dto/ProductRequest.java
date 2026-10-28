@@ -21,6 +21,9 @@ public record ProductRequest(
 
         String description,
 
+        /** RF-014: modo de preparo. */
+        String preparationMethod,
+
         @NotNull(message = "O preco base e obrigatorio")
         @DecimalMin(value = "0.0", message = "O preco nao pode ser negativo")
         BigDecimal basePrice,

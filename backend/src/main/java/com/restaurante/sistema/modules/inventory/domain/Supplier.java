@@ -27,4 +27,8 @@ public class Supplier {
 
     @Column(length = 20)
     private String document;
+
+    /** Desativado: sai das novas compras, mas o historico continua. */
+    @Column(nullable = false)
+    private boolean active = true;
 }

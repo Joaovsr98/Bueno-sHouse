@@ -38,6 +38,10 @@ public class Product {
     @Column(length = 500)
     private String description;
 
+    /** RF-014: modo de preparo (texto livre). */
+    @Column(name = "preparation_method", length = 1000)
+    private String preparationMethod;
+
     @Column(name = "base_price", nullable = false, precision = 15, scale = 2)
     private BigDecimal basePrice;
 

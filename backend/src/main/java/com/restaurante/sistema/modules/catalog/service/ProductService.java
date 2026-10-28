@@ -154,6 +154,7 @@ public class ProductService {
 
         product.setName(request.name());
         product.setDescription(request.description());
+        product.setPreparationMethod(request.preparationMethod());
         product.setBasePrice(request.basePrice());
         product.setImageUrl(request.imageUrl());
         product.setPrepTimeMinutes(request.prepTimeMinutes());
@@ -205,6 +206,7 @@ public class ProductService {
                 p.getCategory().getName(),
                 p.getName(),
                 p.getDescription(),
+                p.getPreparationMethod(),
                 p.getBasePrice(),
                 p.getImageUrl(),
                 p.getPrepTimeMinutes(),

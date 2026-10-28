@@ -62,8 +62,10 @@ public class PurchaseService {
 
     @Transactional
     public PurchaseResponse create(PurchaseRequest request) {
-        if (!supplierRepository.existsById(request.supplierId())) {
-            throw new ResourceNotFoundException("Supplier", request.supplierId());
+        Supplier supplier = supplierRepository.findById(request.supplierId())
+                .orElseThrow(() -> new ResourceNotFoundException("Supplier", request.supplierId()));
+        if (!supplier.isActive()) {
+            throw new BusinessException("Fornecedor desativado: reative-o para fazer novas compras");
         }
 
         Purchase purchase = new Purchase();

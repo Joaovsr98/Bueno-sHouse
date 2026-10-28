@@ -85,7 +85,7 @@ class CatalogControllerIT {
         Long categoryId = categoryResponse.getBody().id();
 
         ProductRequest productRequest = new ProductRequest(
-                DEMO_UNIT_ID, categoryId, "Combo Teste", "Descricao de teste",
+                DEMO_UNIT_ID, categoryId, "Combo Teste", "Descricao de teste", "Grelhar o blend e montar no pao",
                 new BigDecimal("39.90"), null, 15, null, false, false, List.of(), null
         );
 
@@ -96,13 +96,14 @@ class CatalogControllerIT {
         assertThat(productResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(productResponse.getBody().name()).isEqualTo("Combo Teste");
         assertThat(productResponse.getBody().basePrice()).isEqualByComparingTo("39.90");
+        assertThat(productResponse.getBody().preparationMethod()).isEqualTo("Grelhar o blend e montar no pao");
     }
 
     @Test
     void createActiveProductWithoutRecipeReturns422() {
         HttpHeaders headers = authHeaders();
         ProductRequest productRequest = new ProductRequest(
-                DEMO_UNIT_ID, 1L, "Prato sem ficha", "RN01",
+                DEMO_UNIT_ID, 1L, "Prato sem ficha", "RN01", null,
                 new BigDecimal("10.00"), null, 10, null, true, false, List.of(), null
         );
 
@@ -123,5 +124,23 @@ class CatalogControllerIT {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotEmpty(); // produtos do V900__seed_demo_data.sql
+    }
+
+    @Test
+    void missingRequiredParameterReturns400NamingIt() {
+        ResponseEntity<String> response = restTemplate.getForEntity("/api/products", String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).contains("unitId");
+    }
+
+    @Test
+    void tokenCarriesTheProfile() {
+        LoginResponse login = restTemplate.postForEntity("/api/auth/login",
+                new LoginRequest("admin@demo.local", "admin123"), LoginResponse.class).getBody();
+
+        // payload do JWT (segunda parte, base64url): deve trazer o perfil (RF-038)
+        String payload = new String(java.util.Base64.getUrlDecoder().decode(login.token().split("\\.")[1]));
+        assertThat(payload).contains("\"profile\":\"ADMINISTRADOR\"");
     }
 }

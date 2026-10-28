@@ -5,6 +5,7 @@ import com.restaurante.sistema.modules.reports.dto.AverageTicketResponse;
 import com.restaurante.sistema.modules.reports.dto.DailyRevenueResponse;
 import com.restaurante.sistema.modules.reports.dto.MonthlyRevenueResponse;
 import com.restaurante.sistema.modules.reports.dto.TopProductResponse;
+import com.restaurante.sistema.modules.reports.dto.TodaySummaryResponse;
 import com.restaurante.sistema.modules.reports.service.ReportService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +22,12 @@ public class ReportController {
 
     public ReportController(ReportService reportService) {
         this.reportService = reportService;
+    }
+
+    /** RF-034: indicadores do dia (faturamento, pedidos, ticket medio). */
+    @GetMapping("/today")
+    public TodaySummaryResponse today(@RequestParam Long unitId) {
+        return reportService.today(unitId);
     }
 
     @GetMapping("/daily-revenue")

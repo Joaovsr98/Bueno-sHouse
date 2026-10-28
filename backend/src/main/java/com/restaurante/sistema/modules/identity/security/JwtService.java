@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -44,8 +45,17 @@ public class JwtService {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMinutes * 60_000);
 
+        // RF-038: o perfil (ADMINISTRADOR, CLIENTE...) vai no token, alem do e-mail.
+        String profile = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(a -> a.startsWith("ROLE_"))
+                .map(a -> a.substring("ROLE_".length()))
+                .findFirst()
+                .orElse(null);
+
         return Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim("profile", profile)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(signingKey)

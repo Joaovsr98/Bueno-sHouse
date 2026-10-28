@@ -95,6 +95,32 @@ public class GlobalExceptionHandler {
                 .body(ApiError.of(405, "Metodo nao permitido", ex.getMessage(), req.getRequestURI()));
     }
 
+    /** Parametro obrigatorio ausente (ex.: GET /api/products sem unitId): 400 dizendo qual. */
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiError> handleMissingParam(
+            org.springframework.web.bind.MissingServletRequestParameterException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of(400, "Requisicao invalida",
+                        "Parametro obrigatorio ausente: " + ex.getParameterName(), req.getRequestURI()));
+    }
+
+    /** Parametro ou trecho da URL com tipo errado (ex.: unitId=abc): 400. */
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleTypeMismatch(
+            org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of(400, "Requisicao invalida",
+                        "Valor invalido para o parametro: " + ex.getName(), req.getRequestURI()));
+    }
+
+    /** Corpo ausente ou JSON mal formado: 400. */
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleUnreadable(Exception ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of(400, "Requisicao invalida",
+                        "Corpo da requisicao ausente ou em formato invalido.", req.getRequestURI()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(Exception ex, HttpServletRequest req) {
         // Erro nao mapeado explicitamente: nunca expor a mensagem interna/stack trace.
