@@ -235,7 +235,8 @@ public class InventoryService {
                 recipeRepository.findByProductId(productId).ifPresent(recipe -> {
                     for (RecipeItem recipeItem : recipe.getItems()) {
                         needed.merge(recipeItem.getInventoryItemId(),
-                                recipeItem.getQuantity().multiply(BigDecimal.valueOf(quantity)), BigDecimal::add);
+                                consumptionPerServing(recipe, recipeItem).multiply(BigDecimal.valueOf(quantity)),
+                                BigDecimal::add);
                     }
                 }));
 
@@ -267,7 +268,7 @@ public class InventoryService {
             for (RecipeItem recipeItem : recipe.getItems()) {
                 InventoryItem inventoryItem = getOrThrow(recipeItem.getInventoryItemId());
 
-                BigDecimal quantityToDeduct = recipeItem.getQuantity().multiply(BigDecimal.valueOf(quantitySold));
+                BigDecimal quantityToDeduct = consumptionPerServing(recipe, recipeItem).multiply(BigDecimal.valueOf(quantitySold));
                 inventoryItem.setCurrentQuantity(inventoryItem.getCurrentQuantity().subtract(quantityToDeduct));
                 inventoryItemRepository.save(inventoryItem);
 
@@ -312,6 +313,18 @@ public class InventoryService {
             reversal.setCreatedAt(Instant.now());
             stockMovementRepository.save(reversal);
         }
+    }
+
+    /**
+     * Consumo de um ingrediente por porcao vendida: quantidade x fator de correcao /
+     * rendimento - a mesma base do calculo de custo da ficha (RF-012), para baixa e
+     * custo nunca divergirem.
+     */
+    private BigDecimal consumptionPerServing(Recipe recipe, RecipeItem recipeItem) {
+        BigDecimal factor = recipeItem.getCorrectionFactor() != null ? recipeItem.getCorrectionFactor() : BigDecimal.ONE;
+        BigDecimal yield = recipe.getYieldQuantity() != null && recipe.getYieldQuantity().signum() > 0
+                ? recipe.getYieldQuantity() : BigDecimal.ONE;
+        return recipeItem.getQuantity().multiply(factor).divide(yield, 3, RoundingMode.HALF_UP);
     }
 
     private InventoryItem getOrThrow(Long id) {
