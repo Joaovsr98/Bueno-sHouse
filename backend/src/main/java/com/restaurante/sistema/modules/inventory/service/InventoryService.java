@@ -67,7 +67,7 @@ public class InventoryService {
 
     @Transactional(readOnly = true)
     public List<InventoryItemResponse> listByUnit(Long unitId) {
-        return inventoryItemRepository.findByUnitId(unitId).stream().map(this::toResponse).toList();
+        return inventoryItemRepository.findByUnitIdAndActiveTrueOrderByNameAsc(unitId).stream().map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -104,6 +104,29 @@ public class InventoryService {
         item.setMinimumQuantity(request.minimumQuantity() != null ? request.minimumQuantity() : BigDecimal.ZERO);
         item.setCostPerUnit(request.costPerUnit() != null ? request.costPerUnit() : BigDecimal.ZERO);
         return toResponse(inventoryItemRepository.save(item));
+    }
+
+    /** RF-027: edicao do cadastro. O saldo so muda por movimentacao, nunca aqui. */
+    @Transactional
+    public InventoryItemResponse update(Long id, InventoryItemRequest request) {
+        InventoryItem item = getOrThrow(id);
+        item.setName(request.name());
+        item.setUnitOfMeasure(request.unitOfMeasure());
+        if (request.minimumQuantity() != null) {
+            item.setMinimumQuantity(request.minimumQuantity());
+        }
+        if (request.costPerUnit() != null) {
+            item.setCostPerUnit(request.costPerUnit());
+        }
+        return toResponse(inventoryItemRepository.save(item));
+    }
+
+    /** RN06: soft delete - o ingrediente sai das listagens, o historico continua. */
+    @Transactional
+    public void deactivate(Long id) {
+        InventoryItem item = getOrThrow(id);
+        item.setActive(false);
+        inventoryItemRepository.save(item);
     }
 
     @Transactional

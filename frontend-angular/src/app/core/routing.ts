@@ -9,7 +9,9 @@ export function defaultRouteForRole(profileName: string | undefined): string {
       return '/cozinha';
     case 'CAIXA':
       return '/caixa';
-    default:
+    case 'GARCOM':
       return '/mesas';
+    default:
+      return '/pedidos';
   }
 }

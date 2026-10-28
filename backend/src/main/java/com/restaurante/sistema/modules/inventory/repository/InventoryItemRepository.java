@@ -8,8 +8,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface InventoryItemRepository extends JpaRepository<InventoryItem, Long> {
-    List<InventoryItem> findByUnitId(Long unitId);
+    List<InventoryItem> findByUnitIdAndActiveTrueOrderByNameAsc(Long unitId);
 
-    @Query("SELECT i FROM InventoryItem i WHERE i.unitId = :unitId AND i.currentQuantity < i.minimumQuantity")
+    @Query("SELECT i FROM InventoryItem i WHERE i.unitId = :unitId AND i.active = true AND i.currentQuantity < i.minimumQuantity")
     List<InventoryItem> findBelowMinimum(@Param("unitId") Long unitId);
 }

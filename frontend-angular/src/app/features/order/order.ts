@@ -6,6 +6,7 @@ import { AuthService } from '../../core/auth.service';
 import { CategoryResponse, ProductResponse, OrderResponse } from '../../core/models';
 import { currency } from '../../core/format';
 import { OrderPayment } from './order-payment';
+import { ORDER_STATUS_LABELS } from '../../core/order-status';
 
 interface CartLine {
   productId: number;
@@ -14,16 +15,6 @@ interface CartLine {
   quantity: number;
   notes: string;
 }
-
-const ORDER_STATUS_LABELS: Record<string, string> = {
-  RECEBIDO: 'Recebido',
-  ENVIADO_PARA_COZINHA: 'Enviado para cozinha',
-  EM_PREPARO: 'Em preparo',
-  PARCIALMENTE_PRONTO: 'Parcialmente pronto',
-  PRONTO: 'Pronto',
-  FINALIZADO: 'Finalizado',
-  CANCELADO: 'Cancelado',
-};
 
 @Component({
   selector: 'app-order',

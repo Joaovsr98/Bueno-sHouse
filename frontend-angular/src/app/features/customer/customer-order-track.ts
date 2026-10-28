@@ -3,16 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { OrderResponse } from '../../core/models';
 import { currency } from '../../core/format';
-
-// Etapas visiveis para o cliente (mapeamento dos status internos -> 5 estados
-// academicos: recebido → preparando → pronto → a caminho → entregue).
-const STEPS = [
-  { key: 'received', label: 'Recebido', statuses: ['RECEBIDO'] },
-  { key: 'preparing', label: 'Em preparo', statuses: ['ENVIADO_PARA_COZINHA', 'EM_PREPARO', 'PARCIALMENTE_PRONTO'] },
-  { key: 'ready', label: 'Pronto', statuses: ['PRONTO', 'AGUARDANDO_ENTREGADOR', 'RETIRADA_NO_RESTAURANTE'] },
-  { key: 'delivering', label: 'A caminho', statuses: ['SAIU_PARA_ENTREGA', 'EM_ROTA'] },
-  { key: 'delivered', label: 'Entregue', statuses: ['ENTREGUE', 'FINALIZADO'] },
-];
+import { ORDER_TIMELINE } from '../../core/order-status';
 
 @Component({
   selector: 'app-customer-order-track',
@@ -24,7 +15,7 @@ export class CustomerOrderTrack implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
 
   readonly currency = currency;
-  readonly steps = STEPS;
+  readonly steps = ORDER_TIMELINE;
   orderId = this.route.snapshot.paramMap.get('orderId')!;
   order = signal<OrderResponse | null>(null);
   error = signal<string | null>(null);

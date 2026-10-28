@@ -3,19 +3,8 @@ import { RouterLink } from '@angular/router';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { OrderResponse } from '../../core/models';
 import { currency } from '../../core/format';
+import { orderStatusLabel } from '../../core/order-status';
 
-const STATUS_LABELS: Record<string, string> = {
-  RECEBIDO: 'Recebido',
-  ENVIADO_PARA_COZINHA: 'Enviado para a cozinha',
-  EM_PREPARO: 'Em preparo',
-  PARCIALMENTE_PRONTO: 'Quase pronto',
-  PRONTO: 'Pronto',
-  AGUARDANDO_ENTREGADOR: 'Aguardando entregador',
-  SAIU_PARA_ENTREGA: 'Saiu para entrega',
-  ENTREGUE: 'Entregue',
-  FINALIZADO: 'Finalizado',
-  CANCELADO: 'Cancelado',
-};
 
 @Component({
   selector: 'app-customer-orders',
@@ -26,7 +15,6 @@ export class CustomerOrders {
   private readonly api = inject(ApiService);
 
   readonly currency = currency;
-  readonly statusLabels = STATUS_LABELS;
   orders = signal<OrderResponse[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
@@ -45,6 +33,6 @@ export class CustomerOrders {
   }
 
   label(status: string): string {
-    return this.statusLabels[status] ?? status;
+    return orderStatusLabel(status);
   }
 }

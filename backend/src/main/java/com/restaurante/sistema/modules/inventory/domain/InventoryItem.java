@@ -35,4 +35,8 @@ public class InventoryItem {
 
     @Column(name = "cost_per_unit", precision = 15, scale = 4)
     private BigDecimal costPerUnit = BigDecimal.ZERO;
+
+    /** RN06: soft delete - false = desativado. */
+    @Column(nullable = false)
+    private boolean active = true;
 }

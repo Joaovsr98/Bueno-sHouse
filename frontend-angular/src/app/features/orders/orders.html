@@ -1,0 +1,153 @@
+<div class="p-4 sm:p-6 space-y-4">
+  <div class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-bold">Pedidos</h1>
+      <p class="text-sm text-neutral-500">Confirme os pedidos recebidos. A confirmação baixa o estoque e envia para a cozinha.</p>
+    </div>
+    <span class="text-xs text-neutral-500">{{ total() }} pedido(s)</span>
+  </div>
+
+  <form (ngSubmit)="applyFilters()" class="glass rounded-2xl p-4 grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+    <label class="space-y-1">
+      <span class="text-xs text-neutral-500">Status</span>
+      <select name="status" [(ngModel)]="statusFilter" class="w-full rounded-lg bg-ink-850 border border-white/10 px-2 py-2">
+        @for (f of statusFilters; track f.value) {
+          <option [value]="f.value">{{ f.label }}</option>
+        }
+      </select>
+    </label>
+    <label class="space-y-1">
+      <span class="text-xs text-neutral-500">Canal</span>
+      <select name="channel" [(ngModel)]="channel" class="w-full rounded-lg bg-ink-850 border border-white/10 px-2 py-2">
+        <option value="">Todos</option>
+        @for (c of channels; track c) {
+          <option [value]="c">{{ channelLabels[c] }}</option>
+        }
+      </select>
+    </label>
+    <label class="space-y-1">
+      <span class="text-xs text-neutral-500">De</span>
+      <input type="date" name="from" [(ngModel)]="from" class="w-full rounded-lg bg-ink-850 border border-white/10 px-2 py-2" />
+    </label>
+    <label class="space-y-1">
+      <span class="text-xs text-neutral-500">Até</span>
+      <input type="date" name="to" [(ngModel)]="to" class="w-full rounded-lg bg-ink-850 border border-white/10 px-2 py-2" />
+    </label>
+    <div class="flex items-end">
+      <button type="submit" class="w-full btn-brand rounded-xl py-2">Filtrar</button>
+    </div>
+  </form>
+
+  <div [class]="selected() ? 'grid gap-4 lg:grid-cols-[1fr_22rem]' : 'grid gap-4'">
+    <div class="glass rounded-2xl overflow-hidden">
+      @if (loading()) {
+        <p class="p-6 text-sm text-neutral-500">Carregando pedidos...</p>
+      } @else if (orders().length === 0) {
+        <p class="p-6 text-sm text-neutral-500">Nenhum pedido encontrado com esses filtros.</p>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="text-xs uppercase tracking-wide text-neutral-500 border-b border-white/10">
+              <tr>
+                <th class="text-left px-4 py-3">Nº</th>
+                <th class="text-left px-4 py-3">Canal</th>
+                <th class="text-left px-4 py-3">Status</th>
+                <th class="text-right px-4 py-3">Total</th>
+                <th class="text-left px-4 py-3 hidden sm:table-cell">Criado</th>
+                <th class="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (o of orders(); track o.id) {
+                <tr
+                  (click)="open(o)"
+                  class="border-b border-white/5 hover:bg-white/5 cursor-pointer"
+                  [style.background]="selected()?.id === o.id ? 'rgba(249, 115, 22, 0.10)' : null"
+                >
+                  <td class="px-4 py-3 font-medium">#{{ o.orderNumber }}</td>
+                  <td class="px-4 py-3">{{ channelLabels[o.channel] || o.channel }}</td>
+                  <td class="px-4 py-3">
+                    <span class="text-xs rounded-full border border-brand-500/30 text-brand-300 px-2 py-0.5">{{ statusLabel(o.status) }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-right">{{ currency(o.total) }}</td>
+                  <td class="px-4 py-3 text-neutral-400 hidden sm:table-cell">{{ o.createdAt | date: 'dd/MM HH:mm' }}</td>
+                  <td class="px-4 py-3 text-right whitespace-nowrap" (click)="$event.stopPropagation()">
+                    @if (canConfirm(o)) {
+                      <button (click)="confirm(o)" [disabled]="busy()" class="btn-brand rounded-lg px-3 py-1 text-xs">Confirmar</button>
+                    }
+                    @if (canFinish(o)) {
+                      <button (click)="finish(o)" [disabled]="busy()" class="rounded-lg px-3 py-1 text-xs bg-white/10">Finalizar</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="flex items-center justify-between px-4 py-3 text-xs text-neutral-400">
+          <span>Página {{ page() + 1 }} de {{ pages() }}</span>
+          <div class="flex gap-2">
+            <button (click)="goTo(page() - 1)" [disabled]="page() === 0" class="rounded-lg px-3 py-1 bg-white/10 disabled:opacity-40">Anterior</button>
+            <button (click)="goTo(page() + 1)" [disabled]="page() + 1 >= pages()" class="rounded-lg px-3 py-1 bg-white/10 disabled:opacity-40">Próxima</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (selected(); as o) {
+      <aside class="glass rounded-2xl p-5 space-y-4 h-fit">
+        <div class="flex items-start justify-between">
+          <div>
+            <h2 class="text-lg font-bold">Pedido #{{ o.orderNumber }}</h2>
+            <p class="text-xs text-neutral-500">{{ channelLabels[o.channel] || o.channel }} · {{ o.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+          </div>
+          <button (click)="close()" class="text-neutral-500 hover:text-neutral-200" aria-label="Fechar">×</button>
+        </div>
+
+        <span class="inline-block text-xs rounded-full border border-brand-500/30 text-brand-300 px-2 py-0.5">{{ statusLabel(o.status) }}</span>
+
+        <ul class="space-y-1 text-sm">
+          @for (item of o.items; track item.id) {
+            <li class="flex justify-between gap-2">
+              <span class="text-neutral-300">{{ item.quantity }}x {{ item.productName }}
+                @if (item.notes) { <span class="block text-xs text-neutral-500">Obs.: {{ item.notes }}</span> }
+              </span>
+              <span class="text-neutral-400">{{ currency(item.subtotal) }}</span>
+            </li>
+          }
+        </ul>
+
+        <div class="border-t border-white/10 pt-3 space-y-1 text-sm">
+          <div class="flex justify-between"><span class="text-neutral-400">Subtotal</span><span>{{ currency(o.subtotal) }}</span></div>
+          @if (o.deliveryFee > 0) {
+            <div class="flex justify-between"><span class="text-neutral-400">Entrega</span><span>{{ currency(o.deliveryFee) }}</span></div>
+          }
+          <div class="flex justify-between font-semibold"><span>Total</span><span class="text-brand-300">{{ currency(o.total) }}</span></div>
+        </div>
+
+        @if (o.notes) {
+          <p class="text-xs text-neutral-400">Observações: {{ o.notes }}</p>
+        }
+        @if (delivery(); as d) {
+          <div class="text-xs text-neutral-400 space-y-1">
+            <p class="text-neutral-300 font-medium">Entrega</p>
+            <p>{{ d.addressSnapshot }}</p>
+            <p>Status da entrega: {{ d.status }}</p>
+          </div>
+        }
+
+        <div class="flex flex-wrap gap-2">
+          @if (canConfirm(o)) {
+            <button (click)="confirm(o)" [disabled]="busy()" class="btn-brand rounded-xl px-4 py-2 text-sm">Confirmar pedido</button>
+          }
+          @if (canFinish(o)) {
+            <button (click)="finish(o)" [disabled]="busy()" class="rounded-xl px-4 py-2 text-sm bg-white/10">Finalizar</button>
+          }
+          @if (canCancel(o)) {
+            <button (click)="cancel(o)" [disabled]="busy()" class="rounded-xl px-4 py-2 text-sm bg-red-950/60 text-red-300 border border-red-800/60">Cancelar</button>
+          }
+        </div>
+      </aside>
+    }
+  </div>
+</div>

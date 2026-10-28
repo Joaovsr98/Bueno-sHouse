@@ -41,6 +41,17 @@ public class InventoryController {
         return inventoryService.create(request);
     }
 
+    @PutMapping("/items/{id}")
+    public InventoryItemResponse update(@PathVariable Long id, @Valid @RequestBody InventoryItemRequest request) {
+        return inventoryService.update(id, request);
+    }
+
+    @DeleteMapping("/items/{id}")
+    public ResponseEntity<Void> deactivate(@PathVariable Long id) {
+        inventoryService.deactivate(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/items/{id}/movements")
     @ResponseStatus(HttpStatus.CREATED)
     public StockMovementResponse registerMovement(@PathVariable Long id, @Valid @RequestBody StockMovementRequest request) {
