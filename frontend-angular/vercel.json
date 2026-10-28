@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    { "source": "/api/:path*", "destination": "https://bueno-s-house-api.onrender.com/api/:path*" },
     { "source": "/((?!api/|ws).*)", "destination": "/index.html" }
   ]
 }
