@@ -43,7 +43,8 @@ jobs:
               echo "::error title=causa::$(echo "$cause" | cut -c1-1500)"
             done
           for f in "${files[@]}"; do
-            grep -hE "AssertionFailedError|expected:|Expecting" "$f" | head -1 | sed "s|^|$(basename "$f" .txt): |"
+            grep -hE -A3 "AssertionFailedError|Expecting" "$f" | head -4 | tr "
+" " " | sed "s|^|$(basename "$f" .txt): |"
           done | grep -v '^\s*$' | head -5 | while read -r fail; do
             echo "::error title=assercao::$(echo "$fail" | cut -c1-800)"
           done

@@ -128,7 +128,10 @@ class DeliveryFlowIT {
         List<KitchenTaskResponse> tasksBefore = List.of(restTemplate.exchange(
                 "/api/kitchen/tasks?sectorId=" + chapaSectorId, HttpMethod.GET,
                 new HttpEntity<>(headers), KitchenTaskResponse[].class).getBody());
-        Long orderItemId = tasksBefore.get(0).orderItemId();
+        // A fila da chapa pode ter outros pedidos (seed de demonstracao): pega a tarefa deste pedido.
+        Long orderItemId = tasksBefore.stream()
+                .filter(t -> t.orderId().equals(order.id()))
+                .findFirst().orElseThrow().orderItemId();
 
         restTemplate.exchange("/api/kitchen/tasks/" + orderItemId + "/start", HttpMethod.POST,
                 new HttpEntity<>(headers), KitchenTaskResponse.class);
