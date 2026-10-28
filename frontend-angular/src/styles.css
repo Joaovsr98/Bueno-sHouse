@@ -268,3 +268,23 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
 @media (prefers-reduced-motion: reduce) {
   .logo-spark, .reveal { animation: none; }
 }
+
+/* Emblema gravado ao fundo (capa premium): baixa opacidade, mistura de luz e bordas
+   esmaecidas para nao competir com o texto. Puramente decorativo (aria-hidden). */
+.emblem-bg {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.16;
+  mix-blend-mode: screen;
+  filter: saturate(0.85) contrast(1.05);
+  -webkit-mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 62%, transparent 100%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .emblem-bg { animation: emblem-breathe 9s ease-in-out infinite; }
+}
+@keyframes emblem-breathe {
+  0%, 100% { opacity: 0.14; transform: var(--emblem-pos) scale(1); }
+  50% { opacity: 0.2; transform: var(--emblem-pos) scale(1.02); }
+}

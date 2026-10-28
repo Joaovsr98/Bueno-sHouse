@@ -15,9 +15,8 @@ import { Icon } from '../../shared/icon';
   imports: [RouterLink, Logo, Icon],
   template: `
     <div class="relative min-h-screen overflow-hidden flex flex-col">
-      <div class="pointer-events-none absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 w-[64rem] h-[64rem] rounded-full border border-brand-500/10"></div>
-      <div class="pointer-events-none absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 w-[46rem] h-[46rem] rounded-full border border-brand-500/15"></div>
-      <div class="pointer-events-none absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 w-[28rem] h-[28rem] rounded-full border border-brand-500/20"></div>
+      <img src="emblema.webp" alt="" aria-hidden="true" class="emblem-bg w-[58rem] h-[58rem] left-1/2 top-[40%]"
+        style="--emblem-pos: translate(-50%, -50%); transform: translate(-50%, -50%)" />
 
       <header class="relative px-6 sm:px-10 py-6 reveal">
         <app-logo [size]="44" />
@@ -39,9 +38,9 @@ import { Icon } from '../../shared/icon';
           <a [routerLink]="customerLink()" class="door group">
             <span class="door-icon"><app-icon name="cart" [size]="26" /></span>
             <span class="eyebrow-plain text-[0.62rem]">Para você</span>
-            <span class="block font-display text-3xl font-bold uppercase mt-2">Quero pedir</span>
+            <span class="block font-display text-2xl xl:text-[1.7rem] font-bold uppercase mt-2 leading-tight">Quero matar minha fome</span>
             <span class="block text-sm text-neutral-400 mt-3 leading-relaxed">
-              Cardápio digital, carrinho com observações e acompanhamento do pedido até a sua porta.
+              Escolha no cardápio, peça do seu jeito e acompanhe cada etapa até o lanche chegar na sua porta.
             </span>
             <span class="door-cta">{{ isCustomer() ? 'Continuar pedindo' : 'Ver o cardápio' }} <app-icon name="arrow" [size]="16" /></span>
           </a>
@@ -49,9 +48,9 @@ import { Icon } from '../../shared/icon';
           <a [routerLink]="staffLink()" class="door group">
             <span class="door-icon"><app-icon name="chef" [size]="26" /></span>
             <span class="eyebrow-plain text-[0.62rem]">Para a equipe</span>
-            <span class="block font-display text-3xl font-bold uppercase mt-2">Sou do restaurante</span>
+            <span class="block font-display text-2xl xl:text-[1.7rem] font-bold uppercase mt-2 leading-tight">Bora acender a chapa</span>
             <span class="block text-sm text-neutral-400 mt-3 leading-relaxed">
-              Pedidos, cozinha, caixa, estoque, fichas técnicas e dashboard do restaurante.
+              Pedidos, cozinha, caixa, estoque e dashboard: tudo o que a equipe precisa para o serviço rodar.
             </span>
             <span class="door-cta">{{ isStaff() ? 'Voltar ao sistema' : 'Entrar no sistema' }} <app-icon name="arrow" [size]="16" /></span>
           </a>
