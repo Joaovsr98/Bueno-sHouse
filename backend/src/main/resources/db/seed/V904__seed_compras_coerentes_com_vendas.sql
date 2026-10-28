@@ -47,7 +47,7 @@ FROM (
            ROUND(i.cost_per_unit
                  * (1 - 0.015 * TIMESTAMPDIFF(MONTH, c.mes, DATE_FORMAT(CURDATE(), '%Y-%m-01')))
                  * CASE WHEN s.name = 'Distribuidora Sabor Real' THEN 0.97 ELSE 1 END
-                 * (1 + (MOD(CRC32(CONCAT(i.name, c.mes)), 5) - 2) / 100), 4) AS preco
+                 * (1 + (CAST(MOD(CRC32(CONCAT(i.name, c.mes)), 5) AS SIGNED) - 2) / 100), 4) AS preco
     FROM seed_consumo_tmp c
     JOIN purchases p ON p.unit_id = 1 AND p.status = 'RECEBIDO' AND p.purchased_at = c.mes + INTERVAL 1 DAY
     JOIN suppliers s ON s.id = p.supplier_id
@@ -133,3 +133,9 @@ UPDATE products SET preparation_method = CASE name
     WHEN 'Pudim de Leite' THEN 'Leite condensado, leite e ovos batidos e assados em banho-maria sobre calda de caramelo. Desenformado gelado, em fatias.'
     ELSE preparation_method END
 WHERE unit_id = 1 AND deleted_at IS NULL;
+
+-- Fotos dos lanches de exemplo (arquivos do proprio frontend, em /public).
+UPDATE products SET image_url = '/comida-cheeseburger.webp'
+WHERE unit_id = 1 AND name = 'X-Burguer Artesanal' AND image_url IS NULL;
+UPDATE products SET image_url = '/comida-burger-fritas.webp'
+WHERE unit_id = 1 AND name = 'X-Bacon Duplo' AND image_url IS NULL;
