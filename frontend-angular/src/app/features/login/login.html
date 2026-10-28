@@ -5,7 +5,7 @@
     <div class="absolute -right-24 top-1/2 -translate-y-1/2 w-[28rem] h-[28rem] rounded-full border border-brand-500/20"></div>
     <div class="absolute -right-8 top-1/2 -translate-y-1/2 w-[18rem] h-[18rem] rounded-full border border-brand-500/25"></div>
 
-    <app-logo [size]="52" class="relative reveal" />
+    <a routerLink="/" class="relative reveal w-fit" aria-label="Voltar ao início"><app-logo [size]="52" /></a>
 
     <div class="relative max-w-xl">
       <p class="eyebrow reveal reveal-1">Dark kitchen · Gestão de ponta a ponta</p>
@@ -28,7 +28,7 @@
   <!-- Lado do acesso -->
   <section class="flex items-center justify-center p-6 sm:p-10">
     <div class="w-full max-w-md space-y-7 reveal">
-      <div class="lg:hidden flex justify-center"><app-logo [size]="48" /></div>
+      <div class="lg:hidden flex justify-center"><a routerLink="/" aria-label="Voltar ao início"><app-logo [size]="48" /></a></div>
 
       <div>
         <p class="eyebrow">Acesso</p>
@@ -96,7 +96,10 @@
           Criar conta <app-icon name="arrow" [size]="14" />
         </a>
       </div>
-      <a routerLink="/app/cardapio" class="block text-center text-xs text-neutral-500 hover:text-neutral-300">Ver o cardápio sem entrar</a>
+      <div class="flex justify-center gap-6 text-xs text-neutral-500">
+        <a routerLink="/" class="hover:text-neutral-300">Voltar ao início</a>
+        <a routerLink="/app/cardapio" class="hover:text-neutral-300">Ver o cardápio sem entrar</a>
+      </div>
     </div>
   </section>
 </div>

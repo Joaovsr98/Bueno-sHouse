@@ -21,6 +21,6 @@ export class CustomerLayout {
 
   logout(): void {
     this.auth.logout();
-    this.router.navigateByUrl('/login');
+    this.router.navigateByUrl('/');
   }
 }

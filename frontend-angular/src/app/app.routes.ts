@@ -4,6 +4,12 @@ import { roleGuard, SCREEN_ROLES, STAFF_ROLES } from './core/role.guard';
 
 export const routes: Routes = [
   {
+    // Pagina inicial: separa a entrada do cliente da entrada da equipe.
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () => import('./features/home/home').then((m) => m.Home),
+  },
+  {
     path: 'login',
     loadComponent: () => import('./features/login/login').then((m) => m.Login),
   },

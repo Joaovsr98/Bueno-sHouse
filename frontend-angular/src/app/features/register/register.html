@@ -4,7 +4,7 @@
     <div class="absolute -left-40 top-1/2 -translate-y-1/2 w-[38rem] h-[38rem] rounded-full border border-brand-500/15"></div>
     <div class="absolute -left-24 top-1/2 -translate-y-1/2 w-[28rem] h-[28rem] rounded-full border border-brand-500/20"></div>
 
-    <a routerLink="/app/cardapio" class="relative reveal"><app-logo [size]="52" /></a>
+    <a routerLink="/" class="relative reveal w-fit" aria-label="Voltar ao início"><app-logo [size]="52" /></a>
 
     <div class="relative max-w-lg">
       <p class="eyebrow reveal reveal-1">Nova conta · Cliente</p>
@@ -27,7 +27,7 @@
   <!-- Formulario -->
   <section class="flex items-center justify-center p-6 sm:p-10">
     <form (ngSubmit)="submit()" class="w-full max-w-lg space-y-6 reveal">
-      <div class="lg:hidden flex justify-center"><a routerLink="/app/cardapio"><app-logo [size]="48" /></a></div>
+      <div class="lg:hidden flex justify-center"><a routerLink="/" aria-label="Voltar ao início"><app-logo [size]="48" /></a></div>
 
       <div>
         <p class="eyebrow">Cadastro</p>
