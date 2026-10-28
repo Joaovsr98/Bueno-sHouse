@@ -7,6 +7,7 @@ import { AuthService } from '../../core/auth.service';
 import { CustomerResponse, DeliveryZoneResponse, LoginResponse, UnitResponse } from '../../core/models';
 import { defaultRouteForRole } from '../../core/routing';
 import { currency } from '../../core/format';
+import { Logo } from '../../shared/logo';
 
 /**
  * Cadastro publico de Cliente (RF-004): dados pessoais + endereco de entrega.
@@ -15,7 +16,7 @@ import { currency } from '../../core/format';
  */
 @Component({
   selector: 'app-register',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, Logo],
   templateUrl: './register.html',
 })
 export class Register {

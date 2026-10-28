@@ -4,6 +4,7 @@ import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ProductResponse } from '../../core/models';
 import { currency } from '../../core/format';
+import { Ring } from '../../shared/ring';
 
 interface StockItem { id: number; name: string; unitOfMeasure: string; }
 interface Recipe {
@@ -17,7 +18,7 @@ interface Recipe {
 
 @Component({
   selector: 'app-recipes',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, Ring],
   template: `
     <div class="page">
       <div class="mb-6">
@@ -50,12 +51,15 @@ interface Recipe {
             <p class="field-label">Custo por porção</p>
             <p class="kpi-value">{{ costLabel() }}</p>
           </div>
-          <div class="glass rounded-2xl p-4">
-            <p class="field-label">Food cost</p>
-            <p class="kpi-value">{{ foodCostLabel() }}</p>
-            @if (recipe()?.foodCostLevel; as level) {
-              <span class="badge mt-1" [class]="levelClass(level)">{{ levelLabel(level) }}</span>
-            }
+          <div class="glass rounded-2xl p-4 flex items-center gap-4">
+            <app-ring [value]="recipe()?.foodCostPercent ?? null" [size]="64" />
+            <div>
+              <p class="field-label">Food cost</p>
+              <p class="kpi-value">{{ foodCostLabel() }}</p>
+              @if (recipe()?.foodCostLevel; as level) {
+                <span class="badge mt-1" [class]="levelClass(level)">{{ levelLabel(level) }}</span>
+              }
+            </div>
           </div>
           <div class="glass rounded-2xl p-4">
             <p class="field-label">Situação no cardápio</p>

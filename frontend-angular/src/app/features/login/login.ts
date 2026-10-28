@@ -5,21 +5,23 @@ import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { LoginResponse } from '../../core/models';
 import { defaultRouteForRole } from '../../core/routing';
+import { Logo } from '../../shared/logo';
+import { Icon } from '../../shared/icon';
 
 const DEMO_PASSWORD = 'admin123';
 
 const QUICK_ACCESS = [
-  { email: 'admin@demo.local', label: 'Administrador', icon: '🛡️' },
-  { email: 'gerente@demo.local', label: 'Gerente', icon: '📊' },
-  { email: 'garcom@demo.local', label: 'Garçom', icon: '🍽️' },
-  { email: 'cozinha@demo.local', label: 'Cozinha', icon: '👨‍🍳' },
-  { email: 'caixa@demo.local', label: 'Caixa', icon: '💳' },
-  { email: 'motoboy@demo.local', label: 'Motoboy', icon: '🛵' },
+  { email: 'admin@demo.local', label: 'Administrador', icon: 'shield' },
+  { email: 'gerente@demo.local', label: 'Gerente', icon: 'chart' },
+  { email: 'garcom@demo.local', label: 'Garçom', icon: 'utensils' },
+  { email: 'cozinha@demo.local', label: 'Cozinha', icon: 'chef' },
+  { email: 'caixa@demo.local', label: 'Caixa', icon: 'card' },
+  { email: 'motoboy@demo.local', label: 'Motoboy', icon: 'bike' },
 ];
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, Logo, Icon],
   templateUrl: './login.html',
 })
 export class Login {

@@ -4,24 +4,26 @@ import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { UnitResponse } from '../../core/models';
 import { SCREEN_ROLES, hasRole } from '../../core/role.guard';
+import { Logo } from '../../shared/logo';
+import { Icon } from '../../shared/icon';
 
 const NAV_ITEMS = [
-  { to: '/pedidos', label: 'Pedidos', icon: '🧾' },
-  { to: '/mesas', label: 'Mesas', icon: '🍽️' },
-  { to: '/cozinha', label: 'Cozinha', icon: '👨‍🍳' },
-  { to: '/caixa', label: 'Caixa', icon: '💳' },
-  { to: '/catalogo', label: 'Catálogo', icon: '📖' },
-  { to: '/motoboy', label: 'Motoboy', icon: '🛵' },
-  { to: '/estoque', label: 'Estoque', icon: '🥫' },
-  { to: '/fornecedores', label: 'Fornecedores e compras', icon: '📦' },
-  { to: '/fichas-tecnicas', label: 'Fichas técnicas', icon: '📋' },
-  { to: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { to: '/usuarios', label: 'Usuários', icon: '👤' },
+  { to: '/pedidos', label: 'Pedidos', icon: 'receipt' },
+  { to: '/mesas', label: 'Mesas', icon: 'tables' },
+  { to: '/cozinha', label: 'Cozinha', icon: 'flame' },
+  { to: '/caixa', label: 'Caixa', icon: 'wallet' },
+  { to: '/catalogo', label: 'Catálogo', icon: 'book' },
+  { to: '/motoboy', label: 'Motoboy', icon: 'bike' },
+  { to: '/estoque', label: 'Estoque', icon: 'package' },
+  { to: '/fornecedores', label: 'Fornecedores e compras', icon: 'truck' },
+  { to: '/fichas-tecnicas', label: 'Fichas técnicas', icon: 'clipboard' },
+  { to: '/dashboard', label: 'Dashboard', icon: 'chart' },
+  { to: '/usuarios', label: 'Usuários', icon: 'users' },
 ];
 
 @Component({
   selector: 'app-staff-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Logo, Icon],
   templateUrl: './staff-layout.html',
 })
 export class StaffLayout implements OnInit {
@@ -36,6 +38,13 @@ export class StaffLayout implements OnInit {
   );
   readonly unitId = this.auth.unitId;
   units = signal<UnitResponse[]>([]);
+  /** Menu lateral aberto no celular. */
+  menuOpen = signal(false);
+
+  readonly profileLabels: Record<string, string> = {
+    ADMINISTRADOR: 'Administrador', GERENTE: 'Gerente', CAIXA: 'Caixa',
+    GARCOM: 'Garçom', COZINHA: 'Cozinha', MOTOBOY: 'Motoboy',
+  };
 
   ngOnInit(): void {
     this.api.get<UnitResponse[]>('/units').subscribe({

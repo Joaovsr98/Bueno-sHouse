@@ -1,10 +1,14 @@
 <div class="p-4 sm:p-6 space-y-4">
   <div class="flex flex-wrap items-end justify-between gap-3">
-    <div>
-      <h1 class="text-xl font-bold">Pedidos</h1>
-      <p class="text-sm text-neutral-500">Confirme os pedidos recebidos. A confirmação baixa o estoque e envia para a cozinha.</p>
+    <div class="reveal">
+      <p class="eyebrow">Operação · Pedidos</p>
+      <h1 class="page-title mt-3">Painel de pedidos</h1>
+      <p class="page-sub mt-2">Confirme os pedidos recebidos: a confirmação baixa o estoque e envia para a cozinha.</p>
     </div>
-    <span class="text-xs text-neutral-500">{{ total() }} pedido(s)</span>
+    <div class="text-right reveal reveal-1">
+      <p class="kpi-value">{{ total() }}</p>
+      <p class="kpi-label">Pedido(s) no filtro</p>
+    </div>
   </div>
 
   <form (ngSubmit)="applyFilters()" class="glass rounded-2xl p-4 grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">

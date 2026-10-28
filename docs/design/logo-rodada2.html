@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bueno's House — logo rodada 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@500&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { background: radial-gradient(ellipse 60% 50% at 80% 0%, rgba(255,106,26,.14), transparent 60%), #07080c; color: #eef0f4; font-family: Inter, sans-serif; padding: 40px 28px 60px; }
+  .eyebrow { font: 500 11px "IBM Plex Mono", monospace; letter-spacing: .22em; text-transform: uppercase; color: #ff8c3a; }
+  h1 { font: 700 40px/1.05 "Space Grotesk", sans-serif; margin: 14px 0 8px; }
+  h1 span { background: linear-gradient(90deg, #ff6a1a, #f5b544); -webkit-background-clip: text; color: transparent; }
+  p.lead { color: #8b90a0; max-width: 660px; line-height: 1.6; }
+  .row { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 32px; }
+  .tile { width: 200px; height: 200px; border-radius: 44px; display: grid; place-items: center; }
+  .tile.light { background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+  .tile.dark { background: #11141c; border: 1px solid rgba(255,255,255,.08); }
+  .tile.ember { background: linear-gradient(145deg, #ff8c3a, #e8500c); }
+  .cap { font: 500 10px "IBM Plex Mono", monospace; letter-spacing: .18em; color: #8b90a0; text-transform: uppercase; margin-top: 10px; text-align: center; }
+  .lockup { display: flex; align-items: center; gap: 16px; padding: 22px 26px; border: 1px solid rgba(255,255,255,.08); border-radius: 20px; background: rgba(255,255,255,.02); }
+  .word { font: 700 30px/1 "Space Grotesk", sans-serif; letter-spacing: -.01em; }
+  .word small { display: block; font: 500 10px "IBM Plex Mono", monospace; letter-spacing: .3em; color: #8b90a0; margin-top: 8px; text-transform: uppercase; }
+  .tabs { display: flex; gap: 0; margin-top: 28px; background: #dee1e6; border-radius: 10px 10px 0 0; padding: 8px 8px 0; width: 520px; }
+  .tab { display: flex; gap: 8px; align-items: center; background: #fff; color: #222; font: 400 13px Inter; padding: 8px 14px; border-radius: 8px 8px 0 0; width: 240px; }
+  .tab.off { background: transparent; color: #555; }
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute">
+    <defs>
+      <linearGradient id="ring" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" stop-color="#e8500c"/><stop offset=".55" stop-color="#ff8c3a"/><stop offset="1" stop-color="#f5b544"/>
+      </linearGradient>
+      <linearGradient id="bun" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffb347"/><stop offset="1" stop-color="#e8770f"/>
+      </linearGradient>
+      <linearGradient id="stem" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#2a3350"/><stop offset="1" stop-color="#121729"/>
+      </linearGradient>
+      <!-- Marca: telhado (House) coroando um B cujas curvas sao pao e hamburguer, com arco de brasa -->
+      <symbol id="mark" viewBox="0 0 100 100">
+        <path d="M21.1 78.9 A38 38 0 1 1 67 19.1" fill="none" stroke="url(#ring)" stroke-width="5.5" stroke-linecap="round"/>
+        <circle cx="74" cy="15.5" r="3.6" fill="#f5b544"/>
+        <circle cx="82" cy="12" r="2" fill="#ffd27a"/>
+        <path d="M27 39 L50 21 L73 39" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="31" y="37" width="10" height="47" rx="3" fill="currentColor"/>
+        <path d="M41 37 h11 c11 0 17 5 17 11.5 c0 6.5 -6 11.5 -17 11.5 h-11 z" fill="url(#bun)"/>
+        <circle cx="52" cy="44" r="1.6" fill="#fff4dc"/><circle cx="59" cy="47" r="1.6" fill="#fff4dc"/><circle cx="51" cy="51" r="1.6" fill="#fff4dc"/>
+        <path d="M41 62 h14 c9 0 15 2.2 15 5 c0 2.8 -6 5 -15 5 h-14 z" fill="#5a2a12"/>
+        <path d="M41 64 q6 -3 12 0 t12 0 t6 1" fill="none" stroke="#7bc96f" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M41 74 h13 c10 0 16 2.3 16 5 c0 2.7 -6 5 -16 5 h-13 z" fill="url(#bun)"/>
+      </symbol>
+      <symbol id="mark-mini" viewBox="0 0 100 100">
+        <path d="M18 40 L50 15 L82 40" fill="none" stroke="#1a0d04" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="28" y="38" width="13" height="48" rx="4" fill="#1a0d04"/>
+        <path d="M41 38 h12 c11 0 17 5 17 11.5 c0 6.5 -6 11.5 -17 11.5 h-12 z" fill="#1a0d04"/>
+        <path d="M41 66 h13 c11 0 17 4.5 17 10 c0 5.5 -6 10 -17 10 h-13 z" fill="#1a0d04"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <p class="eyebrow">Identidade · Rodada 2 · inspirada no Finrotiva</p>
+  <h1>Proposta D: <span>a casa do burger</span></h1>
+  <p class="lead">Como no "F" do Finrotiva (estrada + seta), a letra conta a história: o <b>telhado</b> é a "House",
+    as curvas do <b>B</b> são o pão com gergelim e o hambúrguer com alface, e o <b>arco de brasa</b> com faísca é a grelha —
+    em degradê brasa → dourado.</p>
+
+  <div class="row">
+    <div><div class="tile light"><svg width="150" height="150" style="color:#1b2238"><use href="#mark"/></svg></div><p class="cap">Selo claro · app</p></div>
+    <div><div class="tile dark"><svg width="150" height="150" style="color:#f3ead9"><use href="#mark"/></svg></div><p class="cap">Selo escuro · sistema</p></div>
+    <div><div class="tile ember"><svg width="130" height="130"><use href="#mark-mini"/></svg></div><p class="cap">Versão chapada · favicon</p></div>
+  </div>
+
+  <div class="row">
+    <div class="lockup">
+      <svg width="64" height="64" style="color:#f3ead9"><use href="#mark"/></svg>
+      <div class="word">Bueno's House<small>Cozinha · Gestão</small></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab"><svg width="16" height="16" style="border-radius:4px;background:linear-gradient(145deg,#ff8c3a,#e8500c)"><use href="#mark-mini"/></svg>Bueno's House · Pedidos</div>
+    <div class="tab off"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M12 2 2 22h20z" fill="#dd0031"/></svg>Antes: ícone do Angular</div>
+  </div>
+  <p class="cap" style="text-align:left">Como fica na aba do navegador (16 px)</p>
+</body>
+</html>

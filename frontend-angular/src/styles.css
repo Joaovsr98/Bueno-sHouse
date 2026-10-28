@@ -1,20 +1,26 @@
 @import "tailwindcss";
 
 /*
- * Bueno's House — sistema de design.
- * Base escura profunda (nao preto chapado) com brilho ambiente, cor de marca
- * ambar/laranja (apetitosa, combina com hamburgueria) e superficies de vidro.
+ * Bueno's House — sistema de design (v2).
+ * Mesma familia visual dos outros projetos (THV, Mondel, Paddock 22, ArtistFound,
+ * Finrotiva): fundo quase preto com brilho radial, UMA cor de destaque (brasa ->
+ * dourado, as cores da logo), titulos em Space Grotesk, rotulos tecnicos em
+ * IBM Plex Mono caixa alta e texto em Inter.
  */
 @theme {
-  --color-brand-300: #fdba74;
-  --color-brand-400: #fb923c;
-  --color-brand-500: #f97316;
-  --color-brand-600: #ea580c;
-  --color-ink-950: #08090d;
-  --color-ink-900: #0d0f16;
-  --color-ink-850: #12151f;
-  --color-ink-800: #1a1e2b;
-  --color-ink-700: #262b3b;
+  --color-brand-200: #ffd2a8;
+  --color-brand-300: #ffb26b;
+  --color-brand-400: #ff8c3a;
+  --color-brand-500: #ff6a1a;
+  --color-brand-600: #e8500c;
+  --color-gold-400: #f5b544;
+  --color-ink-950: #07080c;
+  --color-ink-900: #0c0e14;
+  --color-ink-850: #11141c;
+  --color-ink-800: #181c27;
+  --color-ink-700: #252a38;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 }
 
 * {
@@ -29,16 +35,15 @@ html, body {
 body {
   min-height: 100vh;
   color: #e8eaf0;
-  background-color: #08090d;
+  background-color: #07080c;
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   letter-spacing: -0.011em;
   background-image:
-    radial-gradient(60rem 60rem at 12% -10%, rgba(249, 115, 22, 0.12), transparent 55%),
-    radial-gradient(50rem 50rem at 100% 0%, rgba(56, 189, 248, 0.08), transparent 50%),
-    radial-gradient(40rem 40rem at 50% 120%, rgba(234, 88, 12, 0.06), transparent 55%),
-    linear-gradient(180deg, #0a0c12 0%, #08090d 100%);
+    radial-gradient(55rem 45rem at 88% -12%, rgba(255, 106, 26, 0.14), transparent 60%),
+    radial-gradient(45rem 40rem at -5% 105%, rgba(245, 181, 68, 0.06), transparent 60%),
+    linear-gradient(180deg, #0a0b10 0%, #07080c 100%);
   background-attachment: fixed;
 }
 
@@ -56,24 +61,24 @@ body {
   transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 .glass-hover:hover {
-  border-color: rgba(249, 115, 22, 0.4);
-  background: linear-gradient(180deg, rgba(249, 115, 22, 0.08), rgba(255, 255, 255, 0.03));
+  border-color: rgba(255, 106, 26, 0.4);
+  background: linear-gradient(180deg, rgba(255, 106, 26, 0.08), rgba(255, 255, 255, 0.03));
   transform: translateY(-2px);
   box-shadow:
     0 1px 0 0 rgba(255, 255, 255, 0.07) inset,
-    0 24px 50px -24px rgba(249, 115, 22, 0.35);
+    0 24px 50px -24px rgba(255, 106, 26, 0.35);
 }
 
 /* Botao de marca com gradiente, brilho e leve varredura de luz */
 .btn-brand {
   position: relative;
   overflow: hidden;
-  background-image: linear-gradient(135deg, #fdba74 0%, #f97316 45%, #ea580c 100%);
-  color: #1a1204;
+  background-image: linear-gradient(135deg, #ffb26b 0%, #ff6a1a 50%, #e8500c 100%);
+  color: #1a0d04;
   font-weight: 650;
   letter-spacing: 0.01em;
   box-shadow:
-    0 8px 24px -8px rgba(249, 115, 22, 0.65),
+    0 8px 24px -8px rgba(255, 106, 26, 0.65),
     0 1px 0 0 rgba(255, 255, 255, 0.25) inset;
   transition: filter 0.15s ease, transform 0.08s ease, box-shadow 0.2s ease;
 }
@@ -88,7 +93,7 @@ body {
 .btn-brand:hover:not(:disabled) {
   filter: brightness(1.06);
   box-shadow:
-    0 12px 30px -8px rgba(249, 115, 22, 0.75),
+    0 12px 30px -8px rgba(255, 106, 26, 0.75),
     0 1px 0 0 rgba(255, 255, 255, 0.3) inset;
 }
 .btn-brand:hover:not(:disabled)::after {
@@ -104,7 +109,7 @@ body {
 
 /* Texto com gradiente de marca (logo) */
 .brand-text {
-  background-image: linear-gradient(120deg, #fed7aa 0%, #fdba74 30%, #f97316 60%, #ea580c 100%);
+  background-image: linear-gradient(100deg, #ff6a1a 0%, #ff8c3a 45%, #f5b544 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -112,7 +117,7 @@ body {
 
 /* Foco acessivel e consistente em todos os controles interativos */
 :where(a, button, input, select, textarea):focus-visible {
-  outline: 2px solid rgba(249, 115, 22, 0.7);
+  outline: 2px solid rgba(255, 106, 26, 0.7);
   outline-offset: 2px;
   border-radius: 0.5rem;
 }
@@ -150,9 +155,9 @@ body {
  * de classes utilitarias em cada template.
  */
 .page { display: block; max-width: 72rem; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; }
-.page-title { font-size: 1.25rem; font-weight: 650; }
+.page-title { font-family: var(--font-display); font-size: clamp(1.6rem, 2.6vw, 2.1rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
 .page-sub { font-size: 0.8rem; color: #8b91a3; margin-top: 0.15rem; }
-.section-title { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #fdba74; margin: 0 0 0.75rem; }
+.section-title { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: #ff8c3a; margin: 0 0 0.85rem; }
 
 .field {
   width: 100%;
@@ -166,7 +171,7 @@ body {
   outline: none;
   transition: border-color 0.15s ease;
 }
-.field:focus { border-color: rgba(249, 115, 22, 0.6); }
+.field:focus { border-color: rgba(255, 106, 26, 0.6); }
 .field::placeholder { color: #5b6172; }
 .field option { background: #12151f; }
 .field-label { display: block; font-size: 0.7rem; color: #8b91a3; margin-bottom: 0.25rem; }
@@ -206,7 +211,7 @@ body {
 .badge-blue   { background: rgba(56, 189, 248, 0.12); color: #7dd3fc; border-color: rgba(56, 189, 248, 0.3); }
 .badge-gray   { background: rgba(255, 255, 255, 0.06); color: #a3a8b8; border-color: rgba(255, 255, 255, 0.12); }
 
-.kpi-value { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi-value { font-family: var(--font-display); font-size: clamp(1.6rem, 2.4vw, 2.1rem); font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .alert-error {
   border-radius: 0.75rem; background: rgba(69, 10, 10, 0.7); border: 1px solid rgba(153, 27, 27, 0.6);
   color: #fca5a5; font-size: 0.85rem; padding: 0.7rem 0.9rem; display: flex; justify-content: space-between; gap: 0.75rem;
@@ -217,3 +222,50 @@ body {
 }
 .empty { font-size: 0.85rem; color: #6b7184; padding: 1.25rem 0.9rem; text-align: center; }
 .table-wrap { overflow-x: auto; }
+
+/* ---------- Identidade v2: tipografia e elementos de assinatura ---------- */
+
+h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0.02em; }
+
+/* Rotulo tecnico com traço de destaque (padrao THV/Mondel): "OPERACAO · HOJE" */
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 0.75rem;
+  font-family: var(--font-mono); font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.22em; text-transform: uppercase; color: #ff8c3a;
+}
+.eyebrow::before { content: ""; width: 1.75rem; height: 1px; background: #ff6a1a; }
+.eyebrow-plain {
+  font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.24em;
+  text-transform: uppercase; color: #8b90a0;
+}
+.field-label { font-family: var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.62rem !important; }
+
+/* Titulo com palavra em degradê de brasa (padrao ArtistFound) */
+.text-ember {
+  background-image: linear-gradient(100deg, #ff6a1a 0%, #ff8c3a 45%, #f5b544 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* Card com barra de destaque a esquerda (padrao Mondel) */
+.accent-card { position: relative; }
+.accent-card::before {
+  content: ""; position: absolute; left: 0; top: 1.25rem; bottom: 1.25rem; width: 3px;
+  border-radius: 3px; background: linear-gradient(180deg, #ff6a1a, #f5b544);
+}
+
+/* KPI: numero grande + legenda mono */
+.kpi-label { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: #8b90a0; }
+
+/* Faiscas da logo piscam devagar */
+@keyframes spark { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.logo-spark { animation: spark 2.4s ease-in-out infinite; }
+.logo-spark-2 { animation-delay: 1.2s; }
+
+/* Revelacao ao rolar/entrar (padrao Paddock): itens em sequencia */
+@keyframes reveal { from { opacity: 0; transform: translateY(14px); filter: blur(4px); } to { opacity: 1; transform: none; filter: none; } }
+.reveal { animation: reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.reveal-1 { animation-delay: 0.06s; } .reveal-2 { animation-delay: 0.12s; } .reveal-3 { animation-delay: 0.18s; } .reveal-4 { animation-delay: 0.24s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-spark, .reveal { animation: none; }
+}

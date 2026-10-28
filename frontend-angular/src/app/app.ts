@@ -1,11 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ToastService } from './core/toast.service';
+import { Intro } from './shared/intro';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, Intro],
   template: `
+    <app-intro />
     <router-outlet />
     <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-[min(22rem,calc(100vw-2rem))]" aria-live="polite">
       @for (t of toast.toasts(); track t.id) {
