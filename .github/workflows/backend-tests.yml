@@ -41,9 +41,10 @@ jobs:
               echo "::error title=$(basename "$f" .txt)::$msg"
             fi
           done
-          for f in target/failsafe-reports/*-output.txt target/surefire-reports/*-output.txt; do
-            cause=$(grep -m3 -E "Caused by|Schema-validation|wrong column type|FlywayException|Migration .* failed" "$f" | tr '\n' ' ' | cut -c1-900)
-            [ -n "$cause" ] && echo "::error title=causa $(basename "$f" -output.txt)::$cause"
+          # Causa raiz: as ultimas linhas "Caused by" (as mais internas) de cada relatorio.
+          for f in target/failsafe-reports/*.txt target/surefire-reports/*.txt; do
+            cause=$(grep -E "^Caused by" "$f" | tail -3 | tr '\n' ' ' | cut -c1-1200)
+            [ -n "$cause" ] && echo "::error title=causa $(basename "$f" .txt)::$cause"
           done
           if [ ! -d target/failsafe-reports ] && [ ! -d target/surefire-reports ]; then
             echo "::error title=build::Falhou antes dos testes (compilacao?). Veja o passo anterior."
