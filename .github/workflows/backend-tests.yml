@@ -28,7 +28,7 @@ jobs:
           cache: maven
 
       - name: Testes (unitários + integração)
-        run: mvn -B verify
+        run: mvn -B verify -DtrimStackTrace=false
 
       # Resume as falhas como anotacoes (aparecem no resumo do job, sem abrir o log inteiro).
       - name: Resumo das falhas
