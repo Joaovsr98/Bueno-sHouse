@@ -24,14 +24,18 @@ import { Icon } from '../../shared/icon';
       </header>
 
       <main class="relative flex-1 flex flex-col items-center justify-center px-6 pb-16">
-        <div class="text-center max-w-3xl">
-          <p class="eyebrow reveal reveal-1">Dark kitchen · São Paulo</p>
+        <div class="text-center max-w-4xl">
+          <p class="eyebrow reveal reveal-1">Bueno's House · Uma experiência completa</p>
           <h1 class="mt-5 text-5xl sm:text-7xl font-bold uppercase leading-[0.95] reveal reveal-2">
-            Como você quer<br /><span class="text-ember">entrar?</span>
+            Por trás de cada pedido,<br /><span class="text-ember">uma experiência.</span>
           </h1>
+          <p class="mt-6 text-lg text-neutral-400 reveal reveal-3">
+            Tecnologia para quem faz acontecer. Simplicidade para quem quer aproveitar.
+          </p>
+          <p class="mt-10 eyebrow-plain text-[0.7rem] reveal reveal-3">Como você quer entrar?</p>
         </div>
 
-        <div class="mt-12 w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-5 reveal reveal-3">
+        <div class="mt-5 w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-5 reveal reveal-3">
           <a [routerLink]="customerLink()" class="door group">
             <span class="door-icon"><app-icon name="cart" [size]="26" /></span>
             <span class="eyebrow-plain text-[0.62rem]">Para você</span>

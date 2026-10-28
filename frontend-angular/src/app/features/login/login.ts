@@ -37,6 +37,8 @@ export class Login {
   password = '';
   error = signal<string | null>(null);
   loading = signal(false);
+  showPassword = signal(false);
+  showForgot = signal(false);
   /** Login demorando: o backend gratuito provavelmente esta acordando. */
   slow = signal(false);
   private slowTimer: ReturnType<typeof setTimeout> | null = null;
