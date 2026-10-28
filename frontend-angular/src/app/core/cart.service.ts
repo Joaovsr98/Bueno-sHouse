@@ -6,6 +6,8 @@ export interface CartLine {
   productName: string;
   basePrice: number;
   quantity: number;
+  /** Observacao do cliente para o item (RF-003), ex.: "sem cebola". */
+  notes: string;
 }
 
 const CART_KEY = 'bueno.cart';
@@ -18,7 +20,7 @@ function loadLines(): CartLine[] {
       (l): l is CartLine =>
         typeof l?.productId === 'number' && typeof l?.productName === 'string' &&
         typeof l?.basePrice === 'number' && typeof l?.quantity === 'number' && l.quantity > 0,
-    );
+    ).map((l) => ({ ...l, notes: typeof l.notes === 'string' ? l.notes : '' }));
   } catch {
     return [];
   }
@@ -46,14 +48,25 @@ export class CartService {
     });
   }
 
-  add(product: ProductResponse): void {
+  add(product: ProductResponse, quantity = 1, notes = ''): void {
     this._lines.update((prev) => {
       const existing = prev.find((l) => l.productId === product.id);
       if (existing) {
-        return prev.map((l) => (l.productId === product.id ? { ...l, quantity: l.quantity + 1 } : l));
+        return prev.map((l) =>
+          l.productId === product.id
+            ? { ...l, quantity: l.quantity + quantity, notes: notes || l.notes }
+            : l,
+        );
       }
-      return [...prev, { productId: product.id, productName: product.name, basePrice: product.basePrice, quantity: 1 }];
+      return [
+        ...prev,
+        { productId: product.id, productName: product.name, basePrice: product.basePrice, quantity, notes },
+      ];
     });
+  }
+
+  setNotes(productId: number, notes: string): void {
+    this._lines.update((prev) => prev.map((l) => (l.productId === productId ? { ...l, notes } : l)));
   }
 
   changeQty(productId: number, delta: number): void {

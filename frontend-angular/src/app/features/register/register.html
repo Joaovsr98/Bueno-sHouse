@@ -61,6 +61,31 @@
         />
       </div>
 
+      <div class="pt-2 border-t border-white/10 space-y-2">
+        <p class="text-sm text-neutral-300">Endereço de entrega</p>
+        <div class="grid grid-cols-3 gap-2 text-sm">
+          <input name="street" [(ngModel)]="addr.street" required placeholder="Rua" autocomplete="address-line1"
+            class="col-span-2 rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60" />
+          <input name="number" [(ngModel)]="addr.number" required placeholder="Nº"
+            class="rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60" />
+          <input name="complement" [(ngModel)]="addr.complement" placeholder="Complemento (opcional)" autocomplete="address-line2"
+            class="col-span-3 rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60" />
+          <select name="neighborhood" [(ngModel)]="addr.neighborhood" required
+            class="col-span-3 rounded-xl bg-ink-850 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60">
+            <option value="" disabled>Bairro (só atendemos estes)</option>
+            @for (z of zones(); track z.id) {
+              <option [value]="z.neighborhood">{{ z.neighborhood }} — entrega {{ currency(z.fee) }}</option>
+            }
+          </select>
+          <input name="city" [(ngModel)]="addr.city" required placeholder="Cidade" autocomplete="address-level2"
+            class="col-span-2 rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60" />
+          <input name="state" [(ngModel)]="addr.state" required placeholder="UF" maxlength="2" autocomplete="address-level1"
+            class="rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60 uppercase" />
+          <input name="zipCode" [(ngModel)]="addr.zipCode" required placeholder="CEP" autocomplete="postal-code"
+            class="col-span-3 rounded-xl bg-black/30 border border-white/10 px-3 py-2 outline-none focus:border-brand-500/60" />
+        </div>
+      </div>
+
       @if (error()) {
         <div class="rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300">
           {{ error() }}
@@ -78,7 +103,7 @@
 
     <p class="text-center text-sm text-neutral-400">
       Já tem conta?
-      <a routerLink="/login" class="text-brand-400 hover:underline">Entrar</a>
+      <a routerLink="/login" [queryParams]="returnUrl ? { returnUrl: returnUrl } : {}" class="text-brand-400 hover:underline">Entrar</a>
     </p>
   </div>
 </div>

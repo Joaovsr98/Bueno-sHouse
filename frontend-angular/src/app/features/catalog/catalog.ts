@@ -2,14 +2,18 @@ import { Component, inject, signal, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
-import { CategoryResponse, ProductResponse } from '../../core/models';
+import { CategoryResponse, KitchenSectorResponse, ProductResponse } from '../../core/models';
 import { currency } from '../../core/format';
 
 interface ProductForm {
   id: number | null;
+  categoryId: number | null;
+  kitchenSectorId: number | null;
   name: string;
   description: string;
   basePrice: string;
+  imageUrl: string;
+  prepTimeMinutes: string;
   available: boolean;
 }
 
@@ -27,6 +31,7 @@ export class Catalog {
 
   categories = signal<CategoryResponse[]>([]);
   products = signal<ProductResponse[]>([]);
+  sectors = signal<KitchenSectorResponse[]>([]);
   selectedCategoryId = signal<number | null>(null);
   loadingProducts = signal(false);
   error = signal<string | null>(null);
@@ -45,6 +50,7 @@ export class Catalog {
       untracked(() => {
         this.loadCategories();
         this.loadProducts();
+        this.loadSectors();
       });
     });
   }
@@ -53,6 +59,13 @@ export class Catalog {
     this.api.get<CategoryResponse[]>(`/categories?unitId=${this.unitId()}`).subscribe({
       next: (c) => this.categories.set(c),
       error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao carregar categorias')),
+    });
+  }
+
+  private loadSectors(): void {
+    this.api.get<KitchenSectorResponse[]>('/kitchen-sectors').subscribe({
+      next: (all) => this.sectors.set(all.filter((s) => s.unitId === this.unitId())),
+      error: () => this.sectors.set([]),
     });
   }
 
@@ -102,15 +115,29 @@ export class Catalog {
   }
 
   openNewProduct(): void {
-    this.productForm.set({ id: null, name: '', description: '', basePrice: '', available: false });
+    this.productForm.set({
+      id: null,
+      categoryId: this.selectedCategoryId() ?? this.categories()[0]?.id ?? null,
+      kitchenSectorId: this.sectors()[0]?.id ?? null,
+      name: '',
+      description: '',
+      basePrice: '',
+      imageUrl: '',
+      prepTimeMinutes: '',
+      available: false,
+    });
   }
 
   openEditProduct(p: ProductResponse): void {
     this.productForm.set({
       id: p.id,
+      categoryId: p.categoryId,
+      kitchenSectorId: p.kitchenSectorId,
       name: p.name,
       description: p.description ?? '',
       basePrice: String(p.basePrice),
+      imageUrl: p.imageUrl ?? '',
+      prepTimeMinutes: p.prepTimeMinutes != null ? String(p.prepTimeMinutes) : '',
       available: p.available,
     });
   }
@@ -124,10 +151,13 @@ export class Catalog {
     if (!form) return;
     const payload = {
       unitId: this.unitId(),
-      categoryId: this.selectedCategoryId(),
+      categoryId: form.categoryId,
+      kitchenSectorId: form.kitchenSectorId,
       name: form.name,
       description: form.description || null,
       basePrice: Number(form.basePrice),
+      imageUrl: form.imageUrl.trim() || null,
+      prepTimeMinutes: form.prepTimeMinutes ? Number(form.prepTimeMinutes) : null,
       available: form.available,
     };
     this.savingProduct.set(true);

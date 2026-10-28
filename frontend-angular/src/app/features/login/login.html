@@ -78,7 +78,7 @@
 
     <p class="text-center text-sm text-neutral-400">
       É cliente e quer pedir?
-      <a routerLink="/registrar" class="text-brand-400 hover:underline">Criar conta</a>
+      <a routerLink="/registrar" [queryParams]="returnUrl ? { returnUrl: returnUrl } : {}" class="text-brand-400 hover:underline">Criar conta</a>
     </p>
 
     <p class="text-center text-[11px] text-neutral-600">

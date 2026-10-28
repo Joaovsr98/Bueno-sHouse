@@ -1,12 +1,18 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
-import { LoginResponse } from '../../core/models';
+import { CustomerResponse, DeliveryZoneResponse, LoginResponse, UnitResponse } from '../../core/models';
 import { defaultRouteForRole } from '../../core/routing';
+import { currency } from '../../core/format';
 
-/** Cadastro publico de Cliente (RF-004). Sempre cria conta com perfil CLIENTE. */
+/**
+ * Cadastro publico de Cliente (RF-004): dados pessoais + endereco de entrega.
+ * Sempre cria conta com perfil CLIENTE (RF-039). Se veio do carrinho, volta
+ * para o checkout (RF-005).
+ */
 @Component({
   selector: 'app-register',
   imports: [FormsModule, RouterLink],
@@ -16,33 +22,67 @@ export class Register {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  readonly currency = currency;
+  readonly returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
 
   fullName = '';
   email = '';
   password = '';
   phone = '';
+  addr = { street: '', number: '', complement: '', neighborhood: '', city: '', state: '', zipCode: '' };
+  zones = signal<DeliveryZoneResponse[]>([]);
   error = signal<string | null>(null);
   loading = signal(false);
 
-  submit(): void {
+  constructor() {
+    this.loadZones();
+  }
+
+  private async loadZones(): Promise<void> {
+    try {
+      const units = await firstValueFrom(this.api.get<UnitResponse[]>('/units'));
+      const zones = await firstValueFrom(
+        this.api.get<DeliveryZoneResponse[]>(`/delivery-zones?unitId=${units[0]?.id ?? 1}`),
+      );
+      this.zones.set(zones.filter((z) => z.active));
+    } catch {
+      this.zones.set([]);
+    }
+  }
+
+  async submit(): Promise<void> {
+    const a = this.addr;
+    if (!a.street || !a.number || !a.neighborhood || !a.city || !a.state || !a.zipCode) {
+      this.error.set('Preencha o endereço de entrega: rua, número, bairro, cidade, UF e CEP');
+      return;
+    }
     this.error.set(null);
     this.loading.set(true);
-    this.api
-      .post<LoginResponse>('/auth/register', {
-        fullName: this.fullName,
-        email: this.email,
-        password: this.password,
-        phone: this.phone,
-      })
-      .subscribe({
-        next: (data) => {
-          this.auth.login(data);
-          this.router.navigateByUrl(defaultRouteForRole(data.user.profileName));
-        },
-        error: (err) => {
-          this.error.set(apiErrorMessage(err, 'Erro ao criar conta'));
-          this.loading.set(false);
-        },
-      });
+    try {
+      const data = await firstValueFrom(
+        this.api.post<LoginResponse>('/auth/register', {
+          fullName: this.fullName,
+          email: this.email,
+          password: this.password,
+          phone: this.phone,
+        }),
+      );
+      this.auth.login(data);
+      const me = await firstValueFrom(this.api.get<CustomerResponse>('/customers/me'));
+      await firstValueFrom(
+        this.api.post(`/customers/${me.id}/addresses`, { ...a, label: 'Casa', isDefault: true }),
+      );
+      this.router.navigateByUrl(this.returnUrl || defaultRouteForRole(data.user.profileName));
+    } catch (err) {
+      // Conta criada mas endereco recusado: segue logado, endereco pode ser feito no checkout.
+      if (this.auth.isLoggedIn()) {
+        this.router.navigateByUrl(this.returnUrl || '/app/carrinho');
+        return;
+      }
+      this.error.set(apiErrorMessage(err, 'Erro ao criar conta'));
+      this.loading.set(false);
+    }
   }
 }

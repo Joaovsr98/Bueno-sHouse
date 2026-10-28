@@ -1,5 +1,5 @@
 <h1 class="text-xl font-bold mb-1">Cardápio</h1>
-<p class="text-sm text-neutral-500 mb-6">Escolha seus itens e monte seu pedido para entrega.</p>
+<p class="text-sm text-neutral-500 mb-4">Escolha seus itens e monte seu pedido para entrega.</p>
 
 @if (error()) {
   <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
@@ -12,24 +12,86 @@
   <p class="text-sm text-neutral-500">Carregando cardápio...</p>
 }
 
-@for (group of groups(); track group.category.id) {
+@if (groups().length > 1) {
+  <div class="flex gap-2 overflow-x-auto pb-2 mb-4">
+    <button
+      (click)="categoryId.set(null)"
+      class="shrink-0 rounded-full px-4 py-1.5 text-sm border transition"
+      [class]="categoryId() == null ? 'btn-brand border-transparent' : 'border-white/15 text-neutral-300 hover:bg-white/5'"
+    >
+      Todas
+    </button>
+    @for (g of groups(); track g.category.id) {
+      <button
+        (click)="categoryId.set(g.category.id)"
+        class="shrink-0 rounded-full px-4 py-1.5 text-sm border transition"
+        [class]="categoryId() === g.category.id ? 'btn-brand border-transparent' : 'border-white/15 text-neutral-300 hover:bg-white/5'"
+      >
+        {{ g.category.name }}
+      </button>
+    }
+  </div>
+}
+
+@for (group of visibleGroups(); track group.category.id) {
   <section class="mb-8">
     <h2 class="text-sm font-semibold uppercase tracking-wide text-brand-300 mb-3">{{ group.category.name }}</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       @for (product of group.products; track product.id) {
-        <div class="glass rounded-2xl p-4 flex flex-col">
-          <div class="flex-1">
+        <div class="glass glass-hover rounded-2xl p-4 flex gap-3 cursor-pointer" (click)="openDetail(product)">
+          @if (product.imageUrl) {
+            <img [src]="product.imageUrl" [alt]="product.name" class="w-20 h-20 rounded-xl object-cover shrink-0" loading="lazy" />
+          }
+          <div class="flex-1 flex flex-col min-w-0">
             <h3 class="text-sm font-medium">{{ product.name }}</h3>
             <p class="text-xs text-neutral-500 mt-1 line-clamp-2">{{ product.description || '' }}</p>
-          </div>
-          <div class="flex items-center justify-between mt-3">
-            <span class="text-sm font-semibold text-brand-300">{{ currency(product.basePrice) }}</span>
-            <button (click)="add(product)" class="btn-brand rounded-xl px-3 py-1.5 text-xs">
-              {{ added() === product.id ? 'Adicionado ✓' : '+ Adicionar' }}
-            </button>
+            <div class="flex items-center justify-between mt-auto pt-3">
+              <span class="text-sm font-semibold text-brand-300">{{ currency(product.basePrice) }}</span>
+              <button (click)="quickAdd(product); $event.stopPropagation()" class="btn-brand rounded-xl px-3 py-1.5 text-xs">+ Adicionar</button>
+            </div>
           </div>
         </div>
       }
     </div>
   </section>
+}
+
+@if (detail(); as p) {
+  <div class="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4" (click)="closeDetail()">
+    <div class="glass rounded-2xl w-full max-w-md overflow-hidden" (click)="$event.stopPropagation()" role="dialog" [attr.aria-label]="p.name">
+      @if (p.imageUrl) {
+        <img [src]="p.imageUrl" [alt]="p.name" class="w-full h-48 object-cover" />
+      }
+      <div class="p-5 space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-bold">{{ p.name }}</h2>
+            <p class="text-xs text-neutral-500">
+              {{ p.categoryName }}
+              @if (p.prepTimeMinutes) { · preparo ~{{ p.prepTimeMinutes }} min }
+            </p>
+          </div>
+          <button (click)="closeDetail()" class="text-neutral-500 hover:text-neutral-200 text-xl leading-none" aria-label="Fechar">×</button>
+        </div>
+        @if (p.description) {
+          <p class="text-sm text-neutral-300">{{ p.description }}</p>
+        }
+        <label class="block space-y-1">
+          <span class="text-xs text-neutral-500">Observações (opcional)</span>
+          <input name="notes" [(ngModel)]="detailNotes" placeholder="Ex.: sem cebola, ponto da carne..." maxlength="200"
+            class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm" />
+        </label>
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <button (click)="changeDetailQty(-1)" class="w-8 h-8 rounded-lg bg-white/10">−</button>
+            <span class="w-6 text-center">{{ detailQty }}</span>
+            <button (click)="changeDetailQty(1)" class="w-8 h-8 rounded-lg bg-white/10">+</button>
+          </div>
+          <button (click)="addFromDetail()" class="flex-1 btn-brand rounded-xl py-2.5 text-sm">
+            Adicionar ao carrinho · {{ currency(p.basePrice * detailQty) }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 }

@@ -36,6 +36,16 @@ export class CustomerCheckout {
   savingAddress = signal(false);
   addr = { label: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', zipCode: '' };
 
+  /** RF-006: pagamento simulado - nenhuma cobranca real, a forma escolhida vai nas observacoes do pedido. */
+  readonly paymentMethods = [
+    { value: 'PIX', label: 'Pix' },
+    { value: 'CARTAO', label: 'Cartão (na entrega)' },
+    { value: 'DINHEIRO', label: 'Dinheiro (na entrega)' },
+  ];
+  paymentMethod = 'PIX';
+  changeFor = '';
+  orderNotes = '';
+
   /** Bairros atendidos: o backend so aceita pedido se o bairro bater com uma zona. */
   zones = signal<DeliveryZoneResponse[]>([]);
 
@@ -117,6 +127,16 @@ export class CustomerCheckout {
     this.cart.remove(productId);
   }
 
+  setNotes(productId: number, notes: string): void {
+    this.cart.setNotes(productId, notes);
+  }
+
+  private paymentSummary(): string {
+    const label = this.paymentMethods.find((m) => m.value === this.paymentMethod)?.label ?? this.paymentMethod;
+    const change = this.paymentMethod === 'DINHEIRO' && this.changeFor ? ` - troco para R$ ${this.changeFor}` : '';
+    return `Pagamento (simulado): ${label}${change}`;
+  }
+
   async placeOrder(): Promise<void> {
     if (this.lines().length === 0 || this.selectedAddressId() == null) return;
     this.placing.set(true);
@@ -129,7 +149,8 @@ export class CustomerCheckout {
           unitId,
           channel: 'DELIVERY',
           customerAddressId: this.selectedAddressId(),
-          items: this.lines().map((l) => ({ productId: l.productId, quantity: l.quantity })),
+          notes: [this.orderNotes.trim(), this.paymentSummary()].filter(Boolean).join(' | '),
+          items: this.lines().map((l) => ({ productId: l.productId, quantity: l.quantity, notes: l.notes || null })),
         }),
       );
       this.cart.clear();

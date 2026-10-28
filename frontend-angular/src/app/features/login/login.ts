@@ -29,7 +29,9 @@ export class Login {
   private readonly route = inject(ActivatedRoute);
 
   readonly quickAccess = QUICK_ACCESS;
-  email = 'admin@demo.local';
+  /** Login de demonstracao exigido pelo guia da disciplina. */
+  email = 'admin@email.com';
+  readonly returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
   password = '';
   error = signal<string | null>(null);
   loading = signal(false);

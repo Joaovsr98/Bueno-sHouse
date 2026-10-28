@@ -82,6 +82,8 @@ public class SecurityConfig {
                 // descobre qual unidade exibir antes do cliente logar.
                 .requestMatchers(HttpMethod.GET, "/api/categories", "/api/products", "/api/products/**", "/api/units", "/api/units/**")
                     .permitAll()
+                // Bairros atendidos e taxas: o cadastro do cliente (antes do login) usa para o endereco.
+                .requestMatchers(HttpMethod.GET, "/api/delivery-zones").permitAll()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
