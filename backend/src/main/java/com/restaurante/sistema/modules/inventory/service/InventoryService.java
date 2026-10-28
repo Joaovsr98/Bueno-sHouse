@@ -24,11 +24,11 @@ import java.util.Set;
  * Etapa 3 modelou tudo mas deixou a baixa automatica deliberadamente fora do
  * MVP - ver decisao da Etapa 1).
  *
- * REGRA DE BAIXA (decisao registrada desde a Etapa 2, agora implementada):
- * o estoque e baixado no momento em que o OrderItem e marcado como PRONTO
- * (producao real concluida), nao na criacao do pedido - evita baixar
- * ingrediente de item cancelado antes do preparo. Quem chama
- * deductForOrderItem() e o KitchenService, no metodo complete().
+ * REGRA DE BAIXA (RF-017, fluxo 9.2 do guia): o estoque e baixado quando o
+ * pedido e CONFIRMADO (OrderService.sendToKitchen), nao na criacao - um
+ * pedido recusado antes da confirmacao nao mexe no estoque. O listener de
+ * item PRONTO continua chamando deductForOrderItem(), mas como a baixa e
+ * idempotente ele so age em itens que nao passaram pela confirmacao.
  *
  * Protecao contra baixa duplicada: cada baixa gera um StockMovement do tipo
  * SAIDA_PRODUCAO referenciando o order_item_id; antes de baixar, verificamos
@@ -201,7 +201,35 @@ public class InventoryService {
     }
 
     /**
-     * Chamado pelo KitchenService quando um OrderItem e marcado PRONTO.
+     * RN03: ingredientes que faltam para produzir as quantidades pedidas (por
+     * produto), com o mesmo calculo de consumo da baixa. Lista vazia = ha estoque.
+     * Produto sem ficha tecnica nao controla estoque e e ignorado.
+     */
+    @Transactional(readOnly = true)
+    public List<String> missingIngredients(java.util.Map<Long, Integer> quantityByProduct) {
+        java.util.Map<Long, BigDecimal> needed = new java.util.LinkedHashMap<>();
+        quantityByProduct.forEach((productId, quantity) ->
+                recipeRepository.findByProductId(productId).ifPresent(recipe -> {
+                    for (RecipeItem recipeItem : recipe.getItems()) {
+                        needed.merge(recipeItem.getInventoryItemId(),
+                                recipeItem.getQuantity().multiply(BigDecimal.valueOf(quantity)), BigDecimal::add);
+                    }
+                }));
+
+        List<String> missing = new java.util.ArrayList<>();
+        needed.forEach((inventoryItemId, quantity) -> {
+            InventoryItem item = getOrThrow(inventoryItemId);
+            if (item.getCurrentQuantity().compareTo(quantity) < 0) {
+                missing.add(item.getName() + " (precisa " + quantity.stripTrailingZeros().toPlainString()
+                        + " " + item.getUnitOfMeasure() + ", tem "
+                        + item.getCurrentQuantity().stripTrailingZeros().toPlainString() + ")");
+            }
+        });
+        return missing;
+    }
+
+    /**
+     * Chamado na confirmacao do pedido (e, de forma idempotente, quando o item fica PRONTO).
      * Se o produto nao tiver ficha tecnica cadastrada, nao faz nada
      * silenciosamente (nem todo produto precisa controlar estoque - regra
      * pragmatica: so baixa o que foi explicitamente modelado).

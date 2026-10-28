@@ -135,17 +135,26 @@ public class OrderService {
         return orderRepository.findByUnitIdAndStatusIn(unitId, filter).stream().map(this::toResponse).toList();
     }
 
-    /** Versao paginada (RNF08 / RF-019): mais recentes primeiro. */
+    /**
+     * Versao paginada (RNF08 / RF-019): mais recentes primeiro, com filtros
+     * opcionais de canal e periodo (datas no fuso de Sao Paulo, `to` inclusivo).
+     */
     @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<OrderResponse> listByUnitPaged(
-            Long unitId, List<String> statuses, int page, int size) {
+            Long unitId, List<String> statuses, String channel,
+            java.time.LocalDate from, java.time.LocalDate to, int page, int size) {
         List<String> filter = (statuses == null || statuses.isEmpty())
                 ? List.of("RECEBIDO", "ENVIADO_PARA_COZINHA", "EM_PREPARO", "PARCIALMENTE_PRONTO", "PRONTO")
                 : statuses;
+        java.time.ZoneId zone = java.time.ZoneId.of("America/Sao_Paulo");
+        Instant fromInstant = from != null ? from.atStartOfDay(zone).toInstant() : null;
+        Instant toInstant = to != null ? to.plusDays(1).atStartOfDay(zone).toInstant() : null;
+        String channelFilter = (channel == null || channel.isBlank()) ? null : channel;
         var pageable = org.springframework.data.domain.PageRequest.of(
                 Math.max(page, 0), Math.min(Math.max(size, 1), 100),
                 org.springframework.data.domain.Sort.by("createdAt").descending());
-        return orderRepository.findByUnitIdAndStatusIn(unitId, filter, pageable).map(this::toResponse);
+        return orderRepository.search(unitId, filter, channelFilter, fromInstant, toInstant, pageable)
+                .map(this::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -190,6 +199,16 @@ public class OrderService {
                         "A comanda precisa estar ABERTA ou EM_ATENDIMENTO para receber pedidos (status atual: "
                                 + command.getStatus() + ")");
             }
+        }
+
+        // RN03: estoque insuficiente -> 422 informando o que falta.
+        java.util.Map<Long, Integer> quantityByProduct = new java.util.LinkedHashMap<>();
+        for (CreateOrderItemRequest item : request.items()) {
+            quantityByProduct.merge(item.productId(), item.quantity(), Integer::sum);
+        }
+        List<String> missing = inventoryService.missingIngredients(quantityByProduct);
+        if (!missing.isEmpty()) {
+            throw new BusinessException("Estoque insuficiente: " + String.join("; ", missing));
         }
 
         CustomerAddress deliveryAddress = null;
@@ -249,8 +268,6 @@ public class OrderService {
 
         if (deliveryAddress != null) {
             createDeliveryForOrder(saved, deliveryAddress, deliveryZone);
-            // Pedido delivery nao passa por garcom/comanda: entra direto na fila da cozinha.
-            return sendToKitchen(saved.getId());
         }
 
         return toResponse(saved);
@@ -282,6 +299,12 @@ public class OrderService {
         return String.valueOf(code);
     }
 
+    /**
+     * Confirmacao do pedido (fluxo 9.2: RECEBIDO -> CONFIRMADO). Internamente o
+     * status e ENVIADO_PARA_COZINHA, exibido como "Confirmado" no frontend.
+     * Faz a baixa automatica de estoque (RF-017) na mesma transacao: se algo
+     * falhar, nem a confirmacao nem a baixa sao gravadas.
+     */
     @Transactional
     public OrderResponse sendToKitchen(Long orderId) {
         Order order = getOrThrow(orderId);
@@ -289,6 +312,7 @@ public class OrderService {
 
         order.getItems().forEach(item -> {
             if ("PENDENTE".equals(item.getStatus())) {
+                inventoryService.deductForOrderItem(item.getProductId(), item.getId(), item.getQuantity());
                 item.setStatus("ENVIADO");
                 kitchenEventPublisher.publishItemEvent(
                         order.getUnitId(), "ITEM_SENT", item.getId(), order.getId(), "ENVIADO");
@@ -298,7 +322,7 @@ public class OrderService {
         String previous = order.getStatus();
         order.setStatus("ENVIADO_PARA_COZINHA");
         Order saved = orderRepository.save(order);
-        recordHistory(order.getId(), previous, "ENVIADO_PARA_COZINHA", null);
+        recordHistory(order.getId(), previous, "ENVIADO_PARA_COZINHA", "Pedido confirmado");
         return toResponse(saved);
     }
 

@@ -42,13 +42,20 @@ public class OrderController {
     public org.springframework.http.ResponseEntity<List<OrderResponse>> list(
             @RequestParam Long unitId,
             @RequestParam(required = false) List<String> status,
+            @RequestParam(required = false) String channel,
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+            java.time.LocalDate from,
+            @RequestParam(required = false)
+            @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE)
+            java.time.LocalDate to,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false, defaultValue = "20") int size
     ) {
         if (page == null) {
             return org.springframework.http.ResponseEntity.ok(orderService.listByUnit(unitId, status));
         }
-        var result = orderService.listByUnitPaged(unitId, status, page, size);
+        var result = orderService.listByUnitPaged(unitId, status, channel, from, to, page, size);
         return org.springframework.http.ResponseEntity.ok()
                 .header("X-Total-Count", String.valueOf(result.getTotalElements()))
                 .body(result.getContent());

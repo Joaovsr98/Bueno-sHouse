@@ -102,8 +102,8 @@ class DeliveryFlowIT {
         OrderResponse order = orderResponse.getBody();
         // 34.90 (produto) + 5.00 (taxa da zona "Centro" do seed) = 39.90
         assertThat(order.total()).isEqualByComparingTo("39.90");
-        // Pedido delivery vai direto para a cozinha, sem passar por garcom/comanda
-        assertThat(order.status()).isEqualTo("ENVIADO_PARA_COZINHA");
+        // Fluxo 9.1/9.2 do guia: o pedido nasce RECEBIDO e espera a confirmacao da equipe
+        assertThat(order.status()).isEqualTo("RECEBIDO");
 
         // 3. Confirmar que a entrega ja foi criada automaticamente
         DeliveryResponse delivery = restTemplate.exchange(
@@ -120,6 +120,8 @@ class DeliveryFlowIT {
 
         // 5. Levar o pedido pela cozinha ate PRONTO (necessario antes de despachar a entrega -
         //    a maquina de estado do pedido nao permite SAIU_PARA_ENTREGA antes disso)
+        restTemplate.exchange("/api/orders/" + order.id() + "/send-to-kitchen", HttpMethod.POST,
+                new HttpEntity<>(headers), OrderResponse.class);
         KitchenSectorResponse[] sectors = restTemplate.exchange(
                 "/api/kitchen-sectors", HttpMethod.GET, new HttpEntity<>(headers), KitchenSectorResponse[].class).getBody();
         Long chapaSectorId = Arrays.stream(sectors).filter(s -> s.name().equals("CHAPA")).findFirst().orElseThrow().id();

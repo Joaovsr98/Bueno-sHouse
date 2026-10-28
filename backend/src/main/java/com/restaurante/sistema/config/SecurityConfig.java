@@ -66,6 +66,11 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Sem token ou token expirado -> 401 (o padrao seria 403); o frontend usa
+            // o 401 para encerrar a sessao e voltar ao login (RF-042).
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                    new org.springframework.security.web.authentication.HttpStatusEntryPoint(
+                            org.springframework.http.HttpStatus.UNAUTHORIZED)))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/health", "/actuator/health").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
