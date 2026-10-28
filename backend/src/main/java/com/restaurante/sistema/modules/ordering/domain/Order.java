@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.ordering.domain;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +25,7 @@ public class Order {
     private Long id;
 
     @Column(name = "public_id", nullable = false, unique = true, updatable = false, length = 36)
+    @JdbcTypeCode(SqlTypes.CHAR) // coluna CHAR no banco (Flyway); sem isto o validate do Hibernate falha
     private String publicId;
 
     @Column(name = "order_number", nullable = false)

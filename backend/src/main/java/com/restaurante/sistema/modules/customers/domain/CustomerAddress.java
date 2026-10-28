@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.customers.domain;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,6 +41,7 @@ public class CustomerAddress {
     private String city;
 
     @Column(nullable = false, length = 2)
+    @JdbcTypeCode(SqlTypes.CHAR) // coluna CHAR no banco (Flyway); sem isto o validate do Hibernate falha
     private String state;
 
     @Column(name = "zip_code", nullable = false, length = 10)

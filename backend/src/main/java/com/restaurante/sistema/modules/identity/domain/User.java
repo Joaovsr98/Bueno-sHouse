@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.identity.domain;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +36,7 @@ public class User implements UserDetails {
     private Long id;
 
     @Column(name = "public_id", nullable = false, unique = true, updatable = false, length = 36)
+    @JdbcTypeCode(SqlTypes.CHAR) // coluna CHAR no banco (Flyway); sem isto o validate do Hibernate falha
     private String publicId;
 
     @Column(nullable = false, unique = true, length = 150)
