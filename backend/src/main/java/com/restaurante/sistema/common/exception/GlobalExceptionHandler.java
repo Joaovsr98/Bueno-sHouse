@@ -61,6 +61,30 @@ public class GlobalExceptionHandler {
                 .body(ApiError.ofValidation(400, req.getRequestURI(), errors));
     }
 
+    /**
+     * @PreAuthorize negado: sem isto o handler generico abaixo capturaria a
+     * excecao antes do Spring Security e o perfil sem permissao veria 500.
+     */
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(Exception ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiError.of(403, "Acesso negado",
+                        "Seu perfil nao tem permissao para esta operacao.", req.getRequestURI()));
+    }
+
+    /** Rota inexistente ou metodo HTTP errado: 404/405 em vez de 500. */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleNoResource(Exception ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of(404, "Nao encontrado", "Recurso nao encontrado.", req.getRequestURI()));
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiError> handleMethodNotAllowed(Exception ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(ApiError.of(405, "Metodo nao permitido", ex.getMessage(), req.getRequestURI()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(Exception ex, HttpServletRequest req) {
         // Erro nao mapeado explicitamente: nunca expor a mensagem interna/stack trace.
