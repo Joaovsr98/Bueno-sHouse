@@ -45,13 +45,13 @@ const BURNERS = 3;
                 <button (click)="choose(customerLink())" class="side">
                   <span class="side-icon"><app-icon name="cart" [size]="22" /></span>
                   <span class="eyebrow-plain text-[0.6rem]">Para você</span>
-                  <span class="block font-display text-xl font-bold uppercase mt-1">Quero matar minha fome</span>
+                  <span class="block font-display text-xl font-bold uppercase mt-1">Matar minha fome</span>
                   <span class="side-cta">{{ profileIsCustomer() ? 'Ver o cardápio' : 'Entrar ou criar conta' }} <app-icon name="arrow" [size]="15" /></span>
                 </button>
                 <button (click)="choose(staffLink())" class="side">
                   <span class="side-icon"><app-icon name="chef" [size]="22" /></span>
                   <span class="eyebrow-plain text-[0.6rem]">Para a equipe</span>
-                  <span class="block font-display text-xl font-bold uppercase mt-1">Bora acender a chapa</span>
+                  <span class="block font-display text-xl font-bold uppercase mt-1">Acender a chapa</span>
                   <span class="side-cta">Entrar no sistema <app-icon name="arrow" [size]="15" /></span>
                 </button>
               </div>

@@ -38,7 +38,7 @@ import { Backdrop } from '../../shared/backdrop';
           <a [routerLink]="customerLink()" [queryParams]="isCustomer() ? null : { returnUrl: '/app/cardapio' }" class="door group">
             <span class="door-icon"><app-icon name="cart" [size]="26" /></span>
             <span class="eyebrow-plain text-[0.62rem]">Para você</span>
-            <span class="block font-display text-2xl xl:text-[1.7rem] font-bold uppercase mt-2 leading-tight">Quero matar minha fome</span>
+            <span class="block font-display text-2xl xl:text-[1.7rem] font-bold uppercase mt-2 leading-tight">Matar minha fome</span>
             <span class="block text-sm text-neutral-400 mt-3 leading-relaxed">
               Escolha no cardápio, peça do seu jeito e acompanhe cada etapa até o lanche chegar na sua porta.
             </span>
@@ -48,7 +48,7 @@ import { Backdrop } from '../../shared/backdrop';
           <a [routerLink]="staffLink()" [queryParams]="isStaff() ? null : { lado: 'equipe' }" class="door group">
             <span class="door-icon"><app-icon name="chef" [size]="26" /></span>
             <span class="eyebrow-plain text-[0.62rem]">Para a equipe</span>
-            <span class="block font-display text-2xl xl:text-[1.7rem] font-bold uppercase mt-2 leading-tight">Bora acender a chapa</span>
+            <span class="block font-display text-2xl xl:text-[1.7rem] font-bold uppercase mt-2 leading-tight">Acender a chapa</span>
             <span class="block text-sm text-neutral-400 mt-3 leading-relaxed">
               Pedidos, cozinha, caixa, estoque e dashboard: tudo o que a equipe precisa para o serviço rodar.
             </span>

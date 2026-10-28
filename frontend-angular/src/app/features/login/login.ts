@@ -82,7 +82,7 @@ export class Login {
         this.stopSlowTimer();
         const isCustomer = data.user.profileName === 'CLIENTE';
         if (this.side === 'equipe' && isCustomer) {
-          this.error.set('Esta entrada é só para a equipe. Clientes entram por "Quero matar minha fome".');
+          this.error.set('Esta entrada é só para a equipe. Clientes entram por "Matar minha fome".');
           this.loading.set(false);
           return;
         }
