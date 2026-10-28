@@ -1,0 +1,35 @@
+# Blueprint do Render: backend Spring Boot (Docker). O banco MySQL fica fora do
+# Render (Aiven); os dados de conexao sao preenchidos no painel (sync: false).
+services:
+  - type: web
+    name: bueno-s-house-api
+    runtime: docker
+    plan: free
+    branch: feat/migracao-angular
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION_MINUTES
+        value: "480"
+      # dev = aplica o seed de demonstracao (usuarios @demo.local do login rapido).
+      - key: SPRING_PROFILES_ACTIVE
+        value: dev
+      # Ha divergencias de tipo conhecidas entre entidades e migrations (ver
+      # CONTINUAR-PROJETO.md, secao 0); o Flyway continua dono do schema.
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: none
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://bueno-s-house.vercel.app

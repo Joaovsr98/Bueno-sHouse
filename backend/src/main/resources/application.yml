@@ -36,7 +36,8 @@ app:
     restaurant-name: ${BOOTSTRAP_RESTAURANT_NAME:Meu Restaurante}
 
 server:
-  port: ${SERVER_PORT:8080}
+  # PORT e definida pelo Render; SERVER_PORT continua valendo no Docker Compose/local.
+  port: ${PORT:${SERVER_PORT:8080}}
 
 management:
   endpoints:
