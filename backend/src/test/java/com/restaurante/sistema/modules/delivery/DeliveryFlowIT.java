@@ -48,7 +48,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class DeliveryFlowIT {
 
-    private static final Long DEMO_PRODUCT_ID = 2L; // X-Bacon Duplo, R$ 34.90 (acima do minimo de R$ 20 da zona "Centro")
+    private static final Long DEMO_PRODUCT_ID = 2L; // X-Bacon Duplo, R$ 34.90 (acima do minimo de R$ 25 da zona "Centro")
 
     @Container
     static final MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0")
@@ -79,7 +79,7 @@ class DeliveryFlowIT {
     void fullDeliveryFlowFromOrderToConfirmedDelivery() {
         HttpHeaders headers = authHeaders();
 
-        // 1. Cliente + endereco no bairro "Centro" (ja atendido pelo seed - taxa R$ 5.00)
+        // 1. Cliente + endereco no bairro "Centro" (ja atendido pelo seed - taxa R$ 5.90, ver V902)
         CustomerResponse customer = restTemplate.exchange(
                 "/api/customers", HttpMethod.POST,
                 new HttpEntity<>(new CustomerRequest("Cliente Delivery Teste", "11999998888", null, null, null), headers),
@@ -100,8 +100,8 @@ class DeliveryFlowIT {
                 "/api/orders", HttpMethod.POST, new HttpEntity<>(orderRequest, headers), OrderResponse.class);
         assertThat(orderResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         OrderResponse order = orderResponse.getBody();
-        // 34.90 (produto) + 5.00 (taxa da zona "Centro" do seed) = 39.90
-        assertThat(order.total()).isEqualByComparingTo("39.90");
+        // 34.90 (produto) + 5.90 (taxa da zona "Centro", seed V902) = 40.80
+        assertThat(order.total()).isEqualByComparingTo("40.80");
         // Fluxo 9.1/9.2 do guia: o pedido nasce RECEBIDO e espera a confirmacao da equipe
         assertThat(order.status()).isEqualTo("RECEBIDO");
 
