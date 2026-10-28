@@ -67,7 +67,11 @@ class DeliveryFlowIT {
     private TestRestTemplate restTemplate;
 
     private HttpHeaders authHeaders() {
-        LoginRequest login = new LoginRequest("admin@demo.local", "admin123");
+        return authHeadersAs("admin@demo.local");
+    }
+
+    private HttpHeaders authHeadersAs(String email) {
+        LoginRequest login = new LoginRequest(email, "admin123");
         LoginResponse body = restTemplate.postForEntity("/api/auth/login", login, LoginResponse.class).getBody();
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(body.token());
@@ -143,25 +147,26 @@ class DeliveryFlowIT {
                 "/api/orders/" + order.id(), HttpMethod.GET, new HttpEntity<>(headers), OrderResponse.class).getBody();
         assertThat(orderAfterKitchen.status()).isEqualTo("AGUARDANDO_ENTREGADOR");
 
-        // 6. Aceitar a entrega
+        // 6. Aceitar a entrega - so o perfil MOTOBOY aceita (entregador do seed vinculado a motoboy@demo.local)
+        HttpHeaders motoboy = authHeadersAs("motoboy@demo.local");
         ResponseEntity<DeliveryResponse> accepted = restTemplate.exchange(
                 "/api/deliveries/" + delivery.id() + "/accept", HttpMethod.POST,
-                new HttpEntity<>(headers), DeliveryResponse.class);
+                new HttpEntity<>(motoboy), DeliveryResponse.class);
         assertThat(accepted.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(accepted.getBody().status()).isEqualTo("ACEITA");
 
         // 7. Tentar aceitar de novo deve falhar (a entrega ja nao esta mais AGUARDANDO_ENTREGADOR)
         ResponseEntity<String> secondAttempt = restTemplate.exchange(
                 "/api/deliveries/" + delivery.id() + "/accept", HttpMethod.POST,
-                new HttpEntity<>(headers), String.class);
+                new HttpEntity<>(motoboy), String.class);
         assertThat(secondAttempt.getStatusCode()).isIn(HttpStatus.UNPROCESSABLE_ENTITY, HttpStatus.CONFLICT);
 
         // 8. Retirar, sair para entrega, confirmar com codigo
         restTemplate.exchange("/api/deliveries/" + delivery.id() + "/pickup", HttpMethod.POST,
-                new HttpEntity<>(headers), DeliveryResponse.class);
+                new HttpEntity<>(motoboy), DeliveryResponse.class);
         ResponseEntity<DeliveryResponse> left = restTemplate.exchange(
                 "/api/deliveries/" + delivery.id() + "/leave", HttpMethod.POST,
-                new HttpEntity<>(headers), DeliveryResponse.class);
+                new HttpEntity<>(motoboy), DeliveryResponse.class);
         assertThat(left.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(left.getBody().status()).isEqualTo("EM_ROTA");
 
@@ -175,7 +180,7 @@ class DeliveryFlowIT {
         ConfirmDeliveryRequest wrongCode = new ConfirmDeliveryRequest("000000", "Fulano");
         ResponseEntity<String> wrongCodeResponse = restTemplate.exchange(
                 "/api/deliveries/" + delivery.id() + "/confirm", HttpMethod.POST,
-                new HttpEntity<>(wrongCode, headers), String.class);
+                new HttpEntity<>(wrongCode, motoboy), String.class);
         assertThat(wrongCodeResponse.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
