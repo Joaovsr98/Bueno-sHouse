@@ -86,7 +86,7 @@ class InventoryAutoDeductionIT {
         // 2. Criar ficha tecnica: 1x X-Burguer Artesanal consome 1 unidade de Pao Brioche
         RecipeResponse recipe = restTemplate.exchange(
                 "/api/inventory/recipes", HttpMethod.POST,
-                new HttpEntity<>(new RecipeRequest(DEMO_PRODUCT_ID, List.of(new RecipeItemRequest(bunStock.id(), new BigDecimal("1")))), headers),
+                new HttpEntity<>(new RecipeRequest(DEMO_PRODUCT_ID, List.of(new RecipeItemRequest(bunStock.id(), new BigDecimal("1"), BigDecimal.ONE))), headers),
                 RecipeResponse.class).getBody();
         assertThat(recipe.items()).hasSize(1);
 
