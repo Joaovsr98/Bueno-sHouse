@@ -30,6 +30,7 @@ public class DeliveryController {
     }
 
     @GetMapping("/by-order/{orderId}")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','CAIXA','MOTOBOY')")
     public DeliveryResponse findByOrder(@PathVariable Long orderId) {
         return deliveryService.findByOrderId(orderId);
     }

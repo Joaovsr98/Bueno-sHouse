@@ -57,7 +57,12 @@
         <input name="street" [(ngModel)]="addr.street" placeholder="Rua" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
         <input name="number" [(ngModel)]="addr.number" placeholder="Número" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
         <input name="complement" [(ngModel)]="addr.complement" placeholder="Complemento" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
-        <input name="neighborhood" [(ngModel)]="addr.neighborhood" placeholder="Bairro" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+        <select name="neighborhood" [(ngModel)]="addr.neighborhood" class="col-span-2 rounded-lg bg-ink-850 border border-white/10 px-3 py-2">
+          <option value="" disabled>Bairro (só atendemos estes)</option>
+          @for (z of zones(); track z.id) {
+            <option [value]="z.neighborhood">{{ z.neighborhood }} — entrega {{ currency(z.fee) }}</option>
+          }
+        </select>
         <input name="city" [(ngModel)]="addr.city" placeholder="Cidade" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
         <input name="state" [(ngModel)]="addr.state" placeholder="UF" maxlength="2" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
         <input name="zipCode" [(ngModel)]="addr.zipCode" placeholder="CEP" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
@@ -76,10 +81,26 @@
       <span class="text-neutral-400">Subtotal</span>
       <span class="font-medium">{{ currency(subtotal()) }}</span>
     </div>
-    <p class="text-xs text-neutral-500 mb-4">A taxa de entrega é calculada pelo bairro no momento do pedido.</p>
+    @if (selectedZone(); as zone) {
+      <div class="flex justify-between text-sm mb-1">
+        <span class="text-neutral-400">Entrega ({{ zone.neighborhood }})</span>
+        <span class="font-medium">{{ currency(zone.fee) }}</span>
+      </div>
+      <div class="flex justify-between text-sm mb-4">
+        <span class="text-neutral-400">Total</span>
+        <span class="font-semibold text-brand-300">{{ currency(subtotal() + zone.fee) }}</span>
+      </div>
+      @if (subtotal() < zone.minimumOrderValue) {
+        <p class="text-xs text-amber-300 mb-4">Pedido mínimo para este bairro: {{ currency(zone.minimumOrderValue) }}.</p>
+      }
+    } @else if (selectedAddressId() != null) {
+      <p class="text-xs text-amber-300 mb-4">Ainda não entregamos no bairro deste endereço. Cadastre um endereço em um dos bairros atendidos.</p>
+    } @else {
+      <p class="text-xs text-neutral-500 mb-4">A taxa de entrega é calculada pelo bairro no momento do pedido.</p>
+    }
     <button
       (click)="placeOrder()"
-      [disabled]="placing() || selectedAddressId() == null"
+      [disabled]="placing() || selectedZone() == null || subtotal() < selectedZone()!.minimumOrderValue"
       class="w-full btn-brand rounded-xl py-2.5 text-sm"
     >
       {{ placing() ? 'Enviando...' : 'Finalizar pedido' }}

@@ -39,6 +39,16 @@
     }
   </div>
 
+  @if (showDeliveryCode()) {
+    <div class="glass rounded-2xl p-5 mb-4 flex items-center justify-between gap-4">
+      <div>
+        <h2 class="text-sm font-semibold">Código de entrega</h2>
+        <p class="text-xs text-neutral-500 mt-1">Informe este código ao entregador para confirmar o recebimento.</p>
+      </div>
+      <span class="text-2xl font-bold tracking-[0.3em] text-brand-300">{{ deliveryCode() }}</span>
+    </div>
+  }
+
   <div class="glass rounded-2xl p-5">
     <h2 class="text-sm font-semibold mb-3">Itens</h2>
     <ul class="space-y-1">

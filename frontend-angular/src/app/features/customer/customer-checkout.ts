@@ -4,7 +4,13 @@ import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { CartService } from '../../core/cart.service';
-import { CustomerResponse, CustomerAddressResponse, OrderResponse, UnitResponse } from '../../core/models';
+import {
+  CustomerResponse,
+  CustomerAddressResponse,
+  DeliveryZoneResponse,
+  OrderResponse,
+  UnitResponse,
+} from '../../core/models';
 import { currency } from '../../core/format';
 
 @Component({
@@ -30,8 +36,31 @@ export class CustomerCheckout {
   savingAddress = signal(false);
   addr = { label: '', street: '', number: '', complement: '', neighborhood: '', city: '', state: '', zipCode: '' };
 
+  /** Bairros atendidos: o backend so aceita pedido se o bairro bater com uma zona. */
+  zones = signal<DeliveryZoneResponse[]>([]);
+
   constructor() {
     this.loadAddresses();
+    this.loadZones();
+  }
+
+  private async loadZones(): Promise<void> {
+    try {
+      const units = await firstValueFrom(this.api.get<UnitResponse[]>('/units'));
+      const unitId = units[0]?.id ?? 1;
+      const zones = await firstValueFrom(
+        this.api.get<DeliveryZoneResponse[]>(`/delivery-zones?unitId=${unitId}`),
+      );
+      this.zones.set(zones.filter((z) => z.active));
+    } catch {
+      this.zones.set([]);
+    }
+  }
+
+  /** Zona do endereco selecionado (undefined = bairro sem entrega). */
+  selectedZone(): DeliveryZoneResponse | undefined {
+    const addr = this.addresses().find((a) => a.id === this.selectedAddressId());
+    return addr ? this.zones().find((z) => z.neighborhood === addr.neighborhood) : undefined;
   }
 
   private async loadAddresses(): Promise<void> {

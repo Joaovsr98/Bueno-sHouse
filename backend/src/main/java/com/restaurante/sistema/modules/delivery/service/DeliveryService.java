@@ -84,6 +84,15 @@ public class DeliveryService {
     }
 
     /**
+     * Codigo que o cliente informa ao motoboy na entrega. Nunca vai em
+     * DeliveryResponse; quem chama precisa garantir que e o dono do pedido.
+     */
+    @Transactional(readOnly = true)
+    public String confirmationCodeForOrder(Long orderId) {
+        return getByOrderIdOrThrow(orderId).getConfirmationCode();
+    }
+
+    /**
      * Auto-atribuicao competitiva. O entregador autenticado precisa ter um
      * cadastro em "couriers" vinculado ao seu usuario.
      */

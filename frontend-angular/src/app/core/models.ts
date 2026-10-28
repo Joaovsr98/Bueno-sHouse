@@ -178,6 +178,17 @@ export interface CustomerResponse {
   addresses: CustomerAddressResponse[];
 }
 
+export interface DeliveryZoneResponse {
+  id: number;
+  unitId: number;
+  zoneName: string;
+  neighborhood: string;
+  fee: number;
+  minimumOrderValue: number;
+  estimatedMinutes: number | null;
+  active: boolean;
+}
+
 export interface DeliveryResponse {
   id: number;
   orderId: number;

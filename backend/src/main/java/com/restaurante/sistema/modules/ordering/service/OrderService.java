@@ -249,6 +249,8 @@ public class OrderService {
 
         if (deliveryAddress != null) {
             createDeliveryForOrder(saved, deliveryAddress, deliveryZone);
+            // Pedido delivery nao passa por garcom/comanda: entra direto na fila da cozinha.
+            return sendToKitchen(saved.getId());
         }
 
         return toResponse(saved);

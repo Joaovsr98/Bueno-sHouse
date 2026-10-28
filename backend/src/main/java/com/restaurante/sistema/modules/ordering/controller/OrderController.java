@@ -1,6 +1,7 @@
 package com.restaurante.sistema.modules.ordering.controller;
 
 import com.restaurante.sistema.modules.customers.service.CustomerService;
+import com.restaurante.sistema.modules.delivery.service.DeliveryService;
 import com.restaurante.sistema.modules.identity.security.CurrentUserProvider;
 import com.restaurante.sistema.modules.ordering.dto.*;
 import com.restaurante.sistema.modules.ordering.service.OrderService;
@@ -18,15 +19,18 @@ public class OrderController {
     private final OrderService orderService;
     private final CurrentUserProvider currentUserProvider;
     private final CustomerService customerService;
+    private final DeliveryService deliveryService;
 
     public OrderController(
             OrderService orderService,
             CurrentUserProvider currentUserProvider,
-            CustomerService customerService
+            CustomerService customerService,
+            DeliveryService deliveryService
     ) {
         this.orderService = orderService;
         this.currentUserProvider = currentUserProvider;
         this.customerService = customerService;
+        this.deliveryService = deliveryService;
     }
 
     /**
@@ -34,6 +38,7 @@ public class OrderController {
      * Com `page` (0-based) e `size` (max 100) pagina e devolve o total em X-Total-Count.
      */
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','GARCOM','CAIXA','COZINHA')")
     public org.springframework.http.ResponseEntity<List<OrderResponse>> list(
             @RequestParam Long unitId,
             @RequestParam(required = false) List<String> status,
@@ -65,6 +70,18 @@ public class OrderController {
             return orderService.findByIdForCustomer(id, customerId);
         }
         return orderService.findById(id);
+    }
+
+    /**
+     * Codigo de confirmacao da entrega, para o cliente informar ao motoboy.
+     * So o dono do pedido recebe (findByIdForCustomer devolve 404 para outros).
+     */
+    @GetMapping("/{id}/delivery-code")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public java.util.Map<String, String> deliveryCode(@PathVariable Long id) {
+        Long customerId = customerService.customerIdOfUser(currentUserProvider.getCurrentUserId());
+        orderService.findByIdForCustomer(id, customerId);
+        return java.util.Map.of("confirmationCode", deliveryService.confirmationCodeForOrder(id));
     }
 
     @PostMapping
