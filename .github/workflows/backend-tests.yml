@@ -35,16 +35,17 @@ jobs:
         if: failure()
         run: |
           shopt -s nullglob
-          for f in target/surefire-reports/*.txt target/failsafe-reports/*.txt; do
-            if grep -qE "FAILURE|ERROR" "$f"; then
-              msg=$(grep -E "<<< (FAILURE|ERROR)|Caused by|Exception:|expected|Expecting" "$f" | head -8 | tr '\n' ' ' | cut -c1-900)
-              echo "::error title=$(basename "$f" .txt)::$msg"
-            fi
-          done
-          # Causa raiz: as ultimas linhas "Caused by" (as mais internas) de cada relatorio.
-          for f in target/failsafe-reports/*.txt target/surefire-reports/*.txt; do
-            cause=$(grep -E "^Caused by" "$f" | tail -3 | tr '\n' ' ' | cut -c1-1200)
-            [ -n "$cause" ] && echo "::error title=causa $(basename "$f" .txt)::$cause"
+          # O GitHub mostra no maximo 10 anotacoes de erro por passo: primeiro as causas
+          # raiz distintas (ultimas linhas "Caused by"), depois as falhas de assercao.
+          files=(target/failsafe-reports/*.txt target/surefire-reports/*.txt)
+          for f in "${files[@]}"; do grep -E "^Caused by" "$f" | tail -2 | tr '\n' ' '; echo; done \
+            | grep -v '^\s*$' | sort -u | head -4 | while read -r cause; do
+              echo "::error title=causa::$(echo "$cause" | cut -c1-1500)"
+            done
+          for f in "${files[@]}"; do
+            grep -hE "AssertionFailedError|expected:|Expecting" "$f" | head -1 | sed "s|^|$(basename "$f" .txt): |"
+          done | grep -v '^\s*$' | head -5 | while read -r fail; do
+            echo "::error title=assercao::$(echo "$fail" | cut -c1-800)"
           done
           if [ ! -d target/failsafe-reports ] && [ ! -d target/surefire-reports ]; then
             echo "::error title=build::Falhou antes dos testes (compilacao?). Veja o passo anterior."
