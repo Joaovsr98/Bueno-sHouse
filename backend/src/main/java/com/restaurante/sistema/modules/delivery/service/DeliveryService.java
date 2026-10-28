@@ -1,5 +1,6 @@
 package com.restaurante.sistema.modules.delivery.service;
 
+import com.restaurante.sistema.common.event.DeliveryProgressEvent;
 import com.restaurante.sistema.common.exception.BusinessException;
 import com.restaurante.sistema.common.exception.ConcurrencyConflictException;
 import com.restaurante.sistema.common.exception.ResourceNotFoundException;
@@ -11,7 +12,7 @@ import com.restaurante.sistema.modules.delivery.dto.*;
 import com.restaurante.sistema.modules.delivery.repository.DeliveryAttemptRepository;
 import com.restaurante.sistema.modules.delivery.repository.DeliveryRepository;
 import com.restaurante.sistema.modules.identity.security.CurrentUserProvider;
-import com.restaurante.sistema.modules.ordering.service.OrderService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +22,8 @@ import java.util.Set;
 
 /**
  * Etapa 10 (Fase 1.5) - modulo delivery, ciclo de vida da entrega apos criada
- * (a criacao em si acontece dentro de OrderService.create, ver nota la).
+ * (a criacao em si acontece dentro de OrderService.create, ver nota la). O avanco do pedido
+ * junto com a entrega e feito por evento (DeliveryProgressEvent -> OrderDeliveryEventListener).
  *
  * Maquina de estado (Etapa 2), com uma simplificacao deliberada: a transicao
  * "ATRIBUIDA" (dispatcher escolhe o entregador manualmente) foi substituida
@@ -62,20 +64,20 @@ public class DeliveryService {
     private final DeliveryAttemptRepository deliveryAttemptRepository;
     private final CourierRepository courierRepository;
     private final CurrentUserProvider currentUserProvider;
-    private final OrderService orderService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public DeliveryService(
             DeliveryRepository deliveryRepository,
             DeliveryAttemptRepository deliveryAttemptRepository,
             CourierRepository courierRepository,
             CurrentUserProvider currentUserProvider,
-            OrderService orderService
+            ApplicationEventPublisher eventPublisher
     ) {
         this.deliveryRepository = deliveryRepository;
         this.deliveryAttemptRepository = deliveryAttemptRepository;
         this.courierRepository = courierRepository;
         this.currentUserProvider = currentUserProvider;
-        this.orderService = orderService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional(readOnly = true)
@@ -136,7 +138,7 @@ public class DeliveryService {
         delivery.setLeftAt(Instant.now());
         Delivery saved = deliveryRepository.save(delivery);
 
-        orderService.transitionTo(delivery.getOrderId(), "SAIU_PARA_ENTREGA", null);
+        eventPublisher.publishEvent(new DeliveryProgressEvent(delivery.getOrderId(), DeliveryProgressEvent.Stage.LEFT));
 
         return toResponse(saved);
     }
@@ -156,8 +158,7 @@ public class DeliveryService {
         Delivery saved = deliveryRepository.save(delivery);
 
         freeCourier(delivery.getCourierId());
-        orderService.transitionTo(delivery.getOrderId(), "ENTREGUE", null);
-        orderService.transitionTo(delivery.getOrderId(), "FINALIZADO", null);
+        eventPublisher.publishEvent(new DeliveryProgressEvent(delivery.getOrderId(), DeliveryProgressEvent.Stage.DELIVERED));
 
         return toResponse(saved);
     }

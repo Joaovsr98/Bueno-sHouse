@@ -1,5 +1,6 @@
 package com.restaurante.sistema.modules.ordering.service;
 
+import com.restaurante.sistema.common.event.OrderItemSentToKitchenEvent;
 import com.restaurante.sistema.common.event.OrderReadyEvent;
 import com.restaurante.sistema.common.exception.BusinessException;
 import com.restaurante.sistema.common.exception.ResourceNotFoundException;
@@ -19,7 +20,6 @@ import com.restaurante.sistema.modules.delivery.repository.DeliveryRepository;
 import com.restaurante.sistema.modules.delivery.repository.DeliveryZoneRepository;
 import com.restaurante.sistema.modules.identity.security.CurrentUserProvider;
 import com.restaurante.sistema.modules.inventory.service.InventoryService;
-import com.restaurante.sistema.modules.kitchen.service.KitchenEventPublisher;
 import com.restaurante.sistema.modules.ordering.domain.Order;
 import com.restaurante.sistema.modules.ordering.domain.OrderItem;
 import com.restaurante.sistema.modules.ordering.domain.OrderItemAdditional;
@@ -88,7 +88,6 @@ public class OrderService {
     private final DeliveryZoneRepository deliveryZoneRepository;
     private final DeliveryRepository deliveryRepository;
     private final CurrentUserProvider currentUserProvider;
-    private final KitchenEventPublisher kitchenEventPublisher;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final CustomerService customerService;
     private final InventoryService inventoryService;
@@ -105,7 +104,6 @@ public class OrderService {
             DeliveryZoneRepository deliveryZoneRepository,
             DeliveryRepository deliveryRepository,
             CurrentUserProvider currentUserProvider,
-            KitchenEventPublisher kitchenEventPublisher,
             ApplicationEventPublisher applicationEventPublisher,
             CustomerService customerService,
             InventoryService inventoryService
@@ -121,7 +119,6 @@ public class OrderService {
         this.deliveryZoneRepository = deliveryZoneRepository;
         this.deliveryRepository = deliveryRepository;
         this.currentUserProvider = currentUserProvider;
-        this.kitchenEventPublisher = kitchenEventPublisher;
         this.applicationEventPublisher = applicationEventPublisher;
         this.customerService = customerService;
         this.inventoryService = inventoryService;
@@ -314,8 +311,9 @@ public class OrderService {
             if ("PENDENTE".equals(item.getStatus())) {
                 inventoryService.deductForOrderItem(item.getProductId(), item.getId(), item.getQuantity());
                 item.setStatus("ENVIADO");
-                kitchenEventPublisher.publishItemEvent(
-                        order.getUnitId(), "ITEM_SENT", item.getId(), order.getId(), "ENVIADO");
+                // Painel da cozinha avisado por evento (KitchenOrderEventListener): pedidos nao depende de kitchen.
+                applicationEventPublisher.publishEvent(
+                        new OrderItemSentToKitchenEvent(order.getUnitId(), item.getId(), order.getId()));
             }
         });
 

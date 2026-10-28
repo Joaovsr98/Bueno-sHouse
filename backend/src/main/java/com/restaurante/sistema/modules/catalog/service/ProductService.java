@@ -8,7 +8,7 @@ import com.restaurante.sistema.modules.catalog.repository.AdditionalGroupReposit
 import com.restaurante.sistema.modules.catalog.repository.CategoryRepository;
 import com.restaurante.sistema.modules.catalog.repository.KitchenSectorRepository;
 import com.restaurante.sistema.modules.catalog.repository.ProductRepository;
-import com.restaurante.sistema.modules.inventory.repository.RecipeRepository;
+import com.restaurante.sistema.modules.catalog.port.RecipeLookup;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -44,20 +44,20 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final KitchenSectorRepository kitchenSectorRepository;
     private final AdditionalGroupRepository additionalGroupRepository;
-    private final RecipeRepository recipeRepository;
+    private final RecipeLookup recipeLookup;
 
     public ProductService(
             ProductRepository productRepository,
             CategoryRepository categoryRepository,
             KitchenSectorRepository kitchenSectorRepository,
             AdditionalGroupRepository additionalGroupRepository,
-            RecipeRepository recipeRepository
+            RecipeLookup recipeLookup
     ) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.kitchenSectorRepository = kitchenSectorRepository;
         this.additionalGroupRepository = additionalGroupRepository;
-        this.recipeRepository = recipeRepository;
+        this.recipeLookup = recipeLookup;
     }
 
     @Cacheable(value = "products", key = "#unitId")
@@ -138,7 +138,7 @@ public class ProductService {
 
     /** RN01: um prato so pode ficar ATIVO (available) se tiver ficha tecnica cadastrada. */
     private void assertCanBeActive(Product product) {
-        boolean hasRecipe = product.getId() != null && recipeRepository.findByProductId(product.getId()).isPresent();
+        boolean hasRecipe = recipeLookup.hasRecipe(product.getId());
         if (!hasRecipe) {
             throw new BusinessException("Cadastre a ficha tecnica do prato antes de ativa-lo (RN01)");
         }

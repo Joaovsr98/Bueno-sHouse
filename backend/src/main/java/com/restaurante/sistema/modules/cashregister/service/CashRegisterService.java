@@ -8,7 +8,7 @@ import com.restaurante.sistema.modules.cashregister.dto.*;
 import com.restaurante.sistema.modules.cashregister.repository.CashMovementRepository;
 import com.restaurante.sistema.modules.cashregister.repository.CashRegisterRepository;
 import com.restaurante.sistema.modules.identity.security.CurrentUserProvider;
-import com.restaurante.sistema.modules.payments.repository.PaymentRepository;
+import com.restaurante.sistema.modules.cashregister.port.CashPayments;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,18 +41,18 @@ public class CashRegisterService {
 
     private final CashRegisterRepository cashRegisterRepository;
     private final CashMovementRepository cashMovementRepository;
-    private final PaymentRepository paymentRepository;
+    private final CashPayments cashPayments;
     private final CurrentUserProvider currentUserProvider;
 
     public CashRegisterService(
             CashRegisterRepository cashRegisterRepository,
             CashMovementRepository cashMovementRepository,
-            PaymentRepository paymentRepository,
+            CashPayments cashPayments,
             CurrentUserProvider currentUserProvider
     ) {
         this.cashRegisterRepository = cashRegisterRepository;
         this.cashMovementRepository = cashMovementRepository;
-        this.paymentRepository = paymentRepository;
+        this.cashPayments = cashPayments;
         this.currentUserProvider = currentUserProvider;
     }
 
@@ -89,7 +89,7 @@ public class CashRegisterService {
 
         BigDecimal cashIn = sumMovements(id, CASH_IN_TYPES);
         BigDecimal cashOut = sumMovements(id, CASH_OUT_TYPES);
-        BigDecimal cashPayments = paymentRepository.sumApprovedCashByCashRegisterId(id);
+        BigDecimal cashPayments = cashPayments.approvedCashTotal(id);
 
         BigDecimal expectedBalance = register.getOpeningBalance()
                 .add(cashIn)
