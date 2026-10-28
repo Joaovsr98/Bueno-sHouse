@@ -7,7 +7,7 @@
     <div>
       <h1 class="text-lg font-semibold">Atendimento #{{ serviceId }}</h1>
       @if (service(); as s) {
-        <p class="text-sm text-neutral-400 mt-1">Mesa {{ s.tableNumber }} · {{ s.partySize }} pessoa(s)</p>
+        <p class="text-sm text-neutral-400 mt-1">Mesa {{ s.tableNumber }}, {{ s.partySize }} pessoa(s)</p>
       }
     </div>
     @if (serviceStatus(); as status) {

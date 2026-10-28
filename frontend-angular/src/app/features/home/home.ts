@@ -24,7 +24,7 @@ import { Backdrop } from '../../shared/backdrop';
 
       <main class="relative flex-1 flex flex-col items-center justify-center px-6 pb-16">
         <div class="text-center max-w-4xl">
-          <p class="eyebrow reveal reveal-1">Bueno's House · Uma experiência completa</p>
+          <p class="eyebrow reveal reveal-1">Bueno's House, uma experiência completa</p>
           <h1 class="mt-5 text-5xl sm:text-7xl font-bold uppercase leading-[0.95] reveal reveal-2">
             Por trás de cada pedido,<br /><span class="text-ember">uma experiência.</span>
           </h1>

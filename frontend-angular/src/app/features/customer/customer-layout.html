@@ -1,4 +1,6 @@
-<div class="min-h-screen flex flex-col">
+<div class="relative min-h-screen flex flex-col">
+  <!-- Foto de fundo da area do cliente: abre o apetite sem atrapalhar a leitura. -->
+  <div class="food-bg" aria-hidden="true"></div>
   <header class="sticky top-0 z-20 border-b border-white/10 bg-ink-950/75 backdrop-blur-xl">
     <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
       <a routerLink="/app/cardapio" aria-label="Bueno's House - cardápio">
@@ -28,20 +30,20 @@
             <app-icon name="logout" [size]="18" />
           </button>
         } @else {
-          <a routerLink="/login" class="ml-1 btn-brand rounded-xl px-4 py-2 text-sm">Entrar</a>
+          <a routerLink="/login" [queryParams]="{ lado: 'cliente', returnUrl: '/app/cardapio' }" class="ml-1 btn-brand rounded-xl px-4 py-2 text-sm">Entrar</a>
         }
       </nav>
     </div>
   </header>
 
-  <main class="flex-1 w-full max-w-5xl mx-auto px-4 py-8">
+  <main class="relative flex-1 w-full max-w-5xl mx-auto px-4 py-8">
     <router-outlet />
   </main>
 
-  <footer class="border-t border-white/10">
+  <footer class="relative border-t border-white/10 bg-ink-950/80">
     <div class="max-w-5xl mx-auto px-4 py-6 flex flex-wrap items-center justify-between gap-3">
       <app-logo [size]="28" tagline="" />
-      <p class="eyebrow-plain text-[0.6rem]">Feito com brasa · {{ year }}</p>
+      <p class="eyebrow-plain text-[0.6rem]">Feito na brasa, {{ year }}</p>
     </div>
   </footer>
 </div>

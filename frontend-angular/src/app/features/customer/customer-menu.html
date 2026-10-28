@@ -1,5 +1,5 @@
 <section class="relative mb-10 reveal">
-  <p class="eyebrow">Cardápio · Entrega na sua casa</p>
+  <p class="eyebrow">Entrega na sua casa</p>
   <h1 class="mt-4 text-4xl sm:text-6xl font-bold uppercase leading-[0.95]">
     Feito na brasa,<br /><span class="text-ember">direto pra você.</span>
   </h1>
@@ -73,7 +73,7 @@
             <h2 class="text-lg font-bold">{{ p.name }}</h2>
             <p class="text-xs text-neutral-500">
               {{ p.categoryName }}
-              @if (p.prepTimeMinutes) { · preparo ~{{ p.prepTimeMinutes }} min }
+              @if (p.prepTimeMinutes) {, preparo ~{{ p.prepTimeMinutes }} min }
             </p>
           </div>
           <button (click)="closeDetail()" class="text-neutral-500 hover:text-neutral-200 text-xl leading-none" aria-label="Fechar">×</button>
@@ -93,7 +93,7 @@
             <button (click)="changeDetailQty(1)" class="w-8 h-8 rounded-lg bg-white/10">+</button>
           </div>
           <button (click)="addFromDetail()" class="flex-1 btn-brand rounded-xl py-2.5 text-sm">
-            Adicionar ao carrinho · {{ currency(p.basePrice * detailQty) }}
+            Adicionar ao carrinho ({{ currency(p.basePrice * detailQty) }})
           </button>
         </div>
       </div>

@@ -1,13 +1,12 @@
 <div class="min-h-screen grid lg:grid-cols-[1fr_1.1fr]">
   <!-- Lado da marca: mesmo padrao do login -->
   <section class="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden border-r border-white/10">
-    <div class="absolute -left-40 top-1/2 -translate-y-1/2 w-[38rem] h-[38rem] rounded-full border border-brand-500/15"></div>
-    <div class="absolute -left-24 top-1/2 -translate-y-1/2 w-[28rem] h-[28rem] rounded-full border border-brand-500/20"></div>
+    <div class="food-panel" aria-hidden="true"></div>
 
     <a routerLink="/" class="relative reveal w-fit" aria-label="Voltar ao início"><app-logo [size]="52" /></a>
 
     <div class="relative max-w-lg">
-      <p class="eyebrow reveal reveal-1">Nova conta · Cliente</p>
+      <p class="eyebrow reveal reveal-1">Nova conta de cliente</p>
       <h1 class="mt-6 text-6xl font-bold leading-[0.95] uppercase reveal reveal-2">
         Seu pedido,<br />do jeito<br /><span class="text-ember">que você gosta.</span>
       </h1>
@@ -64,13 +63,13 @@
               @for (g of zoneGroups(); track g.region) {
                 <optgroup [label]="g.region">
                   @for (z of g.zones; track z.id) {
-                    <option [value]="z.neighborhood">{{ z.neighborhood }} · entrega {{ currency(z.fee) }} · ~{{ z.estimatedMinutes }} min</option>
+                    <option [value]="z.neighborhood">{{ z.neighborhood }}, entrega {{ currency(z.fee) }}, ~{{ z.estimatedMinutes }} min</option>
                   }
                 </optgroup>
               }
             </select>
             @if (selectedZone(); as z) {
-              <p class="text-xs text-neutral-400">Entrega em ~{{ z.estimatedMinutes }} min · taxa {{ currency(z.fee) }} · pedido mínimo {{ currency(z.minimumOrderValue) }}</p>
+              <p class="text-xs text-neutral-400">Entrega em ~{{ z.estimatedMinutes }} min, taxa {{ currency(z.fee) }}, pedido mínimo {{ currency(z.minimumOrderValue) }}</p>
             } @else {
               <p class="text-xs text-neutral-500">Atendemos {{ zoneCount() }} bairros de São Paulo, com taxa conforme a distância.</p>
             }

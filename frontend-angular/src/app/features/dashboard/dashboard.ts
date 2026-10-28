@@ -19,7 +19,7 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
   template: `
     <div class="page">
       <header class="mb-8 reveal">
-        <p class="eyebrow">Visão geral · Unidade</p>
+        <p class="eyebrow">Visão geral</p>
         <h1 class="page-title mt-3">Dashboard</h1>
         <p class="page-sub mt-2">Faturamento, ticket médio, food cost e alertas de estoque.</p>
       </header>
@@ -32,7 +32,7 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-6 mb-8 reveal reveal-1">
         <div class="border-t border-white/10 pt-4">
           <p class="kpi-value text-ember"><app-count-up [value]="totalRevenue()" [format]="money" /></p>
-          <p class="kpi-label mt-2">Faturamento · 30 dias</p>
+          <p class="kpi-label mt-2">Faturamento em 30 dias</p>
         </div>
         <div class="border-t border-white/10 pt-4">
           <p class="kpi-value">@if (avgTicket() != null) { <app-count-up [value]="avgTicket()!" [format]="money" /> } @else { - }</p>
@@ -55,7 +55,7 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6 reveal reveal-2">
         <section class="glass accent-card rounded-2xl p-6 lg:col-span-2">
-          <h2 class="section-title">Vendas diárias · últimos 30 dias</h2>
+          <h2 class="section-title">Vendas diárias nos últimos 30 dias</h2>
           @if (revenue().length === 0) {
             <p class="empty">Sem vendas no período.</p>
           } @else {
@@ -63,12 +63,12 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
           }
         </section>
         <section class="glass accent-card rounded-2xl p-6">
-          <h2 class="section-title">Vendas mensais · últimos 12 meses</h2>
+          <h2 class="section-title">Vendas mensais nos últimos 12 meses</h2>
           @if (monthly().length === 0) {
             <p class="empty">Sem vendas no período.</p>
           } @else {
             <app-chart type="bar" label="Faturamento" [labels]="monthlyLabels()" [values]="monthlyValues()" [formatValue]="money" />
-            <p class="kpi-label mt-3">{{ monthlyOrders() }} pedidos · melhor mês {{ bestMonth() }}</p>
+            <p class="kpi-label mt-3">{{ monthlyOrders() }} pedidos, melhor mês {{ bestMonth() }}</p>
           }
         </section>
         <section class="glass accent-card rounded-2xl p-6">

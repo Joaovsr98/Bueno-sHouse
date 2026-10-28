@@ -288,3 +288,30 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
   0%, 100% { opacity: 0.14; transform: var(--emblem-pos) scale(1); }
   50% { opacity: 0.2; transform: var(--emblem-pos) scale(1.02); }
 }
+
+/* Fundo de comida das telas do cliente: foto a direita, escurecida para o lado
+   do texto e para baixo, para dar fome sem brigar com o conteudo. */
+.food-bg {
+  position: fixed; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, #07080c 18%, rgba(7, 8, 12, 0.72) 48%, rgba(7, 8, 12, 0.2) 100%),
+    linear-gradient(0deg, #07080c 2%, rgba(7, 8, 12, 0) 55%),
+    url('/comida-burger-fritas.webp') right center / cover no-repeat;
+}
+@media (max-width: 640px) {
+  .food-bg {
+    background:
+      linear-gradient(180deg, rgba(7, 8, 12, 0.72) 0%, #07080c 65%),
+      url('/comida-burger-fritas.webp') 70% top / auto 60vh no-repeat;
+  }
+}
+
+/* Painel lateral do cliente (cadastro, login pela porta do cliente): o lanche
+   embaixo, escurecido para cima onde fica o titulo. */
+.food-panel {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(180deg, #07080c 30%, rgba(7, 8, 12, 0.8) 62%, rgba(7, 8, 12, 0.25) 100%),
+    linear-gradient(270deg, #07080c 0%, rgba(7, 8, 12, 0) 30%),
+    url('/comida-cheeseburger.webp') center 130% / 110% auto no-repeat #07080c;
+}

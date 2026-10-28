@@ -1,7 +1,7 @@
 <div class="p-4 sm:p-6 space-y-4">
   <div class="flex flex-wrap items-end justify-between gap-3">
     <div class="reveal">
-      <p class="eyebrow">Operação · Pedidos</p>
+      <p class="eyebrow">Operação do dia</p>
       <h1 class="page-title mt-3">Painel de pedidos</h1>
       <p class="page-sub mt-2">Confirme os pedidos recebidos: a confirmação baixa o estoque e envia para a cozinha.</p>
     </div>
@@ -103,7 +103,7 @@
         <div class="flex items-start justify-between">
           <div>
             <h2 class="text-lg font-bold">Pedido #{{ o.orderNumber }}</h2>
-            <p class="text-xs text-neutral-500">{{ channelLabels[o.channel] || o.channel }} · {{ o.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+            <p class="text-xs text-neutral-500">{{ channelLabels[o.channel] || o.channel }}, {{ o.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
           </div>
           <button (click)="close()" class="text-neutral-500 hover:text-neutral-200" aria-label="Fechar">×</button>
         </div>

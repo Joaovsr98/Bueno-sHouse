@@ -199,7 +199,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
                   <td>{{ p.id }}</td>
                   <td>{{ p.supplierName }}</td>
                   <td class="text-xs text-neutral-400">
-                    @for (it of p.items; track $index) { <div>{{ it.inventoryItemName }} × {{ it.quantity }} · {{ currency(it.unitPrice) }}</div> }
+                    @for (it of p.items; track $index) { <div>{{ it.inventoryItemName }} × {{ it.quantity }}, {{ currency(it.unitPrice) }}</div> }
                   </td>
                   <td class="num">{{ currency(p.total) }}</td>
                   <td><span class="badge" [class]="statusOf(p.status).cls">{{ statusOf(p.status).label }}</span></td>

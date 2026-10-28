@@ -46,7 +46,7 @@ let nextId = 0;
 export class Logo {
   readonly size = input(44);
   readonly wordmark = input(true);
-  readonly tagline = input('Cozinha · Gestão');
+  readonly tagline = input('Cozinha e gestão');
 
   readonly Math = Math;
   /** ids unicos por instancia: varias logos na mesma pagina nao disputam o mesmo gradiente. */

@@ -1,12 +1,21 @@
 <div class="min-h-screen grid lg:grid-cols-[1.1fr_1fr]">
   <!-- Lado da marca (padrao THV/Paddock: rotulo mono, titulo enorme, numeros) -->
   <section class="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden border-r border-white/10">
-    <app-backdrop align="right" />
+    @if (side === 'cliente') { <div class="food-panel" aria-hidden="true"></div> } @else { <app-backdrop align="right" /> }
 
     <a routerLink="/" class="relative reveal w-fit" aria-label="Voltar ao início"><app-logo [size]="52" /></a>
 
     <div class="relative max-w-xl">
-      <p class="eyebrow reveal reveal-1">Dark kitchen · Gestão de ponta a ponta</p>
+      @if (side === 'cliente') {
+      <p class="eyebrow reveal reveal-1">Bateu a fome?</p>
+      <h1 class="mt-6 text-6xl xl:text-7xl font-bold leading-[0.95] uppercase reveal reveal-2">
+        A chapa já<br />está quente.<br /><span class="text-ember">Bora pedir?</span>
+      </h1>
+      <p class="mt-6 text-neutral-300 leading-relaxed max-w-md reveal reveal-3">
+        Entre na sua conta, monte o pedido do seu jeito e acompanhe cada etapa até o lanche chegar na sua porta.
+      </p>
+      } @else {
+      <p class="eyebrow reveal reveal-1">Gestão de ponta a ponta</p>
       <h1 class="mt-6 text-6xl xl:text-7xl font-bold leading-[0.95] uppercase reveal reveal-2">
         Do pedido<br />ao lucro, tudo<br /><span class="text-ember">sob controle.</span>
       </h1>
@@ -14,13 +23,16 @@
         Cardápio digital, pedidos, cozinha, ficha técnica com food cost e estoque com baixa automática.
         Tudo conectado, do primeiro clique do cliente ao dashboard do dono.
       </p>
+      }
     </div>
 
+    @if (side !== 'cliente') {
     <div class="relative grid grid-cols-3 gap-6 border-t border-white/10 pt-6 reveal reveal-4">
       <div><p class="kpi-value">7</p><p class="kpi-label mt-1">Perfis de acesso</p></div>
       <div><p class="kpi-value">14</p><p class="kpi-label mt-1">Módulos</p></div>
       <div><p class="kpi-value text-ember">100%</p><p class="kpi-label mt-1">Na nuvem</p></div>
     </div>
+    }
   </section>
 
   <!-- Lado do acesso -->
@@ -73,7 +85,7 @@
       <div class="space-y-3">
         <p class="eyebrow-plain text-[0.62rem] flex items-center gap-2">
           <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
-          Acesso rápido · {{ side === 'equipe' ? 'equipe' : side === 'cliente' ? 'cliente' : 'equipe e cliente' }} (demonstração)
+          Acesso rápido para {{ side === 'equipe' ? 'equipe' : side === 'cliente' ? 'cliente' : 'equipe e cliente' }} (demonstração)
         </p>
         @if (side !== 'cliente') {
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">

@@ -21,7 +21,7 @@
       <div class="flex items-center justify-between">
         <div>
           <p class="text-sm font-medium">Pedido #{{ order.orderNumber }}</p>
-          <p class="text-xs text-neutral-500 mt-0.5">{{ order.items.length }} item(ns) · {{ currency(order.total) }}</p>
+          <p class="text-xs text-neutral-500 mt-0.5">{{ order.items.length }} item(ns), {{ currency(order.total) }}</p>
         </div>
         <span class="text-xs uppercase tracking-wide rounded-full border border-brand-500/30 text-brand-300 px-3 py-1">
           {{ label(order.status) }}
