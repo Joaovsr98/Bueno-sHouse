@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.catalog.domain;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,6 +45,7 @@ public class Product {
     private String imageUrl;
 
     @Column(name = "prep_time_minutes")
+    @JdbcTypeCode(SqlTypes.SMALLINT) // coluna SMALLINT no banco (Flyway); sem isto o validate do Hibernate falha
     private Integer prepTimeMinutes;
 
     @ManyToOne(fetch = FetchType.LAZY)

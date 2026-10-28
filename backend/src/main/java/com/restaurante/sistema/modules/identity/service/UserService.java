@@ -64,6 +64,10 @@ public class UserService {
         if (CLIENTE.equals(user.getProfile().getName())) {
             throw new BusinessException("Clientes nao sao gerenciados por este endpoint");
         }
+        if (isDemoAccount(user.getEmail())) {
+            // As credenciais de demonstracao sao publicas: ninguem pode tranca-las ou rebaixa-las.
+            throw new BusinessException("Contas de demonstracao nao podem ser alteradas");
+        }
         boolean self = id.equals(currentUserId);
         if (request.profileName() != null) {
             if (self) {
@@ -84,6 +88,11 @@ public class UserService {
         }
         user.setUpdatedAt(Instant.now());
         return UserResponse.from(userRepository.save(user));
+    }
+
+    /** Logins publicos do ambiente de demonstracao (seed V900 e o exigido pelo guia). */
+    private static boolean isDemoAccount(String email) {
+        return email != null && (email.endsWith("@demo.local") || email.equals("admin@email.com"));
     }
 
     private Profile staffProfile(String name) {

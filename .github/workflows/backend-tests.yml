@@ -1,0 +1,41 @@
+name: Backend · testes de integração
+
+# Roda a suíte completa (Testcontainers sobe um MySQL 8 real) a cada push e pull request
+# que mexa no backend. O build da imagem do Render pula os testes; este job é quem garante
+# que migrations, mapeamentos (ddl-auto=validate) e regras de negócio continuam corretos.
+on:
+  push:
+    branches: [main, feat/migracao-angular]
+    paths: ['backend/**', '.github/workflows/backend-tests.yml']
+  pull_request:
+    paths: ['backend/**', '.github/workflows/backend-tests.yml']
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Testes (unitários + integração)
+        run: mvn -B verify
+
+      - name: Relatórios dos testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorios-testes
+          path: |
+            backend/target/surefire-reports
+            backend/target/failsafe-reports
+          if-no-files-found: ignore

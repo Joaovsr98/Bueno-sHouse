@@ -22,6 +22,7 @@ public class TableController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','CAIXA','GARCOM')")
     public List<TableResponse> list(@RequestParam Long unitId) {
         return tableService.listByUnit(unitId);
     }

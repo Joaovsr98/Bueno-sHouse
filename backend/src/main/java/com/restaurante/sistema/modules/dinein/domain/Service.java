@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.dinein.domain;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,6 +42,7 @@ public class Service {
     private Long openedBy;
 
     @Column(name = "party_size", nullable = false)
+    @JdbcTypeCode(SqlTypes.SMALLINT) // coluna SMALLINT no banco (Flyway); sem isto o validate do Hibernate falha
     private int partySize = 1;
 
     @Column(nullable = false, length = 20)
@@ -58,6 +61,7 @@ public class Service {
     private Instant closedAt;
 
     @Column(name = "active_flag", insertable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT) // coluna TINYINT no banco (Flyway); sem isto o validate do Hibernate falha
     private Integer activeFlag;
 
     @Version

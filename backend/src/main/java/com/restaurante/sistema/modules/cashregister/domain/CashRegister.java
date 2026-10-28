@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.cashregister.domain;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,6 +51,7 @@ public class CashRegister {
     private Instant closedAt;
 
     @Column(name = "open_flag", insertable = false, updatable = false)
+    @JdbcTypeCode(SqlTypes.TINYINT) // coluna TINYINT no banco (Flyway); sem isto o validate do Hibernate falha
     private Integer openFlag;
 
     @Version

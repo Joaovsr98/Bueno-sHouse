@@ -21,6 +21,7 @@ public class CommandController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','CAIXA','GARCOM')")
     public List<CommandResponse> listByService(@RequestParam Long serviceId) {
         return commandService.listByService(serviceId);
     }

@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.ordering.domain;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,6 +37,7 @@ public class OrderItem {
     private BigDecimal unitPriceSnapshot;
 
     @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.SMALLINT) // coluna SMALLINT no banco (Flyway); sem isto o validate do Hibernate falha
     private int quantity = 1;
 
     @Column(nullable = false, precision = 15, scale = 2)

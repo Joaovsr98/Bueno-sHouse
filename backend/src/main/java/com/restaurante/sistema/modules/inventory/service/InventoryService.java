@@ -170,11 +170,11 @@ public class InventoryService {
     @Transactional
     public void receiveStock(Long inventoryItemId, BigDecimal quantity, BigDecimal unitCost, String reason) {
         InventoryItem item = getOrThrow(inventoryItemId);
-        item.setCurrentQuantity(item.getCurrentQuantity().add(quantity));
         if (unitCost != null) {
             item.setCostPerUnit(unitCost);
+            inventoryItemRepository.save(item);
         }
-        inventoryItemRepository.save(item);
+        inventoryItemRepository.addQuantity(item.getId(), quantity);
 
         StockMovement movement = new StockMovement();
         movement.setInventoryItemId(item.getId());
@@ -200,9 +200,13 @@ public class InventoryService {
 
         InventoryItem item = getOrThrow(inventoryItemId);
 
-        BigDecimal delta = "AJUSTE_PERDA".equals(request.type()) ? request.quantity().negate() : request.quantity();
-        item.setCurrentQuantity(item.getCurrentQuantity().add(delta));
-        inventoryItemRepository.save(item);
+        if ("AJUSTE_PERDA".equals(request.type())) {
+            if (inventoryItemRepository.subtractIfAvailable(item.getId(), request.quantity()) == 0) {
+                throw new BusinessException("Saida maior que o saldo de " + item.getName());
+            }
+        } else {
+            inventoryItemRepository.addQuantity(item.getId(), request.quantity());
+        }
 
         StockMovement movement = new StockMovement();
         movement.setInventoryItemId(item.getId());
@@ -269,8 +273,10 @@ public class InventoryService {
                 InventoryItem inventoryItem = getOrThrow(recipeItem.getInventoryItemId());
 
                 BigDecimal quantityToDeduct = consumptionPerServing(recipe, recipeItem).multiply(BigDecimal.valueOf(quantitySold));
-                inventoryItem.setCurrentQuantity(inventoryItem.getCurrentQuantity().subtract(quantityToDeduct));
-                inventoryItemRepository.save(inventoryItem);
+                // RN03 garantido no proprio UPDATE: sem saldo, a transacao inteira (confirmacao) e desfeita.
+                if (inventoryItemRepository.subtractIfAvailable(inventoryItem.getId(), quantityToDeduct) == 0) {
+                    throw new BusinessException("Estoque insuficiente: " + inventoryItem.getName());
+                }
 
                 StockMovement movement = new StockMovement();
                 movement.setInventoryItemId(inventoryItem.getId());
@@ -300,8 +306,7 @@ public class InventoryService {
         List<StockMovement> deductions = stockMovementRepository.findByReferenceOrderItemIdAndType(orderItemId, STOCK_OUT_TYPE);
         for (StockMovement deduction : deductions) {
             InventoryItem item = getOrThrow(deduction.getInventoryItemId());
-            item.setCurrentQuantity(item.getCurrentQuantity().add(deduction.getQuantity()));
-            inventoryItemRepository.save(item);
+            inventoryItemRepository.addQuantity(item.getId(), deduction.getQuantity());
 
             StockMovement reversal = new StockMovement();
             reversal.setInventoryItemId(item.getId());

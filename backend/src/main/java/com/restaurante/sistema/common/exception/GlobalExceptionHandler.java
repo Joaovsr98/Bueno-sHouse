@@ -62,6 +62,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Restricao unica do banco violada (ex.: segunda baixa simultanea do mesmo item):
+     * a operacao ja aconteceu em outra requisicao.
+     */
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrity(Exception ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of(409, "Conflito", "Esta operacao conflita com outra ja registrada. Atualize a tela e tente de novo.", req.getRequestURI()));
+    }
+
+    /**
      * @PreAuthorize negado: sem isto o handler generico abaixo capturaria a
      * excecao antes do Spring Security e o perfil sem permissao veria 500.
      */

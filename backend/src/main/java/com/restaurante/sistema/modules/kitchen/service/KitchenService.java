@@ -1,5 +1,6 @@
 package com.restaurante.sistema.modules.kitchen.service;
 
+import com.restaurante.sistema.common.event.OrderItemCancelledEvent;
 import com.restaurante.sistema.common.event.OrderItemReadyEvent;
 import com.restaurante.sistema.common.exception.BusinessException;
 import com.restaurante.sistema.common.exception.ResourceNotFoundException;
@@ -120,6 +121,8 @@ public class KitchenService {
         item.setStatus("CANCELADO");
         item.setCancelReason(reason);
         OrderItem saved = orderItemRepository.save(item);
+        // Estoque foi baixado na confirmacao do pedido: estorna (InventoryEventListener).
+        applicationEventPublisher.publishEvent(new OrderItemCancelledEvent(item.getId(), reason));
 
         kitchenEventPublisher.publishItemEvent(
                 unitIdOf(item), "ITEM_CANCELLED", item.getId(), item.getOrder().getId(), "CANCELADO");

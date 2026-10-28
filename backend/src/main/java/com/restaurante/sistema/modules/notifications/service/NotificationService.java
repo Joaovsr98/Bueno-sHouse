@@ -42,8 +42,10 @@ public class NotificationService {
     }
 
     @Transactional
-    public void markRead(Long id) {
+    public void markRead(Long id, Long currentUserId) {
+        // So o destinatario marca a propria notificacao; para os outros ela "nao existe" (404).
         Notification notification = repository.findById(id)
+                .filter(n -> n.getUserId().equals(currentUserId))
                 .orElseThrow(() -> new ResourceNotFoundException("Notification", id));
         notification.setReadAt(Instant.now());
         repository.save(notification);

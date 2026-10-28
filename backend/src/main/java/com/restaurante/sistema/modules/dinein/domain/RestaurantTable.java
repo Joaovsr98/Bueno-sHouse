@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.dinein.domain;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +25,7 @@ public class RestaurantTable {
     private String number;
 
     @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.SMALLINT) // coluna SMALLINT no banco (Flyway); sem isto o validate do Hibernate falha
     private int capacity = 4;
 
     @Column(nullable = false, length = 20)

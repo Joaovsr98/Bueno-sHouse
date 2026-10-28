@@ -1,5 +1,7 @@
 package com.restaurante.sistema.modules.delivery.domain;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +36,7 @@ public class DeliveryZone {
     private BigDecimal minimumOrderValue = BigDecimal.ZERO;
 
     @Column(name = "estimated_minutes")
+    @JdbcTypeCode(SqlTypes.SMALLINT) // coluna SMALLINT no banco (Flyway); sem isto o validate do Hibernate falha
     private Integer estimatedMinutes;
 
     @Column(nullable = false)

@@ -26,6 +26,7 @@ public class ServiceController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','CAIXA','GARCOM')")
     public List<ServiceResponse> history(@RequestParam Long tableId) {
         return serviceService.history(tableId);
     }

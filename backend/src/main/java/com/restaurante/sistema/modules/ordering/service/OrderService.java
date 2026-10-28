@@ -388,6 +388,17 @@ public class OrderService {
         Order order = getOrThrow(orderId);
         List<OrderItem> items = order.getItems();
 
+        // Item cancelado (ex.: indisponivel na cozinha) deixa de ser cobrado.
+        BigDecimal subtotal = items.stream()
+                .filter(i -> !"CANCELADO".equals(i.getStatus()))
+                .map(OrderItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (subtotal.compareTo(order.getSubtotal()) != 0) {
+            order.setSubtotal(subtotal);
+            order.setTotal(subtotal.add(order.getServiceFee()).add(order.getDeliveryFee()).subtract(order.getDiscount()));
+            orderRepository.save(order);
+        }
+
         boolean anyInProgress = items.stream().anyMatch(i -> "EM_PREPARO".equals(i.getStatus()));
         boolean allDone = items.stream().allMatch(i -> Set.of("PRONTO", "CANCELADO", "ENTREGUE").contains(i.getStatus()));
         boolean anyReady = items.stream().anyMatch(i -> "PRONTO".equals(i.getStatus()));

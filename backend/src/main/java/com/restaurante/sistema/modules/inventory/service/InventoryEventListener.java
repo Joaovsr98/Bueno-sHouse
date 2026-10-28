@@ -1,5 +1,6 @@
 package com.restaurante.sistema.modules.inventory.service;
 
+import com.restaurante.sistema.common.event.OrderItemCancelledEvent;
 import com.restaurante.sistema.common.event.OrderItemReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -22,5 +23,12 @@ public class InventoryEventListener {
     @EventListener
     public void onOrderItemReady(OrderItemReadyEvent event) {
         inventoryService.deductForOrderItem(event.productId(), event.orderItemId(), event.quantitySold());
+    }
+
+    /** Item cancelado depois da confirmacao: devolve ao estoque o que a confirmacao baixou. */
+    @EventListener
+    public void onOrderItemCancelled(OrderItemCancelledEvent event) {
+        inventoryService.reverseDeductionForOrderItem(event.orderItemId(),
+                "Estorno: item indisponivel na cozinha" + (event.reason() != null ? " (" + event.reason() + ")" : ""));
     }
 }

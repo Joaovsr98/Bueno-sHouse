@@ -22,6 +22,7 @@ public class CourierController {
     }
 
     @GetMapping("/available")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','CAIXA')")
     public List<CourierResponse> listAvailable(@RequestParam Long unitId) {
         return courierService.listAvailable(unitId);
     }

@@ -3,6 +3,7 @@ package com.restaurante.sistema.modules.catalog.controller;
 import com.restaurante.sistema.modules.catalog.domain.KitchenSector;
 import com.restaurante.sistema.modules.catalog.dto.KitchenSectorResponse;
 import com.restaurante.sistema.modules.catalog.repository.KitchenSectorRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,6 +26,7 @@ public class KitchenSectorController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','CAIXA','GARCOM','COZINHA','MOTOBOY')")
     public List<KitchenSectorResponse> list() {
         return repository.findAll().stream()
                 .map(s -> new KitchenSectorResponse(s.getId(), s.getUnitId(), s.getName()))
