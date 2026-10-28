@@ -89,7 +89,7 @@ public class CashRegisterService {
 
         BigDecimal cashIn = sumMovements(id, CASH_IN_TYPES);
         BigDecimal cashOut = sumMovements(id, CASH_OUT_TYPES);
-        BigDecimal cashPayments = cashPayments.approvedCashTotal(id);
+        BigDecimal cashPayments = this.cashPayments.approvedCashTotal(id);
 
         BigDecimal expectedBalance = register.getOpeningBalance()
                 .add(cashIn)
