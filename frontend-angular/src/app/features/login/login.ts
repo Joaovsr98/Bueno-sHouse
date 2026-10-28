@@ -7,6 +7,8 @@ import { LoginResponse } from '../../core/models';
 import { defaultRouteForRole } from '../../core/routing';
 import { Logo } from '../../shared/logo';
 import { Icon } from '../../shared/icon';
+import { Backdrop } from '../../shared/backdrop';
+import { Burners } from '../../shared/burners';
 
 const DEMO_PASSWORD = 'admin123';
 
@@ -21,7 +23,7 @@ const QUICK_ACCESS = [
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, RouterLink, Logo, Icon],
+  imports: [FormsModule, RouterLink, Logo, Icon, Backdrop, Burners],
   templateUrl: './login.html',
 })
 export class Login {

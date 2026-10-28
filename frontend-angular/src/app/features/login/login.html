@@ -1,8 +1,7 @@
 <div class="min-h-screen grid lg:grid-cols-[1.1fr_1fr]">
   <!-- Lado da marca (padrao THV/Paddock: rotulo mono, titulo enorme, numeros) -->
   <section class="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden border-r border-white/10">
-    <img src="emblema.webp" alt="" aria-hidden="true" class="emblem-bg w-[44rem] h-[44rem] -right-56 top-1/2"
-      style="--emblem-pos: translateY(-50%); transform: translateY(-50%)" />
+    <app-backdrop align="right" />
 
     <a routerLink="/" class="relative reveal w-fit" aria-label="Voltar ao início"><app-logo [size]="52" /></a>
 
@@ -67,7 +66,7 @@
 
         <button type="submit" [disabled]="loading()" class="w-full btn-brand rounded-xl py-3 text-sm inline-flex items-center justify-center gap-2">
           {{ loading() ? (slow() ? 'Acordando o servidor...' : 'Entrando...') : 'Entrar' }}
-          @if (!loading()) { <app-icon name="arrow" [size]="16" /> }
+          @if (loading()) { <app-burners [size]="8" /> } @else { <app-icon name="arrow" [size]="16" /> }
         </button>
       </form>
 

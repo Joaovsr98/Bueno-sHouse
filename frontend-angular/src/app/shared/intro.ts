@@ -6,7 +6,8 @@ const BURNERS = 3;
 
 /**
  * Abertura "acendendo a chapa" (inspirada na largada do Paddock 22): as bocas
- * acendem uma a uma e o servico abre. Uma vez por sessao, com botao de pular;
+ * acendem uma a uma e o servico abre. Toda vez que se entra pela pagina inicial,
+ * com botao de pular (nas outras telas, recarregar nao repete a abertura);
  * quem prefere menos movimento (prefers-reduced-motion) nao ve a animacao.
  */
 @Component({
@@ -52,7 +53,7 @@ export class Intro implements OnDestroy {
   private timers: ReturnType<typeof setTimeout>[] = [];
 
   constructor() {
-    if (this.alreadySeen() || this.prefersReducedMotion()) return;
+    if ((!this.onHome() && this.alreadySeen()) || this.prefersReducedMotion()) return;
     this.visible.set(true);
     this.burners.forEach((i) => this.timers.push(setTimeout(() => this.lit.set(i + 1), 350 + i * 380)));
     this.timers.push(setTimeout(() => this.finish(), 350 + BURNERS * 380 + 700));
@@ -66,6 +67,10 @@ export class Intro implements OnDestroy {
 
   ngOnDestroy(): void {
     this.timers.forEach(clearTimeout);
+  }
+
+  private onHome(): boolean {
+    return typeof location !== 'undefined' && location.pathname === '/';
   }
 
   private alreadySeen(): boolean {

@@ -4,6 +4,7 @@ import { AuthService } from '../../core/auth.service';
 import { defaultRouteForRole } from '../../core/routing';
 import { Logo } from '../../shared/logo';
 import { Icon } from '../../shared/icon';
+import { Backdrop } from '../../shared/backdrop';
 
 /**
  * Pagina inicial: separa as duas entradas do sistema - o cliente (cardapio,
@@ -12,11 +13,10 @@ import { Icon } from '../../shared/icon';
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, Logo, Icon],
+  imports: [RouterLink, Logo, Icon, Backdrop],
   template: `
     <div class="relative min-h-screen overflow-hidden flex flex-col">
-      <img src="emblema.webp" alt="" aria-hidden="true" class="emblem-bg w-[58rem] h-[58rem] left-1/2 top-[40%]"
-        style="--emblem-pos: translate(-50%, -50%); transform: translate(-50%, -50%)" />
+      <app-backdrop align="center" />
 
       <header class="relative px-6 sm:px-10 py-6 reveal">
         <app-logo [size]="44" />
