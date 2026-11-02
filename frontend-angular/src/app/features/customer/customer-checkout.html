@@ -61,6 +61,13 @@
     } @else {
       <form (ngSubmit)="saveAddress()" class="mt-4 grid grid-cols-2 gap-2 text-sm">
         <input name="label" [(ngModel)]="addr.label" placeholder="Apelido (Casa, Trabalho)" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+        <input #zipInput [value]="addr.zipCode" (input)="onCep(zipInput)" placeholder="CEP (00000-000)" inputmode="numeric" maxlength="9"
+          aria-label="CEP" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2"
+          [class.!border-red-500]="cep.status() === 'not-found' || cep.status() === 'outside'" />
+        <p class="self-center text-xs leading-snug" aria-live="polite"
+          [class]="cep.status() === 'ok' ? 'text-green-400' : cep.status() === 'idle' || cep.status() === 'loading' ? 'text-neutral-500' : 'text-red-400'">
+          {{ cep.message() ?? 'Digite o CEP: preenchemos rua e bairro.' }}
+        </p>
         <input name="street" [(ngModel)]="addr.street" placeholder="Rua" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
         <input name="number" [(ngModel)]="addr.number" placeholder="Número" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
         <input name="complement" [(ngModel)]="addr.complement" placeholder="Complemento" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
@@ -74,9 +81,8 @@
             </optgroup>
           }
         </select>
-        <input name="city" [(ngModel)]="addr.city" placeholder="Cidade" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
-        <input name="state" [(ngModel)]="addr.state" placeholder="UF" maxlength="2" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
-        <input name="zipCode" [(ngModel)]="addr.zipCode" placeholder="CEP" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+        <input name="city" [(ngModel)]="addr.city" placeholder="Cidade" readonly aria-label="Cidade" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2 opacity-70" />
+        <input name="state" [(ngModel)]="addr.state" placeholder="UF" maxlength="2" readonly aria-label="UF" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2 opacity-70" />
         <div class="col-span-2 flex gap-2">
           <button type="submit" [disabled]="savingAddress()" class="btn-brand rounded-xl px-4 py-2">{{ savingAddress() ? 'Salvando...' : 'Salvar endereço' }}</button>
           @if (addresses().length > 0) {

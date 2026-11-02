@@ -10,6 +10,7 @@ import { currency } from '../../core/format';
 import { Logo } from '../../shared/logo';
 import { Icon } from '../../shared/icon';
 import { groupZones } from '../../core/zones';
+import { CepLookup } from '../../core/cep';
 
 /**
  * Cadastro publico de Cliente (RF-004): dados pessoais + endereco de entrega.
@@ -45,6 +46,8 @@ export class Register {
   }
   error = signal<string | null>(null);
   loading = signal(false);
+  /** CEP: mascara, ViaCEP e checagem de cidade/bairro atendido. */
+  readonly cep = new CepLookup();
 
   constructor() {
     this.loadZones();
@@ -62,10 +65,21 @@ export class Register {
     }
   }
 
+  async onCep(input: HTMLInputElement): Promise<void> {
+    const lookup = this.cep.onInput(input.value, this.addr, this.zones());
+    input.value = this.addr.zipCode; // mascara aplicada na hora, mesmo se a pessoa digitar letra
+    await lookup;
+  }
+
   async submit(): Promise<void> {
     const a = this.addr;
     if (!a.street || !a.number || !a.neighborhood || !a.city || !a.state || !a.zipCode) {
-      this.error.set('Preencha o endereço de entrega: rua, número, bairro, cidade, UF e CEP');
+      this.error.set('Preencha o endereço de entrega: CEP, rua, número e bairro');
+      return;
+    }
+    const cepError = this.cep.validate(a);
+    if (cepError) {
+      this.error.set(cepError);
       return;
     }
     this.error.set(null);

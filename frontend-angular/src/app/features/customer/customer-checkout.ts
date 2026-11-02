@@ -13,6 +13,7 @@ import {
 } from '../../core/models';
 import { currency } from '../../core/format';
 import { groupZones } from '../../core/zones';
+import { CepLookup } from '../../core/cep';
 
 @Component({
   selector: 'app-customer-checkout',
@@ -35,6 +36,8 @@ export class CustomerCheckout {
   customerId = signal<number | null>(null);
   showAddressForm = signal(false);
   savingAddress = signal(false);
+  /** CEP: mascara, ViaCEP e checagem de cidade/bairro atendido. */
+  readonly cep = new CepLookup();
   addr = { label: '', street: '', number: '', complement: '', neighborhood: '', city: 'São Paulo', state: 'SP', zipCode: '' };
 
   /** RF-006: pagamento simulado - nenhuma cobranca real, a forma escolhida vai nas observacoes do pedido. */
@@ -93,7 +96,12 @@ export class CustomerCheckout {
     const a = this.addr;
     if (id == null) return;
     if (!a.street || !a.number || !a.neighborhood || !a.city || !a.state || !a.zipCode) {
-      this.error.set('Preencha rua, número, bairro, cidade, UF e CEP');
+      this.error.set('Preencha CEP, rua, número e bairro');
+      return;
+    }
+    const cepError = this.cep.validate(a);
+    if (cepError) {
+      this.error.set(cepError);
       return;
     }
     this.savingAddress.set(true);
@@ -110,11 +118,18 @@ export class CustomerCheckout {
       this.selectedAddressId.set(created.id);
       this.showAddressForm.set(false);
       this.addr = { label: '', street: '', number: '', complement: '', neighborhood: '', city: 'São Paulo', state: 'SP', zipCode: '' };
+      this.cep.reset();
     } catch (e) {
       this.error.set(apiErrorMessage(e, 'Erro ao salvar o endereço'));
     } finally {
       this.savingAddress.set(false);
     }
+  }
+
+  async onCep(input: HTMLInputElement): Promise<void> {
+    const lookup = this.cep.onInput(input.value, this.addr, this.zones());
+    input.value = this.addr.zipCode; // mascara aplicada na hora, mesmo se a pessoa digitar letra
+    await lookup;
   }
 
   selectAddress(id: number): void {

@@ -80,6 +80,30 @@ class DeliveryFlowIT {
     }
 
     @Test
+    void addressWithInvalidZipCodeIsRejectedWith400() {
+        HttpHeaders headers = authHeaders();
+        CustomerResponse customer = restTemplate.exchange(
+                "/api/customers", HttpMethod.POST,
+                new HttpEntity<>(new CustomerRequest("Cliente CEP Teste", "11999997777", null, null, null), headers),
+                CustomerResponse.class).getBody();
+
+        CustomerAddressRequest invalid = new CustomerAddressRequest(
+                "Casa", "Rua das Flores", "100", null, "Centro", "Sao Paulo", "SP", "abc", null, true);
+        ResponseEntity<String> rejected = restTemplate.exchange(
+                "/api/customers/" + customer.id() + "/addresses", HttpMethod.POST,
+                new HttpEntity<>(invalid, headers), String.class);
+        assertThat(rejected.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        // Sem hifen e aceito e gravado no formato 00000-000.
+        CustomerAddressRequest digitsOnly = new CustomerAddressRequest(
+                "Casa", "Rua das Flores", "100", null, "Centro", "Sao Paulo", "SP", "01001000", null, true);
+        CustomerAddressResponse saved = restTemplate.exchange(
+                "/api/customers/" + customer.id() + "/addresses", HttpMethod.POST,
+                new HttpEntity<>(digitsOnly, headers), CustomerAddressResponse.class).getBody();
+        assertThat(saved.zipCode()).isEqualTo("01001-000");
+    }
+
+    @Test
     void fullDeliveryFlowFromOrderToConfirmedDelivery() {
         HttpHeaders headers = authHeaders();
 

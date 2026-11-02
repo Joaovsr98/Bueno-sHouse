@@ -56,6 +56,22 @@
       <div class="space-y-4 border-t border-white/10 pt-5">
         <p class="section-title !mb-0">Endereço de entrega</p>
         <div class="grid grid-cols-6 gap-3">
+          <div class="col-span-6 sm:col-span-2 space-y-1.5">
+            <label class="field-label" for="zipCode">CEP</label>
+            <input id="zipCode" #zipInput [value]="addr.zipCode" (input)="onCep(zipInput)" required inputmode="numeric"
+              placeholder="00000-000" maxlength="9" autocomplete="postal-code" class="field py-3"
+              [class.!border-red-500]="cep.status() === 'not-found' || cep.status() === 'outside'" />
+          </div>
+          <div class="col-span-6 sm:col-span-4 flex items-end pb-1">
+            @if (cep.message()) {
+              <p class="text-xs leading-relaxed" aria-live="polite"
+                [class]="cep.status() === 'ok' ? 'text-green-400' : cep.status() === 'loading' ? 'text-neutral-400' : 'text-red-400'">
+                {{ cep.message() }}
+              </p>
+            } @else {
+              <p class="text-xs text-neutral-500">Digite o CEP: preenchemos rua, bairro e cidade para você.</p>
+            }
+          </div>
           <div class="col-span-6 space-y-1.5">
             <label class="field-label" for="neighborhood">Bairro</label>
             <select id="neighborhood" name="neighborhood" [(ngModel)]="addr.neighborhood" required class="field py-3">
@@ -82,21 +98,17 @@
             <label class="field-label" for="number">Número</label>
             <input id="number" name="number" [(ngModel)]="addr.number" required class="field py-3" />
           </div>
-          <div class="col-span-4 sm:col-span-6 space-y-1.5">
+          <div class="col-span-4 sm:col-span-2 space-y-1.5">
             <label class="field-label" for="complement">Complemento</label>
-            <input id="complement" name="complement" [(ngModel)]="addr.complement" placeholder="Apto, bloco (opcional)" autocomplete="address-line2" class="field py-3" />
-          </div>
-          <div class="col-span-6 sm:col-span-2 space-y-1.5">
-            <label class="field-label" for="zipCode">CEP</label>
-            <input id="zipCode" name="zipCode" [(ngModel)]="addr.zipCode" required placeholder="00000-000" autocomplete="postal-code" class="field py-3" />
+            <input id="complement" name="complement" [(ngModel)]="addr.complement" placeholder="Apto, bloco" autocomplete="address-line2" class="field py-3" />
           </div>
           <div class="col-span-4 sm:col-span-3 space-y-1.5">
             <label class="field-label" for="city">Cidade</label>
-            <input id="city" name="city" [(ngModel)]="addr.city" required autocomplete="address-level2" class="field py-3" />
+            <input id="city" name="city" [(ngModel)]="addr.city" required readonly autocomplete="address-level2" class="field py-3 opacity-70" />
           </div>
           <div class="col-span-2 sm:col-span-1 space-y-1.5">
             <label class="field-label" for="state">UF</label>
-            <input id="state" name="state" [(ngModel)]="addr.state" required maxlength="2" autocomplete="address-level1" class="field py-3 uppercase" />
+            <input id="state" name="state" [(ngModel)]="addr.state" required readonly maxlength="2" autocomplete="address-level1" class="field py-3 uppercase opacity-70" />
           </div>
         </div>
       </div>

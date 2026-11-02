@@ -85,7 +85,8 @@ public class CustomerService {
         address.setNeighborhood(request.neighborhood());
         address.setCity(request.city());
         address.setState(request.state());
-        address.setZipCode(request.zipCode());
+        String cep = request.zipCode().replace("-", "");
+        address.setZipCode(cep.substring(0, 5) + "-" + cep.substring(5));
         address.setReferencePoint(request.referencePoint());
         address.setDefault(request.isDefault() != null && request.isDefault());
 

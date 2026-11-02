@@ -1,6 +1,7 @@
 package com.restaurante.sistema.modules.customers.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 public record CustomerAddressRequest(
         String label,
@@ -10,7 +11,8 @@ public record CustomerAddressRequest(
         @NotBlank String neighborhood,
         @NotBlank String city,
         @NotBlank String state,
-        @NotBlank String zipCode,
+        /** CEP com 8 digitos, com ou sem hifen (gravado sempre como 00000-000). */
+        @NotBlank @Pattern(regexp = "\\d{5}-?\\d{3}", message = "CEP invalido: use o formato 00000-000") String zipCode,
         String referencePoint,
         Boolean isDefault
 ) {}
