@@ -49,9 +49,9 @@ export class CustomerCheckout {
    */
   readonly paymentMethods = [
     { value: 'PIX', label: 'Pix' },
-    { value: 'CARTAO_CREDITO', label: 'Crédito (na entrega)' },
-    { value: 'CARTAO_DEBITO', label: 'Débito (na entrega)' },
-    { value: 'DINHEIRO', label: 'Dinheiro (na entrega)' },
+    { value: 'CARTAO_CREDITO', label: 'Cartão de crédito' },
+    { value: 'CARTAO_DEBITO', label: 'Cartão de débito' },
+    { value: 'DINHEIRO', label: 'Dinheiro' },
   ];
   paymentMethod = 'PIX';
   changeFor = '';

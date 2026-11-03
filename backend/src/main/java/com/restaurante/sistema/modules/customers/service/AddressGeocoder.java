@@ -24,7 +24,7 @@ import java.util.Optional;
  * (Nominatim, gratuito e sem chave). E a mesma busca que o site fazia no celular do motoboy:
  * rua e numero, depois o CEP e por fim o bairro, presa ao retangulo da capital ("city=Sao
  * Paulo" sozinho tambem casa com o estado e devolvia ruas de mesmo nome em Guarulhos); entre
- * os resultados, fica com o da capital cujo CEP mais se parece com o informado.
+ * os resultados, fica so com os da capital e, deles, o de CEP mais parecido.
  *
  * O Nominatim pede no maximo 1 consulta por segundo e um User-Agent que identifique o
  * sistema: as consultas daqui respeitam o intervalo, e quem chama (AddressLocationService)
@@ -85,8 +85,9 @@ public class AddressGeocoder {
     static Optional<Point> best(JsonNode results, String zipCode) {
         List<JsonNode> all = new ArrayList<>();
         results.forEach(all::add);
-        List<JsonNode> inCity = all.stream().filter(p -> "São Paulo".equals(cityOf(p))).toList();
-        List<JsonNode> candidates = inCity.isEmpty() ? all : inCity;
+        // So a capital: um resultado de Guarulhos ou Osasco (o retangulo da busca pega as
+        // vizinhas) nao serve; sem nenhum da capital, a busca tenta o proximo jeito.
+        List<JsonNode> candidates = all.stream().filter(p -> "São Paulo".equals(cityOf(p))).toList();
         // max fica com o primeiro em caso de empate (a ordem de relevancia do Nominatim)
         return candidates.stream()
                 .max(Comparator.comparingInt(p -> cepScore(p, zipCode)))

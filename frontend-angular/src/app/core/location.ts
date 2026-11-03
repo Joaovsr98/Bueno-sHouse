@@ -92,8 +92,8 @@ export async function geocode(parts: { street?: string; number?: string; neighbo
       const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=10&addressdetails=1`
         + `&viewbox=${SAO_PAULO_VIEWBOX}&bounded=1&${query}`);
       const found: NominatimPlace[] = await res.json();
-      const inCity = found.filter((p) => (p.address?.city ?? p.address?.municipality ?? p.address?.town) === 'São Paulo');
-      const candidates = inCity.length ? inCity : found;
+      // So a capital: o "Centro" de Guarulhos (o retangulo pega as vizinhas) nao serve.
+      const candidates = found.filter((p) => (p.address?.city ?? p.address?.municipality ?? p.address?.town) === 'São Paulo');
       if (candidates.length) {
         const best = candidates.reduce((a, b) => (cepScore(b, parts.zipCode) > cepScore(a, parts.zipCode) ? b : a));
         return { lat: Number(best.lat), lng: Number(best.lon) };

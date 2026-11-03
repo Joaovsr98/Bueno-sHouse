@@ -55,6 +55,14 @@ class AddressGeocoderTest {
     }
 
     @Test
+    void aNeighborhoodOnlyFoundInAnotherCityIsNotAccepted() throws Exception {
+        String guarulhos = """
+                [{"lat":"-23.4628","lon":"-46.5333","address":{"city":"Guarulhos","postcode":"07010-000"}}]""";
+
+        assertThat(geocoder(Map.of("q=", guarulhos)).locate(null, null, "Centro", null)).isEmpty();
+    }
+
+    @Test
     void nothingFoundIsEmptyAndServiceDownIsAnError() throws Exception {
         assertThat(geocoder(Map.of()).locate("Rua Inexistente", "1", "Lugar Nenhum", "00000-000")).isEmpty();
 
