@@ -5,6 +5,7 @@ import com.restaurante.sistema.modules.inventory.service.InventoryService;
 import com.restaurante.sistema.modules.reports.dto.AverageTicketResponse;
 import com.restaurante.sistema.modules.reports.dto.DailyRevenueResponse;
 import com.restaurante.sistema.modules.reports.dto.MonthlyRevenueResponse;
+import com.restaurante.sistema.modules.reports.dto.TopCourierResponse;
 import com.restaurante.sistema.modules.reports.dto.TopProductResponse;
 import com.restaurante.sistema.modules.reports.dto.TodaySummaryResponse;
 import jakarta.persistence.EntityManager;
@@ -124,6 +125,26 @@ public class ReportService {
         List<Object[]> rows = query.getResultList();
         return rows.stream()
                 .map(r -> new TopProductResponse((String) r[0], (Long) r[1]))
+                .toList();
+    }
+
+    /** Motoboys com mais entregas concluidas nos ultimos dias (ranking do dashboard). */
+    @Transactional(readOnly = true)
+    @SuppressWarnings("unchecked")
+    public List<TopCourierResponse> topCouriers(Long unitId, int days, int limit) {
+        List<Object[]> rows = entityManager.createNativeQuery(
+                "SELECT c.full_name, COUNT(*), COALESCE(SUM(d.fee), 0), " +
+                "ROUND(AVG(TIMESTAMPDIFF(MINUTE, d.left_at, d.delivered_at))) " +
+                "FROM deliveries d JOIN couriers c ON c.id = d.courier_id " +
+                "WHERE d.status = 'ENTREGUE' AND c.unit_id = :unitId AND d.delivered_at >= :since " +
+                "GROUP BY c.id, c.full_name ORDER BY COUNT(*) DESC, c.full_name")
+                .setParameter("unitId", unitId)
+                .setParameter("since", java.time.Instant.now().minus(java.time.Duration.ofDays(days)))
+                .setMaxResults(limit)
+                .getResultList();
+        return rows.stream()
+                .map(r -> new TopCourierResponse((String) r[0], ((Number) r[1]).longValue(), (BigDecimal) r[2],
+                        r[3] == null ? null : ((Number) r[3]).intValue()))
                 .toList();
     }
 

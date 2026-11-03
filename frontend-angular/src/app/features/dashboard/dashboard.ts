@@ -12,6 +12,7 @@ interface TodaySummary { date: string; revenue: number; orders: number; complete
 
 const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 interface TopProduct { productName: string; totalSold: number; }
+interface TopCourier { courierName: string; deliveries: number; fees: number; averageMinutes: number | null; }
 interface LowStock { id: number; name: string; currentQuantity: number; minimumQuantity: number; unitOfMeasure: string; }
 
 @Component({
@@ -118,6 +119,42 @@ interface LowStock { id: number; name: string; currentQuantity: number; minimumQ
         </section>
       </div>
 
+      <section class="glass rounded-2xl p-6 reveal reveal-3">
+        <div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+          <h2 class="section-title !mb-0">Motoboys do mês</h2>
+          <span class="kpi-label">entregas concluídas nos últimos 30 dias</span>
+        </div>
+        @if (couriers().length === 0) {
+          <p class="empty">Nenhuma entrega concluída nos últimos 30 dias.</p>
+        } @else {
+          <ol class="space-y-3">
+            @for (c of couriers(); track c.courierName; let i = $index) {
+              <li class="flex items-center gap-4">
+                <span class="grid place-items-center w-8 h-8 shrink-0 rounded-full text-xs font-bold"
+                  [class]="i === 0 ? 'bg-gradient-to-br from-brand-500 to-gold-400 text-ink-950' : 'border border-white/15 text-neutral-400'">{{ i + 1 }}º</span>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2 text-sm">
+                    <span class="truncate font-medium">{{ c.courierName }}</span>
+                    <span class="flex items-center gap-2 shrink-0">
+                      @if (i === 0) { <span class="badge badge-green">Destaque</span> }
+                      <span class="font-display font-bold tabular-nums">{{ c.deliveries }}</span>
+                      <span class="text-xs text-neutral-500">entregas</span>
+                    </span>
+                  </div>
+                  <div class="mt-1.5 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                    <div class="h-full rounded-full bg-gradient-to-r from-brand-600 via-brand-400 to-gold-400 transition-all duration-700"
+                      [style.width.%]="(c.deliveries / couriersMax()) * 100"></div>
+                  </div>
+                  <p class="mt-1 text-[11px] text-neutral-500">
+                    {{ money(c.fees) }} em taxas{{ c.averageMinutes != null ? ', ~' + c.averageMinutes + ' min da saída até o cliente' : '' }}
+                  </p>
+                </div>
+              </li>
+            }
+          </ol>
+        }
+      </section>
+
       <section class="reveal reveal-3">
         <h2 class="section-title">Estoque abaixo do mínimo</h2>
         @if (low().length === 0) {
@@ -149,6 +186,8 @@ export class Dashboard {
 
   revenue = signal<DailyRevenue[]>([]);
   top = signal<TopProduct[]>([]);
+  couriers = signal<TopCourier[]>([]);
+  couriersMax = computed(() => Math.max(1, ...this.couriers().map((c) => c.deliveries)));
   low = signal<LowStock[]>([]);
   avgTicket = signal<number | null>(null);
   orderCount = signal(0);
@@ -202,6 +241,7 @@ export class Dashboard {
     this.api.get<DailyRevenue[]>(`/reports/daily-revenue?unitId=${u}&days=30`).subscribe({ next: (r) => this.revenue.set(r), error: fail });
     this.api.get<MonthlyRevenue[]>(`/reports/monthly-revenue?unitId=${u}&months=12`).subscribe({ next: (r) => this.monthly.set(r), error: fail });
     this.api.get<TopProduct[]>(`/reports/top-products?unitId=${u}&limit=5`).subscribe({ next: (r) => this.top.set(r), error: fail });
+    this.api.get<TopCourier[]>(`/reports/top-couriers?unitId=${u}&days=30&limit=5`).subscribe({ next: (r) => this.couriers.set(r), error: fail });
     this.api.get<LowStock[]>(`/reports/low-stock?unitId=${u}`).subscribe({ next: (r) => this.low.set(r), error: fail });
     this.api.get<{ averageTicket: number; orderCount: number }>(`/reports/average-ticket?unitId=${u}`).subscribe({
       next: (r) => {

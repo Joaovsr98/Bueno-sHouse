@@ -334,6 +334,16 @@ class DeliveryFlowIT {
     }
 
     @Test
+    void dashboardRanksCouriersByDeliveries() {
+        com.fasterxml.jackson.databind.JsonNode ranking = restTemplate.exchange("/api/reports/top-couriers?unitId=1",
+                HttpMethod.GET, new HttpEntity<>(authHeaders()), com.fasterxml.jackson.databind.JsonNode.class).getBody();
+        // Seed V909: entregas do historico divididas entre tres motoboys
+        assertThat(ranking.size()).isGreaterThanOrEqualTo(3);
+        assertThat(ranking.get(0).get("deliveries").asLong()).isGreaterThanOrEqualTo(ranking.get(1).get("deliveries").asLong());
+        assertThat(ranking.get(0).get("courierName").asText()).isNotBlank();
+    }
+
+    @Test
     void deliveryZoneCoversMinimumOrderValidation() {
         HttpHeaders headers = authHeaders();
 

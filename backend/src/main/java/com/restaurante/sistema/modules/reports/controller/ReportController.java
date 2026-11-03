@@ -4,6 +4,7 @@ import com.restaurante.sistema.modules.inventory.dto.InventoryItemResponse;
 import com.restaurante.sistema.modules.reports.dto.AverageTicketResponse;
 import com.restaurante.sistema.modules.reports.dto.DailyRevenueResponse;
 import com.restaurante.sistema.modules.reports.dto.MonthlyRevenueResponse;
+import com.restaurante.sistema.modules.reports.dto.TopCourierResponse;
 import com.restaurante.sistema.modules.reports.dto.TopProductResponse;
 import com.restaurante.sistema.modules.reports.dto.TodaySummaryResponse;
 import com.restaurante.sistema.modules.reports.service.ReportService;
@@ -50,6 +51,13 @@ public class ReportController {
     @GetMapping("/top-products")
     public List<TopProductResponse> topProducts(@RequestParam Long unitId, @RequestParam(defaultValue = "10") int limit) {
         return reportService.topProducts(unitId, limit);
+    }
+
+    /** Ranking de motoboys: entregas concluidas nos ultimos dias (padrao: 30). */
+    @GetMapping("/top-couriers")
+    public List<TopCourierResponse> topCouriers(@RequestParam Long unitId, @RequestParam(defaultValue = "30") int days,
+                                                @RequestParam(defaultValue = "5") int limit) {
+        return reportService.topCouriers(unitId, days, limit);
     }
 
     @GetMapping("/low-stock")
