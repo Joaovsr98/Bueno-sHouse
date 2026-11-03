@@ -68,14 +68,28 @@ export class CustomerCheckout {
   mode = signal<'DELIVERY' | 'RETIRADA'>('DELIVERY');
   readonly pickupRoute = directionsLink(RESTAURANT.fallbackAddress);
 
+  /** Itens do carrinho que esgotaram depois de entrar nele. */
+  readonly soldOutLines = signal<string[]>([]);
+
+  private async checkSoldOut(): Promise<void> {
+    try {
+      const units = await this.unitsService.list();
+      const ids = new Set(await firstValueFrom(this.api.get<number[]>(`/products/out-of-stock?unitId=${units[0]?.id ?? 1}`)));
+      this.soldOutLines.set(this.lines().filter((l) => ids.has(l.productId)).map((l) => l.productName));
+    } catch {
+      this.soldOutLines.set([]); // sem a consulta, o servidor ainda barra na hora de criar o pedido
+    }
+  }
+
   canPlace(): boolean {
-    if (this.placing() || this.lines().length === 0) return false;
+    if (this.placing() || this.lines().length === 0 || this.soldOutLines().length > 0) return false;
     if (this.mode() === 'RETIRADA') return true;
     const zone = this.selectedZone();
     return zone != null && this.subtotal() >= zone.minimumOrderValue;
   }
 
   constructor() {
+    void this.checkSoldOut();
     this.loadAddresses();
     this.loadZones();
     effect(() => {
@@ -183,6 +197,7 @@ export class CustomerCheckout {
 
   remove(productId: number): void {
     this.cart.remove(productId);
+    void this.checkSoldOut();
   }
 
   setNotes(productId: number, notes: string): void {

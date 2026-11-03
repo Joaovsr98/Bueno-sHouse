@@ -54,7 +54,11 @@
               <span class="text-sm font-semibold text-brand-300">{{ currency(product.basePrice) }}</span>
               <span class="flex items-center gap-3">
                 <span class="text-xs text-neutral-400">Ver detalhes</span>
-                <button (click)="quickAdd(product); $event.preventDefault(); $event.stopPropagation()" class="btn-brand rounded-xl px-3 py-1.5 text-xs">+ Adicionar</button>
+                @if (soldOut().has(product.id)) {
+                  <span class="badge badge-gray">Esgotado</span>
+                } @else {
+                  <button (click)="quickAdd(product); $event.preventDefault(); $event.stopPropagation()" class="btn-brand rounded-xl px-3 py-1.5 text-xs">+ Adicionar</button>
+                }
               </span>
             </div>
           </div>

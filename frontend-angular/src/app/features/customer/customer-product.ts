@@ -66,7 +66,9 @@ import { Icon } from '../../shared/icon';
             </section>
           }
 
-          @if (!p.available) {
+          @if (soldOut()) {
+            <div class="alert-error">Esgotado no momento: acabou um dos ingredientes. Volte mais tarde.</div>
+          } @else if (!p.available) {
             <div class="alert-error">Este prato está indisponível no momento.</div>
           } @else {
             <div class="space-y-4">
@@ -101,6 +103,8 @@ export class CustomerProduct {
   readonly product = signal<ProductResponse | null>(null);
   readonly error = signal<string | null>(null);
   readonly qty = signal(1);
+  /** Sem ingrediente para uma porcao agora. */
+  readonly soldOut = signal(false);
   notes = '';
 
   constructor() {
@@ -111,8 +115,12 @@ export class CustomerProduct {
   private async load(id: string): Promise<void> {
     this.product.set(null);
     this.error.set(null);
+    this.soldOut.set(false);
     try {
-      this.product.set(await firstValueFrom(this.api.get<ProductResponse>(`/products/${id}`)));
+      const p = await firstValueFrom(this.api.get<ProductResponse>(`/products/${id}`));
+      const soldOut = await firstValueFrom(this.api.get<number[]>(`/products/out-of-stock?unitId=${p.unitId}`)).catch(() => [] as number[]);
+      this.soldOut.set(soldOut.includes(p.id));
+      this.product.set(p);
     } catch (e) {
       this.error.set(apiErrorMessage(e, 'Prato não encontrado'));
     }

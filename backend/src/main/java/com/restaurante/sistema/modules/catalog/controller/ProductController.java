@@ -56,6 +56,12 @@ public class ProductController {
         return auth.getAuthorities().stream().noneMatch(a -> "ROLE_CLIENTE".equals(a.getAuthority()));
     }
 
+    /** Sem login: pratos esgotados agora (o cardapio mostra "Esgotado" e nao deixa pedir). */
+    @GetMapping("/out-of-stock")
+    public java.util.Set<Long> outOfStock(@RequestParam Long unitId) {
+        return productService.outOfStockIds(unitId);
+    }
+
     @GetMapping("/{id}")
     public ProductResponse findById(@PathVariable Long id) {
         return productService.findById(id);

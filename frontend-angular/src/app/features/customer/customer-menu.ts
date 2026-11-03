@@ -29,6 +29,8 @@ export class CustomerMenu {
   loading = signal(true);
   error = signal<string | null>(null);
   categoryId = signal<number | null>(null);
+  /** Pratos sem ingrediente para uma porcao agora: aparecem como "Esgotado" e nao entram no carrinho. */
+  soldOut = signal<Set<number>>(new Set());
 
   readonly visibleGroups = computed(() => {
     const id = this.categoryId();
@@ -44,10 +46,12 @@ export class CustomerMenu {
     try {
       const units = await this.unitsService.list();
       const unitId = units[0]?.id ?? 1;
-      const [categories, products] = await Promise.all([
+      const [categories, products, soldOut] = await Promise.all([
         firstValueFrom(this.api.get<CategoryResponse[]>(`/categories?unitId=${unitId}`)),
         firstValueFrom(this.api.get<ProductResponse[]>(`/products?unitId=${unitId}`)),
+        firstValueFrom(this.api.get<number[]>(`/products/out-of-stock?unitId=${unitId}`)).catch(() => [] as number[]),
       ]);
+      this.soldOut.set(new Set(soldOut));
       const groups = categories
         .map((category) => ({
           category,
@@ -63,6 +67,7 @@ export class CustomerMenu {
   }
 
   quickAdd(product: ProductResponse): void {
+    if (this.soldOut().has(product.id)) return;
     this.cart.add(product);
   }
 }

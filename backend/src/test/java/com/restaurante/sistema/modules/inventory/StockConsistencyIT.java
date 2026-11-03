@@ -112,6 +112,24 @@ class StockConsistencyIT {
     }
 
     @Test
+    void dishWithoutStockForOnePortionShowsAsOutOfStockOnTheMenu() {
+        HttpHeaders h = admin();
+        long[] ids = productWithIngredient(h, "Lanche Teste Esgota", 1);
+        String url = "/api/products/out-of-stock?unitId=1";
+
+        // Publico (sem login), como o cardapio
+        assertThat(rest.getForEntity(url, JsonNode.class).getBody().toString()).doesNotContain(String.valueOf(ids[0]));
+
+        long order = createOrder(h, ids[0], 1).getBody().get("id").asLong();
+        call(HttpMethod.POST, "/api/orders/" + order + "/send-to-kitchen", null, h);
+
+        JsonNode outOfStock = rest.getForEntity(url, JsonNode.class).getBody();
+        boolean found = false;
+        for (JsonNode id : outOfStock) found |= id.asLong() == ids[0];
+        assertThat(found).as("produto sem saldo aparece como esgotado").isTrue();
+    }
+
+    @Test
     void confirmingWithoutStockIsRejectedAndNeverGoesNegative() {
         HttpHeaders h = admin();
         long[] ids = productWithIngredient(h, "Lanche Teste Saldo", 2);

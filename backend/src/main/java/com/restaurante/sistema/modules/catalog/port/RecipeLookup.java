@@ -8,4 +8,7 @@ package com.restaurante.sistema.modules.catalog.port;
 public interface RecipeLookup {
 
     boolean hasRecipe(Long productId);
+
+    /** Dos produtos informados, os que nao tem ingrediente para uma porcao agora (esgotados). */
+    java.util.Set<Long> outOfStock(java.util.Collection<Long> productIds);
 }

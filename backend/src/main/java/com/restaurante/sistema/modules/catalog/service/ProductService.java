@@ -89,6 +89,17 @@ public class ProductService {
                 .stream().map(this::toResponse).toList();
     }
 
+    /**
+     * Pratos do cardapio sem ingrediente para uma porcao agora. Fora do cache de proposito:
+     * o estoque muda a cada pedido confirmado e a cada compra recebida.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Set<Long> outOfStockIds(Long unitId) {
+        List<Long> ids = productRepository.findByUnitIdAndDeletedAtIsNullAndAvailableTrue(unitId).stream()
+                .map(Product::getId).toList();
+        return recipeLookup.outOfStock(ids);
+    }
+
     @Transactional(readOnly = true)
     public ProductResponse findById(Long id) {
         return toResponse(getOrThrow(id));
