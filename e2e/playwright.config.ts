@@ -19,7 +19,13 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // Um aparelho por vez: todos usam o mesmo banco e a fila do motoboy anda por ordem de chegada.
+  workers: 1,
+  projects: [
+    { name: 'computador', use: { ...devices['Desktop Chrome'] } },
+    { name: 'android', use: { ...devices['Pixel 7'] } },
+    { name: 'iphone', use: { ...devices['iPhone 14'] } },
+  ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {

@@ -9,13 +9,11 @@ import { expect, test, type Browser, type Page } from '@playwright/test';
  * ViaCEP, OpenStreetMap e Google Maps sao simulados: o teste nao depende de servico de fora.
  */
 
-const id = Date.now().toString().slice(-8);
-const cliente = {
-  nome: 'Cliente Ponta a Ponta',
-  email: `e2e.${id}@teste.local`,
-  telefone: `119${id}`,
-  senha: 'senhaE2E123',
-};
+/** Cliente novo a cada rodada e a cada aparelho (o e-mail e o telefone sao unicos). */
+function novoCliente(aparelho: string) {
+  const id = (Date.now() + aparelho.length).toString().slice(-8);
+  return { nome: 'Cliente Ponta a Ponta', email: `e2e.${aparelho}.${id}@teste.local`, telefone: `119${id}`, senha: 'senhaE2E123' };
+}
 
 async function semServicosDeFora(page: Page): Promise<void> {
   await page.route('https://viacep.com.br/**', (route) =>
@@ -51,7 +49,8 @@ async function entrarNaEquipe(page: Page, email: string, senha: string): Promise
   await expect(page).not.toHaveURL(/\/login/);
 }
 
-test('pedido de delivery: do cardapio ate a entrega confirmada pelo motoboy', async ({ browser }) => {
+test('pedido de delivery: do cardapio ate a entrega confirmada pelo motoboy', async ({ browser }, testInfo) => {
+  const cliente = novoCliente(testInfo.project.name);
   // 1. Cliente: escolhe o lanche, cria a conta com endereco no Centro e finaliza o pedido
   const clientePage = await novaPessoa(browser);
   await clientePage.goto('/app/cardapio');
