@@ -1,4 +1,6 @@
-import { RESTAURANT, directionsLink, distanceKm, formatDistance, geocode, mapEmbedUrl } from './location';
+import {
+  RESTAURANT, detourKm, directionsLink, distanceKm, formatDistance, geocode, mapEmbedUrl, multiStopLink, parseAddressSnapshot,
+} from './location';
 
 describe('location', () => {
   it('calcula a distancia em linha reta (Pinheiros -> Jardim Angela ~15 km)', () => {
@@ -28,5 +30,28 @@ describe('location', () => {
     const where = await geocode({ street: 'Rua Bocaina de Minas', zipCode: '04939-200' });
 
     expect(where).toEqual({ lat: -23.69, lng: -46.76 });
+  });
+
+  it('le o endereco gravado na entrega', () => {
+    expect(parseAddressSnapshot('Rua das Flores, 100 - Centro, Sao Paulo/SP - CEP 01000-000'))
+      .toEqual({ street: 'Rua das Flores', number: '100', neighborhood: 'Centro', zipCode: '01000-000' });
+    expect(parseAddressSnapshot('saude, 447 (casa) - Saúde, São Paulo/SP - CEP 06786-075'))
+      .toEqual({ street: 'saude', number: '447', neighborhood: 'Saúde', zipCode: '06786-075' });
+  });
+
+  it('mede o desvio de uma parada: no caminho quase nao alonga, fora do caminho alonga muito', () => {
+    const cozinha = { lat: -23.568, lng: -46.698 };
+    const destino = { lat: -23.588, lng: -46.698 };
+    const noCaminho = { lat: -23.578, lng: -46.699 };
+    const foraDoCaminho = { lat: -23.568, lng: -46.65 };
+    expect(detourKm(cozinha, noCaminho, destino)).toBeLessThan(0.2);
+    expect(detourKm(cozinha, foraDoCaminho, destino)).toBeGreaterThan(5);
+  });
+
+  it('monta a rota com paradas no Google Maps', () => {
+    const url = multiStopLink(null, ['Rua A, 1', 'Rua B, 2'], 'Rua C, 3');
+    expect(url).toContain('waypoints=Rua%20A%2C%201%7CRua%20B%2C%202');
+    expect(url).toContain('destination=Rua%20C%2C%203');
+    expect(url).not.toContain('origin=');
   });
 });

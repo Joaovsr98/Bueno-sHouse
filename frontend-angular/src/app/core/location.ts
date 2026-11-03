@@ -101,3 +101,33 @@ export async function geocode(parts: { street?: string; number?: string; neighbo
   }
   return null;
 }
+
+/**
+ * Le o endereco gravado na entrega ("Rua das Flores, 100 (apto 2) - Centro, Sao Paulo/SP -
+ * CEP 01000-000") e devolve as partes que o geocode usa.
+ */
+export function parseAddressSnapshot(snapshot: string): { street?: string; number?: string; neighborhood?: string; zipCode?: string } {
+  const m = /^(.*?),\s*([^\s(]+)(?:\s*\([^)]*\))?\s*-\s*(.*?),\s*.*?\/\w{2}\s*-\s*CEP\s*(\d{5}-?\d{3})/.exec(snapshot ?? '');
+  if (!m) return { street: snapshot };
+  return { street: m[1].trim(), number: m[2], neighborhood: m[3].trim(), zipCode: m[4] };
+}
+
+/** Rota com paradas no Google Maps (ate 9 paradas no computador, 3 no celular). */
+export function multiStopLink(origin: string | null, stops: string[], destination: string): string {
+  const from = origin ? `&origin=${encodeURIComponent(origin)}` : '';
+  const via = stops.length ? `&waypoints=${stops.map(encodeURIComponent).join('%7C')}` : '';
+  return `https://www.google.com/maps/dir/?api=1${from}&destination=${encodeURIComponent(destination)}${via}&travelmode=driving`;
+}
+
+/** Mapa embutido com o trajeto de um ponto a outro (sem chave de API). */
+export function routeEmbedUrl(origin: string, destination: string): string {
+  return `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${encodeURIComponent(destination)}&output=embed`;
+}
+
+/**
+ * Quanto uma parada a mais alonga o trajeto da cozinha ate o destino, em linha reta:
+ * (cozinha -> parada) + (parada -> destino) - (cozinha -> destino).
+ */
+export function detourKm(from: LatLng, stop: LatLng, to: LatLng): number {
+  return distanceKm(from, stop) + distanceKm(stop, to) - distanceKm(from, to);
+}

@@ -173,11 +173,25 @@ class DeliveryFlowIT {
 
         // 6. Aceitar a entrega - so o perfil MOTOBOY aceita (entregador do seed vinculado a motoboy@demo.local)
         HttpHeaders motoboy = authHeadersAs("motoboy@demo.local");
+
+        // Antes de aceitar, o motoboy ja ve para onde vai (endereco no pool de disponiveis)
+        DeliveryResponse[] pool = restTemplate.exchange("/api/deliveries/available/details", HttpMethod.GET,
+                new HttpEntity<>(motoboy), DeliveryResponse[].class).getBody();
+        assertThat(pool).anySatisfy(d -> {
+            assertThat(d.id()).isEqualTo(delivery.id());
+            assertThat(d.addressSnapshot()).contains("Rua das Flores");
+        });
+
         ResponseEntity<DeliveryResponse> accepted = restTemplate.exchange(
                 "/api/deliveries/" + delivery.id() + "/accept", HttpMethod.POST,
                 new HttpEntity<>(motoboy), DeliveryResponse.class);
         assertThat(accepted.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(accepted.getBody().status()).isEqualTo("ACEITA");
+
+        // Recarregar a pagina nao perde a entrega: ela volta em "minhas entregas"
+        DeliveryResponse[] mine = restTemplate.exchange("/api/deliveries/mine", HttpMethod.GET,
+                new HttpEntity<>(motoboy), DeliveryResponse[].class).getBody();
+        assertThat(mine).extracting(DeliveryResponse::id).contains(delivery.id());
 
         // 7. Tentar aceitar de novo deve falhar (a entrega ja nao esta mais AGUARDANDO_ENTREGADOR)
         ResponseEntity<String> secondAttempt = restTemplate.exchange(

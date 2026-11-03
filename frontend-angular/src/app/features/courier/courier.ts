@@ -1,8 +1,14 @@
-import { Component, inject, signal, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer } from '@angular/platform-browser';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { DeliveryResponse } from '../../core/models';
 import { currency } from '../../core/format';
+import {
+  LatLng, RESTAURANT, detourKm, directionsLink, distanceKm, formatDistance, geocode, multiStopLink,
+  parseAddressSnapshot, routeEmbedUrl,
+} from '../../core/location';
+import { Icon } from '../../shared/icon';
 
 const STATUS_LABELS: Record<string, string> = {
   AGUARDANDO_ENTREGADOR: 'Aguardando entregador',
@@ -15,63 +21,180 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELADA: 'Cancelada',
 };
 
+/** Ate quanto uma parada a mais pode alongar o trajeto (linha reta) para contar como "no caminho". */
+const ON_THE_WAY_KM = 2;
+
+/** Entrega disponivel com o quanto ela desvia do trajeto atual. */
+interface Nearby { delivery: DeliveryResponse; detour: number | null; }
+
+/**
+ * Area do motoboy: entregas disponiveis com endereco, as entregas em andamento dele
+ * (sobrevivem a recarregar a pagina), mapa da rota e o que esta no caminho para levar
+ * junto. A rota abre no Google Maps (com todas as paradas aceitas).
+ */
 @Component({
   selector: 'app-courier',
-  imports: [FormsModule],
+  imports: [FormsModule, Icon],
   templateUrl: './courier.html',
+  styles: [`
+    /* Entrega que quase nao alonga o trajeto: destaque verde para levar junto. */
+    .on-the-way { border-color: rgba(22, 163, 74, 0.55) !important; }
+  `],
 })
 export class Courier implements OnDestroy {
   private readonly api = inject(ApiService);
+  private readonly sanitizer = inject(DomSanitizer);
 
   readonly currency = currency;
+  readonly formatDistance = formatDistance;
   readonly statusLabels = STATUS_LABELS;
+  readonly onTheWayKm = ON_THE_WAY_KM;
 
-  available = signal<number[]>([]);
-  active = signal<DeliveryResponse | null>(null);
+  /** Pool de entregas aguardando entregador (com endereco). */
+  pool = signal<DeliveryResponse[]>([]);
+  /** Entregas em andamento deste motoboy. */
+  mine = signal<DeliveryResponse[]>([]);
+  selectedId = signal<number | null>(null);
+  /** Lista de disponiveis aberta mesmo com entrega em andamento. */
+  browsing = signal(false);
   error = signal<string | null>(null);
   confirmationCode = '';
   receivedByName = '';
 
+  readonly active = computed(() => {
+    if (this.browsing()) return null;
+    const list = this.mine();
+    return list.find((d) => d.id === this.selectedId()) ?? list[0] ?? null;
+  });
+
+  /** Coordenadas por endereco (OpenStreetMap), buscadas uma a uma e guardadas. */
+  private readonly coords = signal<Record<string, LatLng | null>>({});
+  private geocoding = false;
+
+  /** Mapa embutido da cozinha ate o destino da entrega aberta. */
+  readonly routeEmbed = computed(() => {
+    const d = this.active();
+    return d ? this.sanitizer.bypassSecurityTrustResourceUrl(routeEmbedUrl(RESTAURANT.fallbackAddress, d.addressSnapshot)) : null;
+  });
+
+  /** Disponiveis ordenadas pelo desvio que causam no trajeto da entrega aberta. */
+  readonly nearby = computed<Nearby[]>(() => {
+    const d = this.active();
+    const c = this.coords();
+    const to = d ? c[d.addressSnapshot] : null;
+    return this.pool()
+      .map((p) => {
+        const stop = c[p.addressSnapshot];
+        return { delivery: p, detour: to && stop ? Math.max(0, detourKm(RESTAURANT, stop, to)) : null };
+      })
+      .sort((a, b) => (a.detour ?? 99) - (b.detour ?? 99));
+  });
+
+  /** Distancia da cozinha ate o endereco (para a lista de disponiveis). */
+  distanceOf(d: DeliveryResponse): string | null {
+    const at = this.coords()[d.addressSnapshot];
+    return at ? formatDistance(distanceKm(RESTAURANT, at)) : null;
+  }
+
+  /** Rota no Google Maps: com varias entregas aceitas, uma parada para cada (a mais longe por ultimo). */
+  routeLink(): string {
+    const d = this.active();
+    if (!d) return '';
+    const fromKitchen = d.status === 'ACEITA' || d.status === 'RETIRADA_NO_RESTAURANTE';
+    const origin = fromKitchen ? RESTAURANT.fallbackAddress : null; // em rota: parte de onde o motoboy esta
+    const all = this.mine();
+    if (all.length < 2) return directionsLink(d.addressSnapshot, origin ?? undefined);
+    const c = this.coords();
+    const byDistance = [...all].sort((a, b) => this.kmFromKitchen(c[a.addressSnapshot]) - this.kmFromKitchen(c[b.addressSnapshot]));
+    const last = byDistance[byDistance.length - 1];
+    return multiStopLink(origin, byDistance.slice(0, -1).map((x) => x.addressSnapshot), last.addressSnapshot);
+  }
+
+  private kmFromKitchen(at: LatLng | null | undefined): number {
+    return at ? distanceKm(RESTAURANT, at) : 0;
+  }
+
+  /** Abre o endereco de uma entrega disponivel no Google Maps, saindo da cozinha. */
+  previewLink(d: DeliveryResponse): string {
+    return directionsLink(d.addressSnapshot, RESTAURANT.fallbackAddress);
+  }
+
   private pollHandle: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
-    this.loadAvailable();
-    this.pollHandle = setInterval(() => {
-      if (!this.active()) this.loadAvailable();
-    }, 10000);
+    this.loadMine();
+    this.loadPool();
+    this.pollHandle = setInterval(() => this.loadPool(), 10000);
+    // Localiza os enderecos novos (devagar: o OpenStreetMap pede no maximo 1 consulta por segundo).
+    effect(() => {
+      const addresses = [...this.mine(), ...this.pool()].map((d) => d.addressSnapshot);
+      untracked(() => this.geocodeMissing(addresses));
+    });
   }
 
   ngOnDestroy(): void {
     if (this.pollHandle) clearInterval(this.pollHandle);
   }
 
-  loadAvailable(): void {
-    this.api.get<number[]>('/deliveries/available').subscribe({
-      next: (ids) => this.available.set(ids),
+  private async geocodeMissing(addresses: string[]): Promise<void> {
+    if (this.geocoding) return;
+    this.geocoding = true;
+    try {
+      for (const address of new Set(addresses)) {
+        if (address in this.coords()) continue;
+        const at = await geocode(parseAddressSnapshot(address));
+        this.coords.update((c) => ({ ...c, [address]: at }));
+        await new Promise((r) => setTimeout(r, 1100));
+      }
+    } finally {
+      this.geocoding = false;
+    }
+  }
+
+  loadPool(): void {
+    this.api.get<DeliveryResponse[]>('/deliveries/available/details').subscribe({
+      next: (list) => this.pool.set(list),
       error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao carregar entregas')),
+    });
+  }
+
+  loadMine(selectId?: number): void {
+    this.api.get<DeliveryResponse[]>('/deliveries/mine').subscribe({
+      next: (list) => {
+        this.mine.set(list);
+        if (selectId != null) this.selectedId.set(selectId);
+        else if (!list.some((d) => d.id === this.selectedId())) this.selectedId.set(list[0]?.id ?? null);
+      },
+      error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao carregar suas entregas')),
     });
   }
 
   accept(id: number): void {
     this.api.post<DeliveryResponse>(`/deliveries/${id}/accept`).subscribe({
       next: (d) => {
-        this.active.set(d);
-        this.loadAvailable();
+        this.browsing.set(false);
+        this.loadMine(this.active()?.id ?? d.id);
+        this.loadPool();
       },
       error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao aceitar entrega')),
     });
   }
 
+  /** Atualiza a entrega na lista "minhas" depois de uma acao. */
+  private replace(d: DeliveryResponse): void {
+    this.mine.update((list) => list.map((x) => (x.id === d.id ? d : x)));
+  }
+
   pickup(): void {
     this.api.post<DeliveryResponse>(`/deliveries/${this.active()!.id}/pickup`).subscribe({
-      next: (d) => this.active.set(d),
+      next: (d) => this.replace(d),
       error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao confirmar retirada')),
     });
   }
 
   leave(): void {
     this.api.post<DeliveryResponse>(`/deliveries/${this.active()!.id}/leave`).subscribe({
-      next: (d) => this.active.set(d),
+      next: (d) => this.replace(d),
       error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao sair para entrega')),
     });
   }
@@ -84,10 +207,10 @@ export class Courier implements OnDestroy {
       })
       .subscribe({
         next: () => {
-          this.active.set(null);
           this.confirmationCode = '';
           this.receivedByName = '';
-          this.loadAvailable();
+          this.loadMine();
+          this.loadPool();
         },
         error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao confirmar entrega')),
       });
@@ -97,7 +220,7 @@ export class Courier implements OnDestroy {
     const reason = window.prompt('Motivo da não entrega:');
     if (!reason) return;
     this.api.post<DeliveryResponse>(`/deliveries/${this.active()!.id}/failure`, { reason }).subscribe({
-      next: (d) => this.active.set(d),
+      next: (d) => this.replace(d),
       error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao registrar falha')),
     });
   }

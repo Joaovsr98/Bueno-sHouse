@@ -332,3 +332,6 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
       url('/cozinha-chama.webp') 70% top / auto 55vh no-repeat;
   }
 }
+
+/* Mapa claro do Google puxado para o tema escuro sem perder a leitura das ruas. */
+.map-dark { filter: invert(0.9) hue-rotate(180deg) saturate(0.7) brightness(0.95); }

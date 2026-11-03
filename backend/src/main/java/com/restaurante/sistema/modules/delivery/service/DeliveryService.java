@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -78,6 +79,26 @@ public class DeliveryService {
         this.courierRepository = courierRepository;
         this.currentUserProvider = currentUserProvider;
         this.eventPublisher = eventPublisher;
+    }
+
+    /** Situacoes em que a entrega ainda esta com o motoboy (aceita, retirada, em rota ou com tentativa falha). */
+    private static final List<String> IN_HANDS = List.of("ACEITA", "RETIRADA_NO_RESTAURANTE", "EM_ROTA", "NAO_ENTREGUE");
+
+    /** Entregas aguardando entregador, com endereco: o motoboy ve para onde vai e o que esta no caminho. */
+    @Transactional(readOnly = true)
+    public List<DeliveryResponse> listAvailable() {
+        return deliveryRepository.findByStatus("AGUARDANDO_ENTREGADOR").stream().map(this::toResponse).toList();
+    }
+
+    /**
+     * Entregas em andamento do motoboy logado. Recarregar a pagina nao "perde" a entrega,
+     * e ele pode levar mais de uma no mesmo trajeto.
+     */
+    @Transactional(readOnly = true)
+    public List<DeliveryResponse> listMine() {
+        return courierRepository.findByUserId(currentUserProvider.getCurrentUserId())
+                .map(c -> deliveryRepository.findByCourierIdAndStatusIn(c.getId(), IN_HANDS).stream().map(this::toResponse).toList())
+                .orElse(List.of());
     }
 
     @Transactional(readOnly = true)
@@ -183,6 +204,8 @@ public class DeliveryService {
 
     private void freeCourier(Long courierId) {
         if (courierId == null) return;
+        // Ainda levando outra entrega do mesmo trajeto: continua ocupado.
+        if (!deliveryRepository.findByCourierIdAndStatusIn(courierId, IN_HANDS).isEmpty()) return;
         courierRepository.findById(courierId).ifPresent(courier -> {
             courier.setStatus("DISPONIVEL");
             courierRepository.save(courier);

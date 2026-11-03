@@ -1,8 +1,8 @@
-<div class="p-6 max-w-xl">
+<div class="p-6 max-w-3xl">
   <header class="mb-6 reveal">
     <p class="eyebrow">Entregas</p>
     <h1 class="page-title mt-3">Área do motoboy</h1>
-    <p class="page-sub mt-2">Aceite uma entrega, saia com o pedido e confirme com o código que o cliente informar.</p>
+    <p class="page-sub mt-2">Aceite uma entrega, veja a rota e o que está no caminho, e confirme com o código que o cliente informar.</p>
   </header>
 
   @if (error()) {
@@ -12,71 +12,142 @@
     </div>
   }
 
+  <!-- Minhas entregas (mais de uma = trajeto com paradas) -->
+  @if (mine().length > 1 && !browsing()) {
+    <div class="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Minhas entregas">
+      @for (d of mine(); track d.id) {
+        <button role="tab" (click)="selectedId.set(d.id)" [attr.aria-selected]="active()?.id === d.id"
+          class="rounded-full border px-3 py-1.5 text-xs transition"
+          [class]="active()?.id === d.id ? 'border-brand-500/60 bg-brand-500/15 text-brand-200' : 'border-white/15 text-neutral-400 hover:bg-white/5'">
+          #{{ d.id }}, {{ d.neighborhoodSnapshot }}
+        </button>
+      }
+    </div>
+  }
+
   @if (!active()) {
-    <h2 class="section-title">Entregas disponíveis</h2>
-    @if (available().length === 0) {
+    <!-- Entregas disponiveis -->
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="section-title !mb-0">Entregas disponíveis</h2>
+      @if (browsing() && mine().length) {
+        <button (click)="browsing.set(false)" class="text-xs text-brand-400 hover:text-brand-300">← Voltar para minhas entregas</button>
+      }
+    </div>
+    @if (pool().length === 0) {
       <p class="text-sm text-neutral-500">Nenhuma entrega aguardando entregador no momento.</p>
     }
     <div class="space-y-2">
-      @for (id of available(); track id) {
-        <div class="glass rounded-2xl p-4 flex items-center justify-between">
-          <span class="text-sm">Entrega #{{ id }}</span>
-          <button (click)="accept(id)" class="btn-brand rounded-xl px-3 py-1.5 text-xs">Aceitar</button>
+      @for (d of pool(); track d.id) {
+        <div class="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold flex items-center gap-2">
+              <span class="text-brand-400"><app-icon name="pin" [size]="15" /></span>{{ d.neighborhoodSnapshot }}
+              @if (distanceOf(d); as km) { <span class="text-xs font-normal text-neutral-500">{{ km }} da cozinha</span> }
+            </p>
+            <p class="text-xs text-neutral-400 mt-1 truncate">{{ d.addressSnapshot }}</p>
+            <p class="text-xs text-neutral-500 mt-0.5">Entrega #{{ d.id }}, taxa {{ currency(d.fee) }}{{ d.estimatedMinutes ? ', ~' + d.estimatedMinutes + ' min' : '' }}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <a [href]="previewLink(d)" target="_blank" rel="noopener" class="btn-ghost !text-xs !py-1.5">Ver no mapa</a>
+            <button (click)="accept(d.id)" class="btn-brand rounded-xl px-3 py-1.5 text-xs">Aceitar</button>
+          </div>
         </div>
       }
     </div>
   } @else {
-    <div class="glass rounded-2xl p-6 space-y-4">
-      <div class="flex items-center justify-between">
-        <h2 class="font-display font-bold">Entrega #{{ active()!.id }} do pedido #{{ active()!.orderId }}</h2>
-        <span class="text-xs uppercase tracking-wide text-brand-300">{{ statusLabels[active()!.status] ?? active()!.status }}</span>
-      </div>
-
-      <div class="text-sm text-neutral-300 space-y-1">
-        <p>{{ active()!.addressSnapshot }}</p>
-        <p class="text-neutral-500">{{ active()!.neighborhoodSnapshot }}</p>
-        <p class="text-neutral-500">
-          Taxa: {{ currency(active()!.fee) }}{{ active()!.estimatedMinutes ? ', ~' + active()!.estimatedMinutes + ' min' : '' }}
-        </p>
-      </div>
-
-      <div class="flex flex-wrap gap-2">
-        @if (active()!.status === 'ACEITA') {
-          <button (click)="pickup()" class="text-xs btn-brand rounded-xl px-3 py-1.5">Confirmar retirada no restaurante</button>
-        }
-        @if (active()!.status === 'RETIRADA_NO_RESTAURANTE') {
-          <button (click)="leave()" class="text-xs btn-brand rounded-xl px-3 py-1.5">Saí para entrega</button>
-        }
-        @if (canReportFailure(active()!.status)) {
-          <button (click)="reportFailure()" class="text-xs rounded-xl border border-white/15 px-3 py-1.5 text-neutral-300 hover:bg-white/5 transition">
-            Registrar não entrega
-          </button>
-        }
-      </div>
-
-      @if (active()!.status === 'EM_ROTA') {
-        <form (ngSubmit)="confirm()" class="space-y-2 border-t border-white/10 pt-4">
-          <div class="space-y-1">
-            <label class="text-xs text-neutral-400">Código de confirmação</label>
-            <input
-              required name="confirmationCode" [(ngModel)]="confirmationCode"
-              class="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-500/60 transition"
-            />
-          </div>
-          <div class="space-y-1">
-            <label class="text-xs text-neutral-400">Nome de quem recebeu</label>
-            <input
-              required name="receivedByName" [(ngModel)]="receivedByName"
-              class="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-500/60 transition"
-            />
-          </div>
-          <button type="submit" class="btn-brand rounded-xl px-4 py-2 text-sm">Confirmar entrega</button>
-        </form>
+    @let d = active()!;
+    <div class="glass rounded-2xl overflow-hidden">
+      <!-- Mapa da rota: cozinha -> cliente -->
+      @if (routeEmbed(); as src) {
+        <div class="relative h-56 bg-ink-900">
+          <iframe [src]="src" title="Rota da cozinha até o endereço de entrega" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade" class="absolute inset-0 w-full h-full border-0 map-dark"></iframe>
+        </div>
       }
 
-      <button (click)="active.set(null)" class="text-xs text-neutral-500 hover:text-neutral-300 transition">
-        ← Ver entregas disponíveis
-      </button>
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="font-display font-bold">Entrega #{{ d.id }} do pedido #{{ d.orderId }}</h2>
+          <span class="text-xs uppercase tracking-wide text-brand-300 shrink-0">{{ statusLabels[d.status] ?? d.status }}</span>
+        </div>
+
+        <div class="text-sm text-neutral-300 space-y-1">
+          <p>{{ d.addressSnapshot }}</p>
+          <p class="text-neutral-500">
+            Taxa: {{ currency(d.fee) }}{{ d.estimatedMinutes ? ', ~' + d.estimatedMinutes + ' min' : '' }}{{ distanceOf(d) ? ', ' + distanceOf(d) + ' da cozinha (em linha reta)' : '' }}
+          </p>
+        </div>
+
+        <a [href]="routeLink()" target="_blank" rel="noopener"
+          class="w-full btn-brand rounded-xl py-3 text-sm inline-flex items-center justify-center gap-2">
+          <app-icon name="pin" [size]="16" />
+          {{ mine().length > 1 ? 'Abrir rota com as ' + mine().length + ' entregas no Google Maps' : 'Abrir rota no Google Maps' }}
+        </a>
+
+        <div class="flex flex-wrap gap-2">
+          @if (d.status === 'ACEITA') {
+            <button (click)="pickup()" class="text-xs btn-brand rounded-xl px-3 py-1.5">Confirmar retirada no restaurante</button>
+          }
+          @if (d.status === 'RETIRADA_NO_RESTAURANTE') {
+            <button (click)="leave()" class="text-xs btn-brand rounded-xl px-3 py-1.5">Saí para entrega</button>
+          }
+          @if (canReportFailure(d.status)) {
+            <button (click)="reportFailure()" class="text-xs rounded-xl border border-white/15 px-3 py-1.5 text-neutral-300 hover:bg-white/5 transition">
+              Registrar não entrega
+            </button>
+          }
+        </div>
+
+        @if (d.status === 'EM_ROTA') {
+          <form (ngSubmit)="confirm()" class="space-y-2 border-t border-white/10 pt-4">
+            <div class="space-y-1">
+              <label class="text-xs text-neutral-400" for="confirmationCode">Código de confirmação</label>
+              <input id="confirmationCode" required name="confirmationCode" [(ngModel)]="confirmationCode" class="field" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-xs text-neutral-400" for="receivedByName">Nome de quem recebeu</label>
+              <input id="receivedByName" required name="receivedByName" [(ngModel)]="receivedByName" class="field" />
+            </div>
+            <button type="submit" class="btn-brand rounded-xl px-4 py-2 text-sm">Confirmar entrega</button>
+          </form>
+        }
+
+        <button (click)="browsing.set(true)" class="text-xs text-neutral-500 hover:text-neutral-300 transition">
+          ← Ver todas as entregas disponíveis
+        </button>
+      </div>
     </div>
+
+    <!-- O que esta no caminho para levar junto -->
+    <section class="mt-6">
+      <h2 class="section-title">No caminho desta entrega</h2>
+      @if (nearby().length === 0) {
+        <p class="text-sm text-neutral-500">Nenhuma outra entrega aguardando agora.</p>
+      }
+      <div class="space-y-2">
+        @for (n of nearby(); track n.delivery.id) {
+          <div class="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3"
+            [class.on-the-way]="n.detour != null && n.detour <= onTheWayKm">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold flex items-center gap-2">
+                {{ n.delivery.neighborhoodSnapshot }}
+                @if (n.detour == null) {
+                  <span class="badge badge-gray">Calculando...</span>
+                } @else if (n.detour <= onTheWayKm) {
+                  <span class="badge badge-green">No caminho, +{{ formatDistance(n.detour) }}</span>
+                } @else {
+                  <span class="badge badge-gray">Desvio de +{{ formatDistance(n.detour) }}</span>
+                }
+              </p>
+              <p class="text-xs text-neutral-400 mt-1 truncate">{{ n.delivery.addressSnapshot }}</p>
+            </div>
+            <button (click)="accept(n.delivery.id)" class="btn-ghost !text-xs !py-1.5">Levar junto</button>
+          </div>
+        }
+      </div>
+      <p class="mt-2 text-[11px] text-neutral-500">
+        "No caminho" = alonga o trajeto até {{ onTheWayKm }} km em linha reta. Ao levar junto, a rota no Google Maps passa por todas as paradas.
+      </p>
+    </section>
   }
 </div>

@@ -29,6 +29,20 @@ public class DeliveryController {
         return deliveryRepository.findByStatus("AGUARDANDO_ENTREGADOR").stream().map(Delivery::getId).toList();
     }
 
+    /** Mesmo pool, com endereco, bairro e taxa: o motoboy ve para onde vai antes de aceitar. */
+    @GetMapping("/available/details")
+    @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','MOTOBOY')")
+    public List<DeliveryResponse> listAvailableDetails() {
+        return deliveryService.listAvailable();
+    }
+
+    /** Entregas em andamento do motoboy logado (aceitas, retiradas, em rota). */
+    @GetMapping("/mine")
+    @PreAuthorize("hasRole('MOTOBOY')")
+    public List<DeliveryResponse> listMine() {
+        return deliveryService.listMine();
+    }
+
     @GetMapping("/by-order/{orderId}")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','CAIXA','MOTOBOY')")
     public DeliveryResponse findByOrder(@PathVariable Long orderId) {
