@@ -30,30 +30,35 @@ public class ReportService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    /** Fuso do restaurante: "hoje", os dias e os meses dos relatorios sao os de Sao Paulo, nao os de UTC. */
+    private static final java.time.ZoneId BUSINESS_ZONE = java.time.ZoneId.of("America/Sao_Paulo");
+
     private final InventoryService inventoryService;
 
     public ReportService(InventoryService inventoryService) {
         this.inventoryService = inventoryService;
     }
 
-    @Transactional(readOnly = true)
+    /** Vendas finalizadas a partir de um instante: [completedAt, total], agrupadas depois no fuso de SP. */
     @SuppressWarnings("unchecked")
-    public List<DailyRevenueResponse> dailyRevenue(Long unitId, int days) {
-        Query query = entityManager.createQuery(
-                "SELECT FUNCTION('DATE', o.completedAt), SUM(o.total) " +
-                "FROM Order o WHERE o.status = 'FINALIZADO' AND o.unitId = :unitId AND o.completedAt >= :since " +
-                "GROUP BY FUNCTION('DATE', o.completedAt) ORDER BY FUNCTION('DATE', o.completedAt) ASC");
-        query.setParameter("unitId", unitId);
-        query.setParameter("since", java.time.Instant.now().minus(java.time.Duration.ofDays(Math.max(1, days))));
-
-        List<Object[]> rows = query.getResultList();
-        return rows.stream()
-                .map(r -> new DailyRevenueResponse(String.valueOf(r[0]), (BigDecimal) r[1]))
-                .toList();
+    private List<Object[]> completedSince(Long unitId, java.time.Instant since) {
+        return entityManager.createQuery(
+                "SELECT o.completedAt, o.total FROM Order o " +
+                "WHERE o.status = 'FINALIZADO' AND o.unitId = :unitId AND o.completedAt >= :since")
+                .setParameter("unitId", unitId)
+                .setParameter("since", since)
+                .getResultList();
     }
 
-    /** Fuso do restaurante: "hoje" e o dia de Sao Paulo, nao o dia em UTC. */
-    private static final java.time.ZoneId BUSINESS_ZONE = java.time.ZoneId.of("America/Sao_Paulo");
+    /** RF-036: vendas por dia dos ultimos N dias (dia de Sao Paulo), em ordem cronologica. */
+    @Transactional(readOnly = true)
+    public List<DailyRevenueResponse> dailyRevenue(Long unitId, int days) {
+        java.time.Instant since = java.time.LocalDate.now(BUSINESS_ZONE)
+                .minusDays(Math.max(1, days) - 1L).atStartOfDay(BUSINESS_ZONE).toInstant();
+        return RevenueBuckets.byDay(completedSince(unitId, since), BUSINESS_ZONE).entrySet().stream()
+                .map(e -> new DailyRevenueResponse(e.getKey().toString(), e.getValue().total()))
+                .toList();
+    }
 
     /** RF-034: faturamento, pedidos e ticket medio do dia. */
     @Transactional(readOnly = true)
@@ -83,25 +88,12 @@ public class ReportService {
 
     /** RF-037: vendas por mes (ultimos N meses), em ordem cronologica. */
     @Transactional(readOnly = true)
-    @SuppressWarnings("unchecked")
     public List<MonthlyRevenueResponse> monthlyRevenue(Long unitId, int months) {
-        java.time.Instant since = java.time.LocalDate.now().withDayOfMonth(1)
+        java.time.Instant since = java.time.LocalDate.now(BUSINESS_ZONE).withDayOfMonth(1)
                 .minusMonths(Math.max(1, months) - 1L)
-                .atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
-        Query query = entityManager.createQuery(
-                "SELECT FUNCTION('YEAR', o.completedAt), FUNCTION('MONTH', o.completedAt), SUM(o.total), COUNT(o) " +
-                "FROM Order o WHERE o.status = 'FINALIZADO' AND o.unitId = :unitId AND o.completedAt >= :since " +
-                "GROUP BY FUNCTION('YEAR', o.completedAt), FUNCTION('MONTH', o.completedAt) " +
-                "ORDER BY FUNCTION('YEAR', o.completedAt), FUNCTION('MONTH', o.completedAt)");
-        query.setParameter("unitId", unitId);
-        query.setParameter("since", since);
-
-        List<Object[]> rows = query.getResultList();
-        return rows.stream()
-                .map(r -> new MonthlyRevenueResponse(
-                        String.format("%04d-%02d", ((Number) r[0]).intValue(), ((Number) r[1]).intValue()),
-                        (BigDecimal) r[2],
-                        ((Number) r[3]).longValue()))
+                .atStartOfDay(BUSINESS_ZONE).toInstant();
+        return RevenueBuckets.byMonth(completedSince(unitId, since), BUSINESS_ZONE).entrySet().stream()
+                .map(e -> new MonthlyRevenueResponse(e.getKey().toString(), e.getValue().total(), e.getValue().orders()))
                 .toList();
     }
 

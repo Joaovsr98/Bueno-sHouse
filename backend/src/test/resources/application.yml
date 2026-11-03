@@ -12,3 +12,6 @@ app:
   jwt:
     secret: test-secret-key-not-for-production-use-only-testing-purposes
     expiration-minutes: 480
+  # Os testes de integracao nao dependem do ViaCEP (internet); a regra tem teste unitario proprio.
+  cep-check:
+    enabled: false

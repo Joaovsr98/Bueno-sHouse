@@ -46,6 +46,10 @@ public class Order {
     @Column(name = "created_by", nullable = false)
     private Long createdBy;
 
+    /** Chave enviada pelo app para nao criar o mesmo pedido duas vezes (header Idempotency-Key). */
+    @Column(name = "idempotency_key", length = 64)
+    private String idempotencyKey;
+
     @Column(nullable = false, length = 30)
     private String status = "RASCUNHO";
 

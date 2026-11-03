@@ -1,0 +1,36 @@
+name: Frontend · testes e build
+
+# Testes unitários do Angular (Karma + Jasmine no Chrome headless) e o build de produção,
+# a cada push e pull request que mexa no frontend. A Vercel publica o build; este job
+# garante que CEP, distância e carrinho continuam fazendo o que devem.
+on:
+  push:
+    branches: [main, feat/migracao-angular]
+    paths: ['frontend-angular/**', '.github/workflows/frontend-tests.yml']
+  pull_request:
+    paths: ['frontend-angular/**', '.github/workflows/frontend-tests.yml']
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend-angular
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend-angular/package-lock.json
+
+      - run: npm ci
+
+      - name: Testes unitários
+        run: npx ng test --watch=false --browsers=ChromeHeadless
+
+      - name: Build de produção
+        run: npx ng build

@@ -18,10 +18,13 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final CustomerAddressRepository addressRepository;
+    private final AddressCepValidator cepValidator;
 
-    public CustomerService(CustomerRepository customerRepository, CustomerAddressRepository addressRepository) {
+    public CustomerService(CustomerRepository customerRepository, CustomerAddressRepository addressRepository,
+                           AddressCepValidator cepValidator) {
         this.customerRepository = customerRepository;
         this.addressRepository = addressRepository;
+        this.cepValidator = cepValidator;
     }
 
     @Transactional(readOnly = true)
@@ -75,6 +78,7 @@ public class CustomerService {
     @Transactional
     public CustomerAddressResponse addAddress(Long customerId, CustomerAddressRequest request) {
         Customer customer = getOrThrow(customerId);
+        cepValidator.validate(request.zipCode(), request.neighborhood());
 
         CustomerAddress address = new CustomerAddress();
         address.setCustomer(customer);

@@ -13,9 +13,23 @@ export function maskCep(value: string): string {
   return digits.length > 5 ? `${digits.slice(0, 5)}-${digits.slice(5)}` : digits;
 }
 
+/**
+ * Nomes dos Correios (ViaCEP) que na lista de entrega aparecem com outro nome: o Centro
+ * e "Se" para os Correios e "Jardins" junta varios Jardins. O backend usa a mesma tabela.
+ */
+export const NEIGHBORHOOD_ALIASES: Record<string, string> = {
+  se: 'centro',
+  luz: 'centro',
+  'santa efigenia': 'centro',
+  'jardim paulista': 'jardins',
+  'jardim america': 'jardins',
+  'jardim europa': 'jardins',
+  'cerqueira cesar': 'jardins',
+};
+
 /** Compara nomes ignorando acento, caixa e espacos extras ("Saúde" == "saude"). */
-function normalize(text: string): string {
-  return (text ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+export function normalize(text: string): string {
+  return (text ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
 }
 
 interface ViaCepResponse {
@@ -96,7 +110,7 @@ export class CepLookup {
     // Nome igual, ou um contido no outro ("Alto da Lapa" -> Lapa), so com nomes de 4+ letras
     // para um bairro curto nao casar por acaso.
     const bairro = normalize(data.bairro ?? '');
-    const zone = zones.find((z) => normalize(z.neighborhood) === bairro)
+    const zone = zones.find((z) => normalize(z.neighborhood) === (NEIGHBORHOOD_ALIASES[bairro] ?? bairro))
       ?? zones.find((z) => {
         const n = normalize(z.neighborhood);
         return bairro.length >= 4 && n.length >= 4 && (bairro.includes(n) || n.includes(bairro));

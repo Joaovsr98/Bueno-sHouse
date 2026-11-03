@@ -180,8 +180,28 @@ public class OrderService {
         return toResponse(order);
     }
 
+    /** Pedido sem chave de idempotencia (uso interno e testes antigos). */
     @Transactional
     public OrderResponse create(CreateOrderRequest incoming) {
+        return create(incoming, null);
+    }
+
+    /**
+     * H4: com Idempotency-Key, a mesma chave do mesmo usuario devolve o pedido ja criado
+     * em vez de criar outro (clique duplo, rede que reenvia, recarregar no meio do envio).
+     */
+    @Transactional
+    public OrderResponse create(CreateOrderRequest incoming, String idempotencyKey) {
+        String key = idempotencyKey == null || idempotencyKey.isBlank() ? null : idempotencyKey.trim();
+        if (key != null) {
+            if (key.length() > 64) {
+                throw new BusinessException("Idempotency-Key deve ter no maximo 64 caracteres");
+            }
+            var existing = orderRepository.findByCreatedByAndIdempotencyKey(currentUserProvider.getCurrentUserId(), key);
+            if (existing.isPresent()) {
+                return toResponse(existing.get());
+            }
+        }
         final CreateOrderRequest request = applyClienteRulesIfNeeded(incoming);
         validateChannel(request.channel());
 
@@ -235,6 +255,7 @@ public class OrderService {
         order.setCommandId(request.commandId());
         order.setCustomerId(request.customerId());
         order.setCreatedBy(currentUserProvider.getCurrentUserId());
+        order.setIdempotencyKey(key);
         order.setNotes(request.notes());
         order.setOrderNumber(nextOrderNumber(request.unitId()));
         order.setStatus("RECEBIDO");

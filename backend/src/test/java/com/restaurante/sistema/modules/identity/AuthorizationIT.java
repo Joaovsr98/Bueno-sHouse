@@ -86,6 +86,20 @@ class AuthorizationIT {
     }
 
     @Test
+    void sameIdempotencyKeyReturnsTheSameOrderInsteadOfADuplicate() {
+        HttpHeaders customer = login("cliente@demo.local");
+        customer.set("Idempotency-Key", "teste-clique-duplo-1");
+        Map<String, Object> body = Map.of("unitId", 1, "channel", "RETIRADA",
+                "items", List.of(Map.of("productId", 3, "quantity", 1)));
+
+        JsonNode first = rest.exchange("/api/orders", HttpMethod.POST, new HttpEntity<>(body, customer), JsonNode.class).getBody();
+        JsonNode second = rest.exchange("/api/orders", HttpMethod.POST, new HttpEntity<>(body, customer), JsonNode.class).getBody();
+
+        assertThat(second.get("id").asLong()).isEqualTo(first.get("id").asLong());
+        assertThat(second.get("orderNumber").asLong()).isEqualTo(first.get("orderNumber").asLong());
+    }
+
+    @Test
     void customerCannotReadAnotherCustomer() {
         HttpHeaders customer = login("cliente@demo.local");
         assertThat(status(HttpMethod.GET, "/api/customers/999999", null, customer)).isEqualTo(HttpStatus.NOT_FOUND);

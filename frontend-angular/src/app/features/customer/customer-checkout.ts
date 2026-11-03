@@ -190,6 +190,23 @@ export class CustomerCheckout {
     return `Pagamento (simulado): ${label}${change}`;
   }
 
+  private orderKey = '';
+  private orderKeyFor = '';
+
+  /**
+   * Mesma chave enquanto o pedido for o mesmo: se o envio repetir (clique duplo, rede
+   * lenta, tentar de novo depois de erro), o servidor devolve o pedido ja criado.
+   * Mudou o carrinho, o endereco ou a forma de receber, e outro pedido: chave nova.
+   */
+  private idempotencyKey(body: unknown): string {
+    const signature = JSON.stringify(body);
+    if (signature !== this.orderKeyFor) {
+      this.orderKeyFor = signature;
+      this.orderKey = crypto.randomUUID();
+    }
+    return this.orderKey;
+  }
+
   async placeOrder(): Promise<void> {
     if (!this.canPlace()) return;
     const pickup = this.mode() === 'RETIRADA';
@@ -198,14 +215,15 @@ export class CustomerCheckout {
     try {
       const units = await firstValueFrom(this.api.get<UnitResponse[]>('/units'));
       const unitId = units[0]?.id ?? 1;
+      const body = {
+        unitId,
+        channel: pickup ? 'RETIRADA' : 'DELIVERY',
+        customerAddressId: pickup ? null : this.selectedAddressId(),
+        notes: [this.orderNotes.trim(), this.paymentSummary()].filter(Boolean).join(' | '),
+        items: this.lines().map((l) => ({ productId: l.productId, quantity: l.quantity, notes: l.notes || null })),
+      };
       const order = await firstValueFrom(
-        this.api.post<OrderResponse>('/orders', {
-          unitId,
-          channel: pickup ? 'RETIRADA' : 'DELIVERY',
-          customerAddressId: pickup ? null : this.selectedAddressId(),
-          notes: [this.orderNotes.trim(), this.paymentSummary()].filter(Boolean).join(' | '),
-          items: this.lines().map((l) => ({ productId: l.productId, quantity: l.quantity, notes: l.notes || null })),
-        }),
+        this.api.post<OrderResponse>('/orders', body, { 'Idempotency-Key': this.idempotencyKey(body) }),
       );
       this.cart.clear();
       this.router.navigate(['/app/pedidos', order.id]);

@@ -94,8 +94,9 @@ public class OrderController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','GARCOM','CAIXA','CLIENTE')")
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderResponse create(@Valid @RequestBody CreateOrderRequest request) {
-        return orderService.create(request);
+    public OrderResponse create(@Valid @RequestBody CreateOrderRequest request,
+                                @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        return orderService.create(request, idempotencyKey);
     }
 
     @PostMapping("/{id}/send-to-kitchen")

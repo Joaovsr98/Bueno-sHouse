@@ -15,8 +15,9 @@ export class ApiService {
     return this.http.get<T>(`/api${path}`);
   }
 
-  post<T>(path: string, body?: unknown): Observable<T> {
-    return this.http.post<T>(`/api${path}`, body ?? {});
+  /** headers: ex. Idempotency-Key, para o pedido nao duplicar em clique duplo ou reenvio. */
+  post<T>(path: string, body?: unknown, headers?: Record<string, string>): Observable<T> {
+    return this.http.post<T>(`/api${path}`, body ?? {}, headers ? { headers } : {});
   }
 
   put<T>(path: string, body?: unknown): Observable<T> {

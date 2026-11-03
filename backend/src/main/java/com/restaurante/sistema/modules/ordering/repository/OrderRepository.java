@@ -31,6 +31,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
 
+    java.util.Optional<Order> findByCreatedByAndIdempotencyKey(Long createdBy, String idempotencyKey);
+
     @Query("SELECT COALESCE(MAX(o.orderNumber), 0) FROM Order o WHERE o.unitId = :unitId")
     Long findMaxOrderNumberForUnit(@Param("unitId") Long unitId);
 }
