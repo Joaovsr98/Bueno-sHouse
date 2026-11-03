@@ -303,6 +303,8 @@ public class OrderService {
 
         delivery.setAddressSnapshot(fullAddress);
         delivery.setNeighborhoodSnapshot(address.getNeighborhood());
+        delivery.setLatitude(address.getLatitude());
+        delivery.setLongitude(address.getLongitude());
         delivery.setReferencePointSnapshot(address.getReferencePoint());
         delivery.setFee(zone.getFee());
         delivery.setEstimatedMinutes(zone.getEstimatedMinutes());

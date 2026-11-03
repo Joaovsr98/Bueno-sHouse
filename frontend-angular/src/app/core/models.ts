@@ -203,4 +203,9 @@ export interface DeliveryResponse {
   receivedByName: string | null;
   /** Quando o pedido ficou pronto e a entrega entrou na fila (ISO). */
   releasedAt: string | null;
+  /** Localizacao guardada pelo servidor (aproximada quando addressHidden); null = sem localizacao. */
+  latitude: number | null;
+  longitude: number | null;
+  /** Entrega de outro (ou ainda na fila): o servidor manda so o bairro, rua e numero ao aceitar. */
+  addressHidden: boolean;
 }

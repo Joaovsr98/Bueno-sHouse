@@ -19,12 +19,14 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerAddressRepository addressRepository;
     private final AddressCepValidator cepValidator;
+    private final AddressLocationService locationService;
 
     public CustomerService(CustomerRepository customerRepository, CustomerAddressRepository addressRepository,
-                           AddressCepValidator cepValidator) {
+                           AddressCepValidator cepValidator, AddressLocationService locationService) {
         this.customerRepository = customerRepository;
         this.addressRepository = addressRepository;
         this.cepValidator = cepValidator;
+        this.locationService = locationService;
     }
 
     @Transactional(readOnly = true)
@@ -95,6 +97,8 @@ public class CustomerService {
         address.setDefault(request.isDefault() != null && request.isDefault());
 
         CustomerAddress saved = addressRepository.save(address);
+        // Localizacao no mapa buscada depois, sem atrasar o cadastro (ver AddressLocationService).
+        locationService.locateAfterCommit(saved.getId());
         return toAddressResponse(saved);
     }
 

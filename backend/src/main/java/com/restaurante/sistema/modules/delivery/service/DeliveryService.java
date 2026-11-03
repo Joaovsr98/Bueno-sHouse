@@ -18,6 +18,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
@@ -91,7 +93,9 @@ public class DeliveryService {
      */
     @Transactional(readOnly = true)
     public List<DeliveryResponse> listAvailable() {
-        return queue().stream().map(this::toResponse).toList();
+        // Na fila ninguem pegou a entrega ainda: para o motoboy, so bairro e ponto aproximado.
+        boolean courier = callerIsCourier();
+        return queue().stream().map(d -> courier ? toMaskedResponse(d) : toResponse(d)).toList();
     }
 
     private List<Delivery> queue() {
@@ -111,7 +115,9 @@ public class DeliveryService {
 
     @Transactional(readOnly = true)
     public DeliveryResponse findByOrderId(Long orderId) {
-        return toResponse(getByOrderIdOrThrow(orderId));
+        Delivery delivery = getByOrderIdOrThrow(orderId);
+        boolean othersDelivery = callerIsCourier() && !myCourierId().equals(delivery.getCourierId());
+        return othersDelivery ? toMaskedResponse(delivery) : toResponse(delivery);
     }
 
     /**
@@ -239,12 +245,18 @@ public class DeliveryService {
 
     /** Motoboy so mexe na entrega que e dele; gerente e administrador podem ajudar em qualquer uma. */
     private void assertCanHandle(Delivery delivery) {
-        var user = currentUserProvider.getCurrentUser();
-        if (!"MOTOBOY".equals(user.getProfile().getName())) return;
-        Long myCourierId = courierRepository.findByUserId(user.getId()).map(Courier::getId).orElse(null);
-        if (myCourierId == null || !myCourierId.equals(delivery.getCourierId())) {
+        if (callerIsCourier() && !myCourierId().equals(delivery.getCourierId())) {
             throw new AccessDeniedException("Esta entrega esta com outro motoboy");
         }
+    }
+
+    private boolean callerIsCourier() {
+        return "MOTOBOY".equals(currentUserProvider.getCurrentUser().getProfile().getName());
+    }
+
+    /** Cadastro de entregador do usuario logado (-1 = nao e entregador: nao bate com nenhuma entrega). */
+    private Long myCourierId() {
+        return courierRepository.findByUserId(currentUserProvider.getCurrentUserId()).map(Courier::getId).orElse(-1L);
     }
 
     private void validateTransition(String from, String to) {
@@ -268,7 +280,26 @@ public class DeliveryService {
         return new DeliveryResponse(
                 d.getId(), d.getOrderId(), d.getCourierId(), d.getAddressSnapshot(), d.getNeighborhoodSnapshot(),
                 d.getFee(), d.getEstimatedMinutes(), d.getStatus(), d.getReceivedByName(),
-                d.getAssignedAt(), d.getAcceptedAt(), d.getPickedUpAt(), d.getLeftAt(), d.getDeliveredAt(), d.getReleasedAt()
+                d.getAssignedAt(), d.getAcceptedAt(), d.getPickedUpAt(), d.getLeftAt(), d.getDeliveredAt(), d.getReleasedAt(),
+                d.getLatitude(), d.getLongitude(), false
         );
+    }
+
+    /**
+     * LGPD: antes de pegar a entrega, o motoboy ve o bairro e um ponto aproximado (3 casas
+     * decimais, ~100 m), o bastante para a distancia e o "no caminho"; rua e numero so para
+     * quem pegou (ou para gerente e admin).
+     */
+    private DeliveryResponse toMaskedResponse(Delivery d) {
+        return new DeliveryResponse(
+                d.getId(), d.getOrderId(), d.getCourierId(), d.getNeighborhoodSnapshot(), d.getNeighborhoodSnapshot(),
+                d.getFee(), d.getEstimatedMinutes(), d.getStatus(), null,
+                d.getAssignedAt(), d.getAcceptedAt(), d.getPickedUpAt(), d.getLeftAt(), d.getDeliveredAt(), d.getReleasedAt(),
+                approximate(d.getLatitude()), approximate(d.getLongitude()), true
+        );
+    }
+
+    private static BigDecimal approximate(BigDecimal coordinate) {
+        return coordinate == null ? null : coordinate.setScale(3, RoundingMode.HALF_UP);
     }
 }

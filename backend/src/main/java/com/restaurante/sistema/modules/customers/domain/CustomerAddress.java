@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+
 @Entity
 @Table(name = "customer_addresses")
 @Getter
@@ -49,6 +52,17 @@ public class CustomerAddress {
 
     @Column(name = "reference_point", length = 200)
     private String referencePoint;
+
+    /** Localizacao buscada pelo servidor no OpenStreetMap (null = nao achou ou ainda nao buscou). */
+    @Column(precision = 9, scale = 6)
+    private BigDecimal latitude;
+
+    @Column(precision = 9, scale = 6)
+    private BigDecimal longitude;
+
+    /** Quando a busca da localizacao teve resposta; null = ainda vai buscar. */
+    @Column(name = "geocoded_at")
+    private Instant geocodedAt;
 
     @Column(name = "is_default", nullable = false)
     private boolean isDefault = false;

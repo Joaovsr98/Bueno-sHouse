@@ -55,6 +55,13 @@ public class Delivery {
     @Column(name = "received_by_name", length = 150)
     private String receivedByName;
 
+    /** Localizacao do endereco no momento do pedido (copiada do cadastro; null = sem localizacao). */
+    @Column(precision = 9, scale = 6)
+    private BigDecimal latitude;
+
+    @Column(precision = 9, scale = 6)
+    private BigDecimal longitude;
+
     /** Quando o pedido ficou pronto e a entrega entrou na fila do motoboy (null = ainda nao liberada). */
     @Column(name = "released_at")
     private Instant releasedAt;

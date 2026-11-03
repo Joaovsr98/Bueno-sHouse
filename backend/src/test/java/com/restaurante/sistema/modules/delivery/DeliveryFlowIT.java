@@ -174,12 +174,13 @@ class DeliveryFlowIT {
         // 6. Aceitar a entrega - so o perfil MOTOBOY aceita (entregador do seed vinculado a motoboy@demo.local)
         HttpHeaders motoboy = authHeadersAs("motoboy@demo.local");
 
-        // Antes de aceitar, o motoboy ja ve para onde vai (endereco no pool de disponiveis)
+        // Antes de aceitar, o motoboy ve o bairro; rua e numero so depois de pegar (LGPD)
         DeliveryResponse[] pool = restTemplate.exchange("/api/deliveries/available/details", HttpMethod.GET,
                 new HttpEntity<>(motoboy), DeliveryResponse[].class).getBody();
         assertThat(pool).anySatisfy(d -> {
             assertThat(d.id()).isEqualTo(delivery.id());
-            assertThat(d.addressSnapshot()).contains("Rua das Flores");
+            assertThat(d.addressHidden()).isTrue();
+            assertThat(d.addressSnapshot()).isEqualTo("Centro");
         });
 
         ResponseEntity<DeliveryResponse> accepted = restTemplate.exchange(
@@ -187,6 +188,8 @@ class DeliveryFlowIT {
                 new HttpEntity<>(motoboy), DeliveryResponse.class);
         assertThat(accepted.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(accepted.getBody().status()).isEqualTo("ACEITA");
+        assertThat(accepted.getBody().addressHidden()).isFalse();
+        assertThat(accepted.getBody().addressSnapshot()).contains("Rua das Flores");
 
         // Recarregar a pagina nao perde a entrega: ela volta em "minhas entregas"
         DeliveryResponse[] mine = restTemplate.exchange("/api/deliveries/mine", HttpMethod.GET,

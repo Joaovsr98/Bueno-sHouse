@@ -15,3 +15,6 @@ app:
   # Os testes de integracao nao dependem do ViaCEP (internet); a regra tem teste unitario proprio.
   cep-check:
     enabled: false
+  # Nem o OpenStreetMap: a escolha do resultado tem teste unitario (AddressGeocoderTest).
+  geocoding:
+    enabled: false

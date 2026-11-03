@@ -111,15 +111,19 @@
                   <span class="badge badge-gray">Desvio de +{{ formatDistance(n.detour) }}</span>
                 }
               </p>
-              <p class="text-xs text-neutral-400 mt-1 truncate">{{ n.delivery.addressSnapshot }}</p>
-              <p class="text-[11px] text-neutral-500 mt-0.5">Entrega #{{ n.delivery.id }}{{ waiting(n.delivery) ? ', ' + waiting(n.delivery) : '' }}</p>
+              @if (!n.delivery.addressHidden) {
+                <p class="text-xs text-neutral-400 mt-1 truncate">{{ n.delivery.addressSnapshot }}</p>
+              }
+              <p class="text-[11px] text-neutral-500 mt-0.5">
+                Entrega #{{ n.delivery.id }}{{ distanceOf(n.delivery) ? ', ' + distanceOf(n.delivery) + ' da cozinha' : '' }}{{ waiting(n.delivery) ? ', ' + waiting(n.delivery) : '' }}
+              </p>
             </div>
             <button (click)="accept(n.delivery.id)" class="btn-ghost !text-xs !py-1.5">Levar junto</button>
           </div>
         }
       </div>
       <p class="mt-2 text-[11px] text-neutral-500">
-        "No caminho" = alonga o trajeto até {{ onTheWayKm }} km em linha reta. Ao levar junto, a rota no Google Maps passa por todas as paradas.
+        "No caminho" = alonga o trajeto até {{ onTheWayKm }} km em linha reta (pela localização aproximada). Ao levar junto, o endereço completo aparece e a rota no Google Maps passa por todas as paradas.
       </p>
     </section>
   } @else {
@@ -142,7 +146,11 @@
               <span class="text-brand-400"><app-icon name="pin" [size]="15" /></span>{{ d.neighborhoodSnapshot }}
               @if (distanceOf(d); as km) { <span class="text-xs font-normal text-neutral-500">{{ km }} da cozinha</span> }
             </p>
-            <p>{{ d.addressSnapshot }}</p>
+            @if (d.addressHidden) {
+              <p class="text-neutral-400">Rua e número aparecem quando você aceitar a entrega.</p>
+            } @else {
+              <p>{{ d.addressSnapshot }}</p>
+            }
             <p class="text-neutral-500">Taxa: {{ currency(d.fee) }}{{ d.estimatedMinutes ? ', ~' + d.estimatedMinutes + ' min' : '' }}</p>
           </div>
 

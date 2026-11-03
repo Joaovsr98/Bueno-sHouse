@@ -73,22 +73,32 @@ export class Courier implements OnDestroy {
   /** As que esperam a vez (sem botao de aceitar). */
   readonly queued = computed(() => (this.mine().length ? [] : this.pool().slice(1)));
 
-  /** Coordenadas por endereco (OpenStreetMap), buscadas uma a uma e guardadas. */
+  /** Entregas antigas, sem localizacao no servidor: coordenadas buscadas aqui (OpenStreetMap), uma a uma. */
   private readonly coords = signal<Record<string, LatLng | null>>({});
   private geocoding = false;
 
+  /** Localizacao da entrega: a do servidor ou a buscada aqui. undefined = buscando; null = nao achou. */
+  private coordsOf(d: DeliveryResponse): LatLng | null | undefined {
+    if (d.latitude != null && d.longitude != null) return { lat: d.latitude, lng: d.longitude };
+    return this.coords()[d.addressSnapshot];
+  }
+
+  /** Endereco para o Google: o completo, ou so o bairro quando ainda esta oculto. */
+  private placeOf(d: DeliveryResponse): string {
+    return d.addressHidden ? `${d.neighborhoodSnapshot}, São Paulo - SP` : d.addressSnapshot;
+  }
+
   /**
-   * Destino do mapa embutido: as coordenadas ja calculadas, assim o Google sempre traca a
-   * rota (com endereco digitado errado ele mostrava o mapa-mundi) e ela bate com a
-   * distancia exibida. Sem coordenadas, vai o endereco escrito; undefined = localizando.
+   * Destino do mapa embutido: as coordenadas, assim o Google sempre traca a rota (com
+   * endereco digitado errado ele mostrava o mapa-mundi) e ela bate com a distancia
+   * exibida. Sem coordenadas, vai o endereco escrito; undefined = localizando.
    */
   private readonly mapTarget = computed<string | null | undefined>(() => {
     const d = this.active() ?? this.next();
     if (!d) return null;
-    const c = this.coords();
-    if (!(d.addressSnapshot in c)) return undefined;
-    const at = c[d.addressSnapshot];
-    return at ? `${at.lat},${at.lng}` : d.addressSnapshot;
+    const at = this.coordsOf(d);
+    if (at === undefined) return undefined;
+    return at ? `${at.lat},${at.lng}` : this.placeOf(d);
   });
 
   /** Mapa embutido da cozinha ate o destino (so recarrega quando o destino muda). */
@@ -100,11 +110,10 @@ export class Courier implements OnDestroy {
   /** Disponiveis ordenadas pelo desvio que causam no trajeto da entrega aberta. */
   readonly nearby = computed<Nearby[]>(() => {
     const d = this.active();
-    const c = this.coords();
-    const to = d ? c[d.addressSnapshot] : null;
+    const to = d ? this.coordsOf(d) : null;
     return this.pool()
       .map((p) => {
-        const stop = c[p.addressSnapshot];
+        const stop = this.coordsOf(p);
         return { delivery: p, detour: to && stop ? Math.max(0, detourKm(RESTAURANT, stop, to)) : null };
       })
       .sort((a, b) => (a.detour ?? 99) - (b.detour ?? 99));
@@ -112,7 +121,7 @@ export class Courier implements OnDestroy {
 
   /** Distancia da cozinha ate o endereco (para a lista de disponiveis). */
   distanceOf(d: DeliveryResponse): string | null {
-    const at = this.coords()[d.addressSnapshot];
+    const at = this.coordsOf(d);
     return at ? formatDistance(distanceKm(RESTAURANT, at)) : null;
   }
 
@@ -129,8 +138,7 @@ export class Courier implements OnDestroy {
     const origin = fromKitchen ? RESTAURANT.fallbackAddress : null; // em rota: parte de onde o motoboy esta
     const all = this.mine();
     if (all.length < 2) return directionsLink(d.addressSnapshot, origin ?? undefined);
-    const c = this.coords();
-    const byDistance = [...all].sort((a, b) => this.kmFromKitchen(c[a.addressSnapshot]) - this.kmFromKitchen(c[b.addressSnapshot]));
+    const byDistance = [...all].sort((a, b) => this.kmFromKitchen(this.coordsOf(a)) - this.kmFromKitchen(this.coordsOf(b)));
     const last = byDistance[byDistance.length - 1];
     return multiStopLink(origin, byDistance.slice(0, -1).map((x) => x.addressSnapshot), last.addressSnapshot);
   }
@@ -139,9 +147,10 @@ export class Courier implements OnDestroy {
     return at ? distanceKm(RESTAURANT, at) : 0;
   }
 
-  /** Abre o endereco de uma entrega disponivel no Google Maps, saindo da cozinha. */
+  /** Abre no Google Maps o destino de uma entrega da fila (ponto aproximado), saindo da cozinha. */
   previewLink(d: DeliveryResponse): string {
-    return directionsLink(d.addressSnapshot, RESTAURANT.fallbackAddress);
+    const at = this.coordsOf(d);
+    return directionsLink(at ? `${at.lat},${at.lng}` : this.placeOf(d), RESTAURANT.fallbackAddress);
   }
 
   private pollHandle: ReturnType<typeof setInterval> | null = null;
@@ -153,10 +162,11 @@ export class Courier implements OnDestroy {
       this.now.set(Date.now());
       this.loadPool();
     }, 10000);
-    // Localiza os enderecos novos (devagar: o OpenStreetMap pede no maximo 1 consulta por segundo).
+    // So entregas antigas, sem localizacao no servidor, sao localizadas aqui (devagar: o
+    // OpenStreetMap pede no maximo 1 consulta por segundo).
     effect(() => {
-      const addresses = [...this.mine(), ...this.pool()].map((d) => d.addressSnapshot);
-      untracked(() => this.geocodeMissing(addresses));
+      const missing = [...this.mine(), ...this.pool()].filter((d) => d.latitude == null);
+      untracked(() => this.geocodeMissing(missing));
     });
   }
 
@@ -164,13 +174,15 @@ export class Courier implements OnDestroy {
     if (this.pollHandle) clearInterval(this.pollHandle);
   }
 
-  private async geocodeMissing(addresses: string[]): Promise<void> {
+  private async geocodeMissing(list: DeliveryResponse[]): Promise<void> {
     if (this.geocoding) return;
     this.geocoding = true;
     try {
-      for (const address of new Set(addresses)) {
+      for (const d of list) {
+        const address = d.addressSnapshot;
         if (address in this.coords()) continue;
-        const at = await geocode(parseAddressSnapshot(address));
+        // Endereco oculto (entrega na fila): so o bairro, como o servidor manda.
+        const at = await geocode(d.addressHidden ? { neighborhood: d.neighborhoodSnapshot } : parseAddressSnapshot(address));
         this.coords.update((c) => ({ ...c, [address]: at }));
         await new Promise((r) => setTimeout(r, 1100));
       }

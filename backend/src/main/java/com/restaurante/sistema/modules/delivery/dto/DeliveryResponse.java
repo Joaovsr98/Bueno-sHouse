@@ -19,5 +19,10 @@ public record DeliveryResponse(
         Instant leftAt,
         Instant deliveredAt,
         /** Quando entrou na fila (pedido pronto): o motoboy ve ha quanto tempo esta esperando. */
-        Instant releasedAt
+        Instant releasedAt,
+        /** Localizacao do endereco (null = sem localizacao; aproximada quando addressHidden). */
+        BigDecimal latitude,
+        BigDecimal longitude,
+        /** Motoboy que ainda nao pegou a entrega ve so o bairro (LGPD); rua e numero ao aceitar. */
+        boolean addressHidden
 ) {}
