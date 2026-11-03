@@ -36,6 +36,13 @@ async function novaPessoa(browser: Browser): Promise<Page> {
   return page;
 }
 
+/** Espera o proximo passo aparecer; se a tela mostrar um erro, a falha diz qual foi. */
+async function semErroNaTela(page: Page, proximo: ReturnType<Page['locator']>): Promise<void> {
+  const erro = page.locator('.alert-error');
+  await expect(proximo.or(erro).first()).toBeVisible();
+  if (await erro.isVisible()) throw new Error(`A tela mostrou um erro: ${(await erro.textContent())?.trim()}`);
+}
+
 async function entrarNaEquipe(page: Page, email: string, senha: string): Promise<void> {
   await page.goto('/login?lado=equipe');
   await page.locator('#email').fill(email);
@@ -96,7 +103,8 @@ test('pedido de delivery: do cardapio ate a entrega confirmada pelo motoboy', as
   await expect(motoboy.getByText('Rua e número aparecem quando você aceitar a entrega.')).toBeVisible();
 
   await motoboy.getByRole('button', { name: 'Aceitar e buscar na cozinha' }).click();
-  await expect(motoboy.getByText('Praça da Sé, 100 - Centro')).toBeVisible();
+  await semErroNaTela(motoboy, motoboy.getByRole('button', { name: 'Confirmar retirada no restaurante' }));
+  await expect(motoboy.getByText(/Praça da Sé, 100/)).toBeVisible();
   await motoboy.getByRole('button', { name: 'Confirmar retirada no restaurante' }).click();
   await motoboy.getByRole('button', { name: 'Saí para entrega' }).click();
   await motoboy.locator('#confirmationCode').fill(codigo);

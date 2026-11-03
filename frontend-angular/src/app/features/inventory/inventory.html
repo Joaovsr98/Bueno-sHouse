@@ -19,7 +19,7 @@
       <div class="flex flex-wrap gap-2">
         @for (a of alerts(); track a.id) {
           <button (click)="select(a)" class="text-xs rounded-lg bg-red-900/40 border border-red-800/60 px-3 py-1.5 text-red-200">
-            {{ a.name }}: {{ a.currentQuantity | number: '1.0-3' }} {{ a.unitOfMeasure }} (mín. {{ a.minimumQuantity | number: '1.0-3' }})
+            {{ a.name }}: {{ a.currentQuantity | number: '1.0-3' }} {{ a.unitOfMeasure }} (mín. {{ a.minimumQuantity | number: '1.0-3' }}) · + dar entrada
           </button>
         }
       </div>
@@ -48,6 +48,12 @@
         <span class="text-xs text-neutral-500">Custo por unidade (R$)</span>
         <input name="cost" type="number" min="0" step="0.0001" [(ngModel)]="f.costPerUnit" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
       </label>
+      @if (f.id) {
+        <p class="col-span-2 md:col-span-5 text-xs text-neutral-400">
+          Aqui muda só o cadastro. Comprou mais? Use <strong class="text-brand-300">+ entrada</strong> na lista para somar ao saldo
+          (ou receba um pedido em Fornecedores e compras, que também atualiza o preço do fornecedor).
+        </p>
+      }
       <div class="col-span-2 md:col-span-5 flex gap-2">
         <button type="submit" [disabled]="saving()" class="btn-brand rounded-xl px-4 py-2">{{ f.id ? 'Salvar alterações' : 'Cadastrar' }}</button>
         <button type="button" (click)="form.set(null)" class="rounded-xl px-4 py-2 bg-white/10">Cancelar</button>
@@ -92,6 +98,7 @@
                   <td class="px-4 py-3 text-right text-neutral-400 hidden sm:table-cell">{{ i.minimumQuantity | number: '1.0-3' }}</td>
                   <td class="px-4 py-3 text-right text-neutral-400 hidden md:table-cell">{{ currency(i.costPerUnit || 0) }}</td>
                   <td class="px-4 py-3 text-right whitespace-nowrap" (click)="$event.stopPropagation()">
+                    <button (click)="select(i)" class="text-xs btn-brand rounded-lg px-2.5 py-1 mr-3">+ entrada</button>
                     <button (click)="editItem(i)" class="text-xs text-brand-300 hover:underline mr-3">editar</button>
                     <button (click)="deactivate(i)" class="text-xs text-neutral-500 hover:text-red-400">desativar</button>
                   </td>
@@ -104,7 +111,7 @@
     </div>
 
     @if (selected(); as s) {
-      <aside class="glass rounded-2xl p-5 space-y-4 h-fit">
+      <aside id="movimentacao" class="glass rounded-2xl p-5 space-y-4 h-fit scroll-mt-24">
         <div class="flex items-start justify-between">
           <div>
             <h2 class="text-lg font-bold">{{ s.name }}</h2>
@@ -122,7 +129,13 @@
               <input type="radio" name="type" value="AJUSTE_PERDA" [(ngModel)]="movementType" /> Saída (perda)
             </label>
           </div>
-          <input name="qty" type="number" min="0.001" step="0.001" [(ngModel)]="movementQty" placeholder="Quantidade ({{ s.unitOfMeasure }})" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+          <input id="movementQty" name="qty" type="number" min="0.001" step="0.001" [(ngModel)]="movementQty" placeholder="Quantidade ({{ s.unitOfMeasure }})" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+          @if (movementType === 'ENTRADA_COMPRA') {
+            <input name="note" [(ngModel)]="movementNote" maxlength="200" placeholder="Observação (ex.: compra no Atacadão, NF 123)" class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
+            @if (movementQty) {
+              <p class="text-xs text-green-300">Saldo depois: {{ s.currentQuantity + +movementQty | number: '1.0-3' }} {{ s.unitOfMeasure }}</p>
+            }
+          }
           @if (movementType === 'AJUSTE_PERDA') {
             <select name="reason" [(ngModel)]="movementReason" class="w-full rounded-lg bg-ink-850 border border-white/10 px-3 py-2">
               <option value="" disabled>Motivo da saída (obrigatório)</option>

@@ -77,6 +77,7 @@ export class Inventory {
   movementType: 'ENTRADA_COMPRA' | 'AJUSTE_PERDA' = 'ENTRADA_COMPRA';
   movementQty = '';
   movementReason = '';
+  movementNote = '';
   saving = signal(false);
 
   constructor() {
@@ -162,7 +163,14 @@ export class Inventory {
     this.movementType = 'ENTRADA_COMPRA';
     this.movementQty = '';
     this.movementReason = '';
+    this.movementNote = '';
+    this.form.set(null);
     this.loadMovements(item.id);
+    // O painel fica ao lado (ou abaixo, no celular): leva a pessoa direto ao campo da quantidade.
+    setTimeout(() => {
+      document.getElementById('movimentacao')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('movementQty')?.focus({ preventScroll: true });
+    });
   }
 
   private loadMovements(id: number): void {
@@ -184,14 +192,15 @@ export class Inventory {
       .post(`/inventory/items/${item.id}/movements`, {
         type: this.movementType,
         quantity: Number(this.movementQty),
-        reason: this.movementType === 'AJUSTE_PERDA' ? this.movementReason : 'Entrada manual',
+        reason: this.movementType === 'AJUSTE_PERDA' ? this.movementReason : this.movementNote.trim() || 'Entrada manual',
       })
       .subscribe({
         next: () => {
           this.saving.set(false);
           this.movementQty = '';
           this.movementReason = '';
-          this.toast.success('Movimentação registrada');
+          this.movementNote = '';
+          this.toast.success(this.movementType === 'ENTRADA_COMPRA' ? `Entrada de ${item.name} somada ao saldo` : 'Saída registrada');
           this.load();
           this.loadMovements(item.id);
         },

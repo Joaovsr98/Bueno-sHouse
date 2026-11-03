@@ -180,6 +180,22 @@ estoque insuficiente (422) e autorização por perfil (401/403/404).
 O **GitHub Actions** ([.github/workflows/backend-tests.yml](.github/workflows/backend-tests.yml))
 roda a suíte a cada push que mexe no backend.
 
+### Teste ponta a ponta (pela tela)
+
+[e2e/](e2e/) usa Playwright para percorrer o caminho inteiro de um pedido de delivery no
+navegador, com servidor e banco de verdade: o cliente escolhe o lanche, cria a conta e pede; a
+equipe confirma; a cozinha prepara; o motoboy pega a entrega na fila, retira, sai e confirma com
+o código que o cliente vê no acompanhamento. ViaCEP, OpenStreetMap e Google Maps são simulados.
+No CI ([.github/workflows/e2e.yml](.github/workflows/e2e.yml)) ele sobe MySQL, servidor e site
+sozinho; localmente, com o backend no ar em `localhost:8080` (profile `dev`):
+
+```bash
+cd e2e
+npm ci
+npx playwright install chromium
+npx playwright test
+```
+
 ---
 
 ## Estrutura de Pastas
@@ -227,6 +243,11 @@ restaurante-sistema/
 Em ambiente de desenvolvimento, a carga inicial cria automaticamente um restaurante e uma
 unidade de exemplo, os perfis de acesso, usuários de demonstração (um por perfil), além de
 categorias, produtos, mesas e zonas de entrega.
+
+Depois de muitos testes, o administrador pode voltar tudo ao estado inicial em **Usuários →
+Dados de demonstração → Restaurar demonstração** (digitando RESTAURAR). O servidor apaga e
+recria o banco com as mesmas migrations e seeds em segundo plano (cerca de 1 minuto) e todos
+entram de novo. Só existe com o perfil `dev`.
 
 > As credenciais de demonstração (tabela em **Sistema no ar**) existem apenas com o perfil
 > `dev`. Em produção real use `SPRING_PROFILES_ACTIVE=prod` e o `BOOTSTRAP_ADMIN_*` (ver [docs/DEPLOY.md](docs/DEPLOY.md)).

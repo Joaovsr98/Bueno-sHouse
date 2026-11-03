@@ -9,7 +9,8 @@ export default defineConfig({
   testDir: './tests',
   timeout: 180_000,
   expect: { timeout: 20_000 },
-  retries: process.env.CI ? 1 : 0,
+  // Sem repetir: o pedido e a entrega da primeira tentativa ficariam no banco e confundiriam a segunda.
+  retries: 0,
   reporter: process.env.CI ? [['github'], ['list'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:4200',
