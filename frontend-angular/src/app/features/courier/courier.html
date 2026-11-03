@@ -1,15 +1,19 @@
 <div class="p-6 max-w-xl">
-  <h1 class="text-lg font-semibold mb-4">Área do Motoboy</h1>
+  <header class="mb-6 reveal">
+    <p class="eyebrow">Entregas</p>
+    <h1 class="page-title mt-3">Área do motoboy</h1>
+    <p class="page-sub mt-2">Aceite uma entrega, saia com o pedido e confirme com o código que o cliente informar.</p>
+  </header>
 
   @if (error()) {
-    <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+    <div class="alert-error mb-4">
       <span>{{ error() }}</span>
       <button (click)="error.set(null)" class="text-red-400">×</button>
     </div>
   }
 
   @if (!active()) {
-    <h2 class="text-sm font-semibold mb-3">Entregas disponíveis</h2>
+    <h2 class="section-title">Entregas disponíveis</h2>
     @if (available().length === 0) {
       <p class="text-sm text-neutral-500">Nenhuma entrega aguardando entregador no momento.</p>
     }
@@ -24,7 +28,7 @@
   } @else {
     <div class="glass rounded-2xl p-6 space-y-4">
       <div class="flex items-center justify-between">
-        <h2 class="text-sm font-semibold">Entrega #{{ active()!.id }} do pedido #{{ active()!.orderId }}</h2>
+        <h2 class="font-display font-bold">Entrega #{{ active()!.id }} do pedido #{{ active()!.orderId }}</h2>
         <span class="text-xs uppercase tracking-wide text-brand-300">{{ statusLabels[active()!.status] ?? active()!.status }}</span>
       </div>
 

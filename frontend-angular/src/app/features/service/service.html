@@ -5,9 +5,10 @@
 
   <div class="flex items-start justify-between mb-6">
     <div>
-      <h1 class="text-lg font-semibold">Atendimento #{{ serviceId }}</h1>
+      <p class="eyebrow">Salão</p>
+      <h1 class="page-title mt-3">Atendimento #{{ serviceId }}</h1>
       @if (service(); as s) {
-        <p class="text-sm text-neutral-400 mt-1">Mesa {{ s.tableNumber }}, {{ s.partySize }} pessoa(s)</p>
+        <p class="page-sub mt-2">Mesa {{ s.tableNumber }}, {{ s.partySize }} pessoa(s)</p>
       }
     </div>
     @if (serviceStatus(); as status) {
@@ -18,7 +19,7 @@
   </div>
 
   @if (error()) {
-    <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+    <div class="alert-error mb-4">
       <span>{{ error() }}</span>
       <button (click)="error.set(null)" class="text-red-400">×</button>
     </div>
@@ -38,7 +39,7 @@
   }
 
   <div class="flex items-center justify-between mb-3">
-    <h2 class="text-sm font-semibold">Comandas</h2>
+    <h2 class="section-title !mb-0">Comandas</h2>
     <button (click)="openCommand()" class="btn-brand rounded-xl px-3 py-1.5 text-xs">+ Nova comanda</button>
   </div>
 

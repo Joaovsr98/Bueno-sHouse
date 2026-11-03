@@ -5,7 +5,7 @@
     <div class="w-56 shrink-0 border-r border-white/10 flex flex-col bg-black/10">
       <div class="p-4 border-b border-white/10">
         <button (click)="back()" class="text-xs text-neutral-500 hover:text-neutral-300 transition">← Voltar</button>
-        <h2 class="text-sm font-semibold mt-2">Categorias</h2>
+        <h2 class="section-title !mb-0 mt-3">Categorias</h2>
       </div>
       <div class="flex-1 overflow-y-auto p-2 space-y-1">
         <button
@@ -29,10 +29,14 @@
 
     <div class="flex-1 min-w-0 overflow-y-auto">
       <div class="p-6">
-        <h1 class="text-lg font-semibold mb-4">Cardápio</h1>
+        <header class="mb-6 reveal">
+          <p class="eyebrow">Comanda</p>
+          <h1 class="page-title mt-3">Lançar pedido</h1>
+          <p class="page-sub mt-2">Escolha os itens, deixe a observação e envie para a cozinha.</p>
+        </header>
 
         @if (error()) {
-          <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+          <div class="alert-error mb-4">
             <span>{{ error() }}</span>
             <button (click)="error.set(null)" class="text-red-400">×</button>
           </div>
@@ -51,7 +55,7 @@
           }
         </div>
 
-        <h2 class="text-sm font-semibold mb-3">Pedidos desta comanda</h2>
+        <h2 class="section-title">Pedidos desta comanda</h2>
         @if (commandOrders().length === 0) {
           <p class="text-sm text-neutral-500 mb-4">Nenhum pedido enviado ainda.</p>
         }
@@ -93,7 +97,7 @@
 
     <div class="w-80 shrink-0 border-l border-white/10 flex flex-col bg-black/10">
       <div class="p-4 border-b border-white/10">
-        <h2 class="text-sm font-semibold">Novo pedido</h2>
+        <h2 class="font-display font-bold">Novo pedido</h2>
       </div>
 
       <div class="flex-1 overflow-y-auto p-3 space-y-3">

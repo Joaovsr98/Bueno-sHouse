@@ -2,10 +2,14 @@
   <div class="p-6 text-sm text-neutral-400">Carregando...</div>
 } @else {
   <div class="p-6 max-w-2xl">
-    <h1 class="text-lg font-semibold mb-4">Caixa</h1>
+    <header class="mb-6 reveal">
+      <p class="eyebrow">Financeiro</p>
+      <h1 class="page-title mt-3">Caixa</h1>
+      <p class="page-sub mt-2">Abertura, sangria, suprimento e fechamento com a conferência do dinheiro.</p>
+    </header>
 
     @if (error()) {
-      <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+      <div class="alert-error mb-4">
         <span>{{ error() }}</span>
         <button (click)="error.set(null)" class="text-red-400">×</button>
       </div>
@@ -49,7 +53,7 @@
         </div>
 
         <div class="glass rounded-2xl p-6">
-          <h2 class="text-sm font-semibold mb-3">Movimentos (sangria / suprimento)</h2>
+          <h2 class="section-title">Movimentos (sangria / suprimento)</h2>
           <form (ngSubmit)="registerMovement()" class="flex flex-wrap gap-2 items-end mb-4">
             <div class="space-y-1">
               <label class="text-xs text-neutral-400">Tipo</label>

@@ -4,7 +4,7 @@
   <div class="flex h-screen">
     <div class="w-64 shrink-0 border-r border-white/10 flex flex-col bg-black/10">
       <div class="p-4 border-b border-white/10">
-        <h2 class="text-sm font-semibold">Categorias</h2>
+        <h2 class="section-title !mb-0">Categorias</h2>
       </div>
 
       <div class="flex-1 overflow-y-auto p-2 space-y-1">
@@ -62,7 +62,11 @@
     <div class="flex-1 min-w-0 overflow-y-auto">
       <div class="p-6">
         <div class="flex items-center justify-between mb-4">
-          <h1 class="text-lg font-semibold">Produtos</h1>
+          <div class="reveal">
+            <p class="eyebrow">Cardápio</p>
+            <h1 class="page-title mt-3">Produtos</h1>
+            <p class="page-sub mt-2">Pratos, preços, modo de preparo e disponibilidade no cardápio do cliente.</p>
+          </div>
           <button
             (click)="openNewProduct()"
             [disabled]="selectedCategoryId() === null"
@@ -74,7 +78,7 @@
         </div>
 
         @if (error()) {
-          <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300 flex justify-between">
+          <div class="alert-error mb-4">
             <span>{{ error() }}</span>
             <button (click)="error.set(null)" class="text-red-400">×</button>
           </div>
@@ -120,7 +124,7 @@
           (ngSubmit)="saveProduct()"
           class="w-full max-w-md glass rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto"
         >
-          <h2 class="text-sm font-semibold">{{ form.id ? 'Editar produto' : 'Novo produto' }}</h2>
+          <h2 class="font-display font-bold">{{ form.id ? 'Editar produto' : 'Novo produto' }}</h2>
 
           <div class="space-y-1">
             <label class="text-xs text-neutral-400">Nome</label>
