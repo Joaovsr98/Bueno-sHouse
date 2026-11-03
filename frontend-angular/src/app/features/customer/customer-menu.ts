@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { LocationCard } from '../../shared/location-card';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { CartService } from '../../core/cart.service';
@@ -15,7 +16,7 @@ interface MenuGroup {
 /** Cardapio publico (RF-001) com filtro por categoria e link para a pagina do prato (RF-002). */
 @Component({
   selector: 'app-customer-menu',
-  imports: [RouterLink],
+  imports: [RouterLink, LocationCard],
   templateUrl: './customer-menu.html',
 })
 export class CustomerMenu {

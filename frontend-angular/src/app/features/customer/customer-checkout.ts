@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -14,10 +14,12 @@ import {
 import { currency } from '../../core/format';
 import { groupZones } from '../../core/zones';
 import { CepLookup } from '../../core/cep';
+import { RESTAURANT, directionsLink, distanceKm, formatDistance, geocode } from '../../core/location';
+import { Icon } from '../../shared/icon';
 
 @Component({
   selector: 'app-customer-checkout',
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, Icon],
   templateUrl: './customer-checkout.html',
 })
 export class CustomerCheckout {
@@ -54,9 +56,28 @@ export class CustomerCheckout {
   zones = signal<DeliveryZoneResponse[]>([]);
   readonly zoneGroups = computed(() => groupZones(this.zones()));
 
+  /** Distancia do endereco escolhido ate a cozinha, com link da rota no Google Maps. */
+  distance = signal<{ text: string; route: string } | null>(null);
+
   constructor() {
     this.loadAddresses();
     this.loadZones();
+    effect(() => {
+      const addr = this.addresses().find((a) => a.id === this.selectedAddressId());
+      untracked(() => this.updateDistance(addr));
+    });
+  }
+
+  private async updateDistance(addr: CustomerAddressResponse | undefined): Promise<void> {
+    this.distance.set(null);
+    if (!addr) return;
+    const where = await geocode(addr);
+    if (!where || this.selectedAddressId() !== addr.id) return;
+    const full = `${addr.street}, ${addr.number}, ${addr.neighborhood}, ${addr.city} - ${addr.state}, ${addr.zipCode}`;
+    this.distance.set({
+      text: formatDistance(distanceKm(RESTAURANT, where)),
+      route: directionsLink(full, RESTAURANT.fallbackAddress),
+    });
   }
 
   private async loadZones(): Promise<void> {

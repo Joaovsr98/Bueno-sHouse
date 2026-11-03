@@ -56,6 +56,14 @@
       }
     </div>
 
+    @if (distance(); as d) {
+      <p class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-neutral-400" aria-live="polite">
+        <span class="text-brand-400"><app-icon name="pin" [size]="14" /></span>
+        Este endereço fica a <strong class="text-neutral-100">{{ d.text }}</strong> da cozinha (em linha reta).
+        <a [href]="d.route" target="_blank" rel="noopener" class="text-brand-400 hover:text-brand-300">Ver rota no Google Maps</a>
+      </p>
+    }
+
     @if (!showAddressForm()) {
       <button (click)="showAddressForm.set(true)" class="mt-3 text-sm text-brand-300 hover:underline">+ Novo endereço</button>
     } @else {
