@@ -84,6 +84,8 @@ public class SecurityConfig {
                     .permitAll()
                 // Bairros atendidos e taxas: o cadastro do cliente (antes do login) usa para o endereco.
                 .requestMatchers(HttpMethod.GET, "/api/delivery-zones").permitAll()
+                // Acompanhar a restauracao da demonstracao: o banco e recriado, nao ha como logar durante ela.
+                .requestMatchers(HttpMethod.GET, "/api/demo/reset-status").permitAll()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())

@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
+import { DemoReset } from './demo-reset';
 
 interface UserRow {
   id: number;
@@ -22,7 +23,7 @@ const PROFILE_LABELS: Record<string, string> = {
 
 @Component({
   selector: 'app-users',
-  imports: [FormsModule],
+  imports: [FormsModule, DemoReset],
   template: `
     <div class="page">
       <div class="mb-6">
@@ -94,6 +95,8 @@ const PROFILE_LABELS: Record<string, string> = {
           </table>
         </div>
       </section>
+
+      <app-demo-reset />
     </div>
   `,
 })

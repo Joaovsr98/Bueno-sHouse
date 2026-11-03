@@ -13,6 +13,12 @@ spring:
     # O seed e V900: sem isto, toda migration nova (V17, V18...) ficaria "abaixo" da
     # ultima aplicada e o Flyway recusaria subir em bancos que ja rodaram o seed.
     out-of-order: true
+    # Permite o botao "Restaurar demonstracao" (so administrador): apaga e recria o banco.
+    clean-disabled: false
+
+app:
+  demo-reset:
+    enabled: true
 
 logging:
   level:
