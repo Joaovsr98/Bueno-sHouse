@@ -55,6 +55,10 @@ public class Delivery {
     @Column(name = "received_by_name", length = 150)
     private String receivedByName;
 
+    /** Quando o pedido ficou pronto e a entrega entrou na fila do motoboy (null = ainda nao liberada). */
+    @Column(name = "released_at")
+    private Instant releasedAt;
+
     @Column(name = "assigned_at")
     private Instant assignedAt;
 

@@ -363,6 +363,9 @@ public class OrderService {
         Order saved = orderRepository.save(order);
         recordHistory(order.getId(), previous, newStatus, reason);
 
+        if ("AGUARDANDO_ENTREGADOR".equals(newStatus)) {
+            releaseDelivery(order.getId());
+        }
         if ("CANCELADO".equals(newStatus)) {
             // RF-018: estorna qualquer baixa de estoque ja feita (itens que
             // chegaram a PRONTO antes do cancelamento) - idempotente e nao faz
@@ -370,6 +373,13 @@ public class OrderService {
             for (OrderItem item : orderItemRepository.findByOrderId(order.getId())) {
                 inventoryService.reverseDeductionForOrderItem(item.getId(), "Cancelamento do pedido " + order.getId() + ": " + reason);
             }
+            // Pedido cancelado sai da fila do motoboy (antes ficava la para sempre).
+            deliveryRepository.findByOrderId(order.getId()).ifPresent(delivery -> {
+                if ("AGUARDANDO_ENTREGADOR".equals(delivery.getStatus())) {
+                    delivery.setStatus("CANCELADA");
+                    deliveryRepository.save(delivery);
+                }
+            });
         }
 
         return toResponse(saved);
@@ -450,8 +460,19 @@ public class OrderService {
                 order.setStatus("AGUARDANDO_ENTREGADOR");
                 orderRepository.save(order);
                 recordHistory(orderId, "PRONTO", "AGUARDANDO_ENTREGADOR", "Pedido delivery liberado para retirada");
+                releaseDelivery(orderId);
             }
         }
+    }
+
+    /** So com o pedido pronto a entrega entra na fila do motoboy (a fila anda por ordem de liberacao). */
+    private void releaseDelivery(Long orderId) {
+        deliveryRepository.findByOrderId(orderId).ifPresent(delivery -> {
+            if (delivery.getReleasedAt() == null) {
+                delivery.setReleasedAt(Instant.now());
+                deliveryRepository.save(delivery);
+            }
+        });
     }
 
     /**

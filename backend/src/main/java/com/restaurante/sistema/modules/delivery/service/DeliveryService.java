@@ -84,10 +84,17 @@ public class DeliveryService {
     /** Situacoes em que a entrega ainda esta com o motoboy (aceita, retirada, em rota ou com tentativa falha). */
     private static final List<String> IN_HANDS = List.of("ACEITA", "RETIRADA_NO_RESTAURANTE", "EM_ROTA", "NAO_ENTREGUE");
 
-    /** Entregas aguardando entregador, com endereco: o motoboy ve para onde vai e o que esta no caminho. */
+    /**
+     * Fila do motoboy: so entregas de pedidos prontos, da que espera ha mais tempo para a
+     * mais nova. A primeira e a unica que pode ser pega por quem esta sem entrega.
+     */
     @Transactional(readOnly = true)
     public List<DeliveryResponse> listAvailable() {
-        return deliveryRepository.findByStatus("AGUARDANDO_ENTREGADOR").stream().map(this::toResponse).toList();
+        return queue().stream().map(this::toResponse).toList();
+    }
+
+    private List<Delivery> queue() {
+        return deliveryRepository.findByStatusAndReleasedAtIsNotNullOrderByReleasedAtAscIdAsc("AGUARDANDO_ENTREGADOR");
     }
 
     /**
@@ -126,6 +133,19 @@ public class DeliveryService {
 
         Delivery delivery = getOrThrow(deliveryId);
         validateTransition(delivery.getStatus(), "ACEITA");
+        if (delivery.getReleasedAt() == null) {
+            throw new BusinessException("Este pedido ainda nao esta pronto para entrega");
+        }
+        // Fila: sem entrega em maos, o motoboy pega a que espera ha mais tempo; com uma em
+        // maos, pode levar outras junto (as que estao no caminho).
+        boolean emptyHanded = deliveryRepository.findByCourierIdAndStatusIn(courier.getId(), IN_HANDS).isEmpty();
+        if (emptyHanded) {
+            Delivery oldest = queue().get(0);
+            if (!oldest.getId().equals(delivery.getId())) {
+                throw new BusinessException("Pegue primeiro a entrega que espera ha mais tempo (#" + oldest.getId()
+                        + "). Com ela em maos, voce pode levar junto as que estiverem no caminho.");
+            }
+        }
 
         delivery.setCourierId(courier.getId());
         delivery.setStatus("ACEITA");
@@ -233,7 +253,7 @@ public class DeliveryService {
         return new DeliveryResponse(
                 d.getId(), d.getOrderId(), d.getCourierId(), d.getAddressSnapshot(), d.getNeighborhoodSnapshot(),
                 d.getFee(), d.getEstimatedMinutes(), d.getStatus(), d.getReceivedByName(),
-                d.getAssignedAt(), d.getAcceptedAt(), d.getPickedUpAt(), d.getLeftAt(), d.getDeliveredAt()
+                d.getAssignedAt(), d.getAcceptedAt(), d.getPickedUpAt(), d.getLeftAt(), d.getDeliveredAt(), d.getReleasedAt()
         );
     }
 }

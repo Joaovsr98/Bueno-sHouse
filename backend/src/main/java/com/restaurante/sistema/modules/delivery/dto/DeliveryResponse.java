@@ -17,5 +17,7 @@ public record DeliveryResponse(
         Instant acceptedAt,
         Instant pickedUpAt,
         Instant leftAt,
-        Instant deliveredAt
+        Instant deliveredAt,
+        /** Quando entrou na fila (pedido pronto): o motoboy ve ha quanto tempo esta esperando. */
+        Instant releasedAt
 ) {}

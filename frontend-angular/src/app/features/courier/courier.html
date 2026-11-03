@@ -2,7 +2,7 @@
   <header class="mb-6 reveal">
     <p class="eyebrow">Entregas</p>
     <h1 class="page-title mt-3">Área do motoboy</h1>
-    <p class="page-sub mt-2">Aceite uma entrega, veja a rota e o que está no caminho, e confirme com o código que o cliente informar.</p>
+    <p class="page-sub mt-2">A fila anda por ordem de chegada: pegue a entrega que espera há mais tempo e leve junto as que estiverem no caminho. Na porta do cliente, confirme com o código que ele informar.</p>
   </header>
 
   @if (error()) {
@@ -12,58 +12,34 @@
     </div>
   }
 
-  <!-- Minhas entregas (mais de uma = trajeto com paradas) -->
-  @if (mine().length > 1 && !browsing()) {
-    <div class="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Minhas entregas">
-      @for (d of mine(); track d.id) {
-        <button role="tab" (click)="selectedId.set(d.id)" [attr.aria-selected]="active()?.id === d.id"
-          class="rounded-full border px-3 py-1.5 text-xs transition"
-          [class]="active()?.id === d.id ? 'border-brand-500/60 bg-brand-500/15 text-brand-200' : 'border-white/15 text-neutral-400 hover:bg-white/5'">
-          #{{ d.id }}, {{ d.neighborhoodSnapshot }}
-        </button>
-      }
-    </div>
-  }
-
-  @if (!active()) {
-    <!-- Entregas disponiveis -->
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="section-title !mb-0">Entregas disponíveis</h2>
-      @if (browsing() && mine().length) {
-        <button (click)="browsing.set(false)" class="text-xs text-brand-400 hover:text-brand-300">← Voltar para minhas entregas</button>
-      }
-    </div>
-    @if (pool().length === 0) {
-      <p class="text-sm text-neutral-500">Nenhuma entrega aguardando entregador no momento.</p>
-    }
-    <div class="space-y-2">
-      @for (d of pool(); track d.id) {
-        <div class="glass rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
-          <div class="min-w-0">
-            <p class="text-sm font-semibold flex items-center gap-2">
-              <span class="text-brand-400"><app-icon name="pin" [size]="15" /></span>{{ d.neighborhoodSnapshot }}
-              @if (distanceOf(d); as km) { <span class="text-xs font-normal text-neutral-500">{{ km }} da cozinha</span> }
-            </p>
-            <p class="text-xs text-neutral-400 mt-1 truncate">{{ d.addressSnapshot }}</p>
-            <p class="text-xs text-neutral-500 mt-0.5">Entrega #{{ d.id }}, taxa {{ currency(d.fee) }}{{ d.estimatedMinutes ? ', ~' + d.estimatedMinutes + ' min' : '' }}</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <a [href]="previewLink(d)" target="_blank" rel="noopener" class="btn-ghost !text-xs !py-1.5">Ver no mapa</a>
-            <button (click)="accept(d.id)" class="btn-brand rounded-xl px-3 py-1.5 text-xs">Aceitar</button>
-          </div>
-        </div>
-      }
-    </div>
-  } @else {
-    @let d = active()!;
-    <div class="glass rounded-2xl overflow-hidden">
-      <!-- Mapa da rota: cozinha -> cliente -->
+  <!-- Mapa da rota: cozinha -> cliente (o mesmo bloco na proxima entrega e na entrega aberta) -->
+  <ng-template #routeMap>
+    <div class="relative h-56 bg-ink-900">
       @if (routeEmbed(); as src) {
-        <div class="relative h-56 bg-ink-900">
-          <iframe [src]="src" title="Rota da cozinha até o endereço de entrega" loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade" class="absolute inset-0 w-full h-full border-0 map-dark"></iframe>
-        </div>
+        <iframe [src]="src" title="Rota da cozinha até o endereço de entrega" loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade" class="absolute inset-0 w-full h-full border-0 map-dark"></iframe>
+      } @else {
+        <p class="absolute inset-0 grid place-items-center text-xs text-neutral-500">Localizando o endereço no mapa...</p>
       }
+    </div>
+  </ng-template>
+
+  @if (active(); as d) {
+    <!-- Minhas entregas (mais de uma = trajeto com paradas) -->
+    @if (mine().length > 1) {
+      <div class="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Minhas entregas">
+        @for (m of mine(); track m.id) {
+          <button role="tab" (click)="selectedId.set(m.id)" [attr.aria-selected]="d.id === m.id"
+            class="rounded-full border px-3 py-1.5 text-xs transition"
+            [class]="d.id === m.id ? 'border-brand-500/60 bg-brand-500/15 text-brand-200' : 'border-white/15 text-neutral-400 hover:bg-white/5'">
+            #{{ m.id }}, {{ m.neighborhoodSnapshot }}
+          </button>
+        }
+      </div>
+    }
+
+    <div class="glass rounded-2xl overflow-hidden">
+      <ng-container [ngTemplateOutlet]="routeMap" />
 
       <div class="p-6 space-y-4">
         <div class="flex items-center justify-between gap-3">
@@ -111,10 +87,6 @@
             <button type="submit" class="btn-brand rounded-xl px-4 py-2 text-sm">Confirmar entrega</button>
           </form>
         }
-
-        <button (click)="browsing.set(true)" class="text-xs text-neutral-500 hover:text-neutral-300 transition">
-          ← Ver todas as entregas disponíveis
-        </button>
       </div>
     </div>
 
@@ -122,7 +94,7 @@
     <section class="mt-6">
       <h2 class="section-title">No caminho desta entrega</h2>
       @if (nearby().length === 0) {
-        <p class="text-sm text-neutral-500">Nenhuma outra entrega aguardando agora.</p>
+        <p class="text-sm text-neutral-500">Nenhuma outra entrega pronta agora.</p>
       }
       <div class="space-y-2">
         @for (n of nearby(); track n.delivery.id) {
@@ -140,6 +112,7 @@
                 }
               </p>
               <p class="text-xs text-neutral-400 mt-1 truncate">{{ n.delivery.addressSnapshot }}</p>
+              <p class="text-[11px] text-neutral-500 mt-0.5">Entrega #{{ n.delivery.id }}{{ waiting(n.delivery) ? ', ' + waiting(n.delivery) : '' }}</p>
             </div>
             <button (click)="accept(n.delivery.id)" class="btn-ghost !text-xs !py-1.5">Levar junto</button>
           </div>
@@ -149,5 +122,64 @@
         "No caminho" = alonga o trajeto até {{ onTheWayKm }} km em linha reta. Ao levar junto, a rota no Google Maps passa por todas as paradas.
       </p>
     </section>
+  } @else {
+    <!-- Sem entrega em maos: so a primeira da fila (a que espera ha mais tempo) pode ser pega -->
+    <h2 class="section-title">Sua próxima entrega</h2>
+    @if (next(); as d) {
+      <div class="glass rounded-2xl overflow-hidden">
+        <ng-container [ngTemplateOutlet]="routeMap" />
+
+        <div class="p-6 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h3 class="font-display font-bold">Entrega #{{ d.id }} do pedido #{{ d.orderId }}</h3>
+            @if (waiting(d); as w) {
+              <span class="badge badge-yellow inline-flex items-center gap-1.5"><app-icon name="clock" [size]="13" />{{ w }}</span>
+            }
+          </div>
+
+          <div class="text-sm text-neutral-300 space-y-1">
+            <p class="font-semibold flex items-center gap-2">
+              <span class="text-brand-400"><app-icon name="pin" [size]="15" /></span>{{ d.neighborhoodSnapshot }}
+              @if (distanceOf(d); as km) { <span class="text-xs font-normal text-neutral-500">{{ km }} da cozinha</span> }
+            </p>
+            <p>{{ d.addressSnapshot }}</p>
+            <p class="text-neutral-500">Taxa: {{ currency(d.fee) }}{{ d.estimatedMinutes ? ', ~' + d.estimatedMinutes + ' min' : '' }}</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button (click)="accept(d.id)" class="btn-brand rounded-xl px-4 py-2.5 text-sm">Aceitar e buscar na cozinha</button>
+            <a [href]="previewLink(d)" target="_blank" rel="noopener" class="btn-ghost !text-xs !py-1.5">Ver no Google Maps</a>
+          </div>
+          <p class="text-[11px] text-neutral-500">Com ela em mãos, você vê quais das próximas estão no caminho e pode levar junto.</p>
+        </div>
+      </div>
+    } @else {
+      <div class="glass rounded-2xl p-6 text-sm text-neutral-400">
+        Nenhuma entrega pronta agora. Assim que a cozinha terminar um pedido de delivery, ele aparece aqui.
+      </div>
+    }
+
+    @if (queued().length) {
+      <section class="mt-6">
+        <h2 class="section-title">Na fila ({{ queued().length }})</h2>
+        <div class="space-y-2">
+          @for (q of queued(); track q.id; let i = $index) {
+            <div class="glass rounded-2xl px-4 py-3 flex items-center gap-3">
+              <span class="grid place-items-center w-8 h-8 shrink-0 rounded-full border border-white/15 text-xs text-neutral-400">{{ i + 2 }}º</span>
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-neutral-300">
+                  {{ q.neighborhoodSnapshot }}
+                  @if (distanceOf(q); as km) { <span class="text-xs font-normal text-neutral-500">{{ km }} da cozinha</span> }
+                </p>
+                <p class="text-xs text-neutral-500 truncate">Entrega #{{ q.id }}{{ waiting(q) ? ', ' + waiting(q) : '' }}</p>
+              </div>
+            </div>
+          }
+        </div>
+        <p class="mt-2 text-[11px] text-neutral-500">
+          Elas liberam por ordem de chegada. Depois de pegar a primeira, as que estiverem no caminho dela podem ir junto.
+        </p>
+      </section>
+    }
   }
 </div>

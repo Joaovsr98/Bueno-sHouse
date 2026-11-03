@@ -201,4 +201,6 @@ export interface DeliveryResponse {
   estimatedMinutes: number | null;
   status: string;
   receivedByName: string | null;
+  /** Quando o pedido ficou pronto e a entrega entrou na fila (ISO). */
+  releasedAt: string | null;
 }

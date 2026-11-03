@@ -222,6 +222,107 @@ class DeliveryFlowIT {
         assertThat(wrongCodeResponse.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
+    /** Pedido DELIVERY recem-criado (RECEBIDO) para o bairro Centro. */
+    private OrderResponse deliveryOrder(HttpHeaders admin, String phone) {
+        CustomerResponse customer = restTemplate.exchange("/api/customers", HttpMethod.POST,
+                new HttpEntity<>(new CustomerRequest("Cliente Fila " + phone, phone, null, null, null), admin),
+                CustomerResponse.class).getBody();
+        CustomerAddressResponse address = restTemplate.exchange(
+                "/api/customers/" + customer.id() + "/addresses", HttpMethod.POST,
+                new HttpEntity<>(new CustomerAddressRequest("Casa", "Rua das Flores", "100", null, "Centro",
+                        "Sao Paulo", "SP", "01000-000", null, true), admin), CustomerAddressResponse.class).getBody();
+        OrderResponse order = restTemplate.exchange("/api/orders", HttpMethod.POST, new HttpEntity<>(
+                new CreateOrderRequest(1L, "DELIVERY", null, customer.id(), address.id(), null,
+                        List.of(new CreateOrderItemRequest(DEMO_PRODUCT_ID, null, 1, null, List.of()))), admin),
+                OrderResponse.class).getBody();
+        return order;
+    }
+
+    /** Pedido DELIVERY levado ate pronto (cozinha concluida); devolve a entrega. */
+    private DeliveryResponse readyDelivery(HttpHeaders admin, String phone) {
+        OrderResponse order = deliveryOrder(admin, phone);
+
+        // Ainda na cozinha: nao esta na fila do motoboy
+        DeliveryResponse[] poolBefore = restTemplate.exchange("/api/deliveries/available/details", HttpMethod.GET,
+                new HttpEntity<>(admin), DeliveryResponse[].class).getBody();
+        assertThat(poolBefore).noneMatch(d -> d.orderId().equals(order.id()));
+
+        restTemplate.exchange("/api/orders/" + order.id() + "/send-to-kitchen", HttpMethod.POST,
+                new HttpEntity<>(admin), OrderResponse.class);
+        KitchenSectorResponse[] sectors = restTemplate.exchange("/api/kitchen-sectors", HttpMethod.GET,
+                new HttpEntity<>(admin), KitchenSectorResponse[].class).getBody();
+        for (KitchenSectorResponse sector : sectors) {
+            for (KitchenTaskResponse task : restTemplate.exchange("/api/kitchen/tasks?sectorId=" + sector.id(),
+                    HttpMethod.GET, new HttpEntity<>(admin), KitchenTaskResponse[].class).getBody()) {
+                if (!task.orderId().equals(order.id())) continue;
+                restTemplate.exchange("/api/kitchen/tasks/" + task.orderItemId() + "/start", HttpMethod.POST,
+                        new HttpEntity<>(admin), KitchenTaskResponse.class);
+                restTemplate.exchange("/api/kitchen/tasks/" + task.orderItemId() + "/complete", HttpMethod.POST,
+                        new HttpEntity<>(admin), KitchenTaskResponse.class);
+            }
+        }
+        return restTemplate.exchange("/api/deliveries/by-order/" + order.id(), HttpMethod.GET,
+                new HttpEntity<>(admin), DeliveryResponse.class).getBody();
+    }
+
+    @Test
+    void courierTakesTheOldestReadyDeliveryFirstAndThenCanTakeOthersAlong() {
+        HttpHeaders admin = authHeaders();
+
+        // Motoboy so deste teste (o do seed pode estar com entrega em maos de outro teste)
+        restTemplate.exchange("/api/users", HttpMethod.POST, new HttpEntity<>(
+                java.util.Map.of("email", "motoboy.fila@teste.local", "password", "senhaFila123", "profileName", "MOTOBOY"),
+                admin), String.class);
+        Long userId = java.util.Arrays.stream(restTemplate.exchange("/api/users", HttpMethod.GET, new HttpEntity<>(admin),
+                        com.restaurante.sistema.modules.identity.dto.UserResponse[].class).getBody())
+                .filter(u -> u.email().equals("motoboy.fila@teste.local")).findFirst().orElseThrow().id();
+        restTemplate.exchange("/api/couriers", HttpMethod.POST, new HttpEntity<>(
+                new CourierRequest(1L, userId, "Motoboy da Fila", "11977776666", "98765432100", "MOTO", "FIL1A23"), admin),
+                CourierResponse.class);
+        LoginResponse login = restTemplate.postForEntity("/api/auth/login",
+                new LoginRequest("motoboy.fila@teste.local", "senhaFila123"), LoginResponse.class).getBody();
+        HttpHeaders courier = new HttpHeaders();
+        courier.setBearerAuth(login.token());
+        courier.setContentType(MediaType.APPLICATION_JSON);
+
+        DeliveryResponse older = readyDelivery(admin, "11999996661");
+        DeliveryResponse newer = readyDelivery(admin, "11999996662");
+        assertThat(older.releasedAt()).isNotNull();
+
+        // Sem entrega em maos: a mais nova esta travada, a primeira da fila e a mais antiga
+        ResponseEntity<String> skipQueue = restTemplate.exchange("/api/deliveries/" + newer.id() + "/accept",
+                HttpMethod.POST, new HttpEntity<>(courier), String.class);
+        assertThat(skipQueue.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+        assertThat(skipQueue.getBody()).contains("#" + older.id());
+
+        assertThat(restTemplate.exchange("/api/deliveries/" + older.id() + "/accept", HttpMethod.POST,
+                new HttpEntity<>(courier), DeliveryResponse.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // Com uma em maos, pode levar a outra junto
+        assertThat(restTemplate.exchange("/api/deliveries/" + newer.id() + "/accept", HttpMethod.POST,
+                new HttpEntity<>(courier), DeliveryResponse.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        DeliveryResponse[] mine = restTemplate.exchange("/api/deliveries/mine", HttpMethod.GET,
+                new HttpEntity<>(courier), DeliveryResponse[].class).getBody();
+        assertThat(mine).extracting(DeliveryResponse::id).containsExactlyInAnyOrder(older.id(), newer.id());
+    }
+
+    @Test
+    void cancelledDeliveryOrderCancelsItsDelivery() {
+        HttpHeaders admin = authHeaders();
+        OrderResponse order = deliveryOrder(admin, "11999996663");
+
+        ResponseEntity<String> cancel = restTemplate.exchange("/api/orders/" + order.id() + "/transitions",
+                HttpMethod.POST, new HttpEntity<>(java.util.Map.of("status", "CANCELADO", "reason", "Cliente desistiu"), admin),
+                String.class);
+        assertThat(cancel.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        DeliveryResponse after = restTemplate.exchange("/api/deliveries/by-order/" + order.id(), HttpMethod.GET,
+                new HttpEntity<>(admin), DeliveryResponse.class).getBody();
+        assertThat(after.status()).isEqualTo("CANCELADA");
+        assertThat(after.releasedAt()).isNull();
+    }
+
     @Test
     void deliveryZoneCoversMinimumOrderValidation() {
         HttpHeaders headers = authHeaders();

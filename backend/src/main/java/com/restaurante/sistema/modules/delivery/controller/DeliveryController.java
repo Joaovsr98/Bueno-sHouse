@@ -1,8 +1,6 @@
 package com.restaurante.sistema.modules.delivery.controller;
 
-import com.restaurante.sistema.modules.delivery.domain.Delivery;
 import com.restaurante.sistema.modules.delivery.dto.*;
-import com.restaurante.sistema.modules.delivery.repository.DeliveryRepository;
 import com.restaurante.sistema.modules.delivery.service.DeliveryService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -15,18 +13,16 @@ import java.util.List;
 public class DeliveryController {
 
     private final DeliveryService deliveryService;
-    private final DeliveryRepository deliveryRepository;
 
-    public DeliveryController(DeliveryService deliveryService, DeliveryRepository deliveryRepository) {
+    public DeliveryController(DeliveryService deliveryService) {
         this.deliveryService = deliveryService;
-        this.deliveryRepository = deliveryRepository;
     }
 
     /** Pool de entregas aguardando entregador - qualquer MOTOBOY pode ver e tentar aceitar. */
     @GetMapping("/available")
     @PreAuthorize("hasAnyRole('ADMINISTRADOR','GERENTE','MOTOBOY')")
     public List<Long> listAvailable() {
-        return deliveryRepository.findByStatus("AGUARDANDO_ENTREGADOR").stream().map(Delivery::getId).toList();
+        return deliveryService.listAvailable().stream().map(DeliveryResponse::id).toList();
     }
 
     /** Mesmo pool, com endereco, bairro e taxa: o motoboy ve para onde vai antes de aceitar. */

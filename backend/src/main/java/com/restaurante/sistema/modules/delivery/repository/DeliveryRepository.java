@@ -9,5 +9,8 @@ import java.util.Optional;
 public interface DeliveryRepository extends JpaRepository<Delivery, Long> {
     Optional<Delivery> findByOrderId(Long orderId);
     List<Delivery> findByStatus(String status);
+
+    /** Fila do motoboy: entregas liberadas (pedido pronto), da que espera ha mais tempo para a mais nova. */
+    List<Delivery> findByStatusAndReleasedAtIsNotNullOrderByReleasedAtAscIdAsc(String status);
     List<Delivery> findByCourierIdAndStatusIn(Long courierId, List<String> statuses);
 }

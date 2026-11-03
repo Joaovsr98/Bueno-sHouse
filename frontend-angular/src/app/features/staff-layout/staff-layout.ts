@@ -1,5 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { UnitResponse } from '../../core/models';
@@ -40,6 +42,17 @@ export class StaffLayout implements OnInit {
   units = signal<UnitResponse[]>([]);
   /** Menu lateral aberto no celular. */
   menuOpen = signal(false);
+
+  /** Tela aberta (a primeira vem da navegacao em andamento, quando o layout nasce). */
+  private readonly url = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+    ),
+    { initialValue: this.router.currentNavigation()?.finalUrl?.toString() ?? this.router.url },
+  );
+  /** Fundo da tela: foto da entrega na area do motoboy, a cozinha nas demais. */
+  readonly backdrop = computed(() => (this.url().startsWith('/motoboy') ? 'delivery-bg' : 'kitchen-bg'));
 
   readonly profileLabels: Record<string, string> = {
     ADMINISTRADOR: 'Administrador', GERENTE: 'Gerente', CAIXA: 'Caixa',

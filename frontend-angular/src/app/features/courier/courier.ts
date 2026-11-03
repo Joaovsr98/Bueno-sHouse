@@ -1,9 +1,10 @@
 import { Component, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { DeliveryResponse } from '../../core/models';
-import { currency } from '../../core/format';
+import { currency, waitingLabel } from '../../core/format';
 import {
   LatLng, RESTAURANT, detourKm, directionsLink, distanceKm, formatDistance, geocode, multiStopLink,
   parseAddressSnapshot, routeEmbedUrl,
@@ -28,13 +29,14 @@ const ON_THE_WAY_KM = 2;
 interface Nearby { delivery: DeliveryResponse; detour: number | null; }
 
 /**
- * Area do motoboy: entregas disponiveis com endereco, as entregas em andamento dele
- * (sobrevivem a recarregar a pagina), mapa da rota e o que esta no caminho para levar
- * junto. A rota abre no Google Maps (com todas as paradas aceitas).
+ * Area do motoboy. A fila anda por ordem de chegada: sem entrega em maos, ele so pega a
+ * que espera ha mais tempo (as outras aparecem "na fila"). Com uma em maos, ve o que esta
+ * no caminho e pode levar junto. As entregas dele sobrevivem a recarregar a pagina, e a
+ * rota abre no Google Maps com todas as paradas.
  */
 @Component({
   selector: 'app-courier',
-  imports: [FormsModule, Icon],
+  imports: [FormsModule, NgTemplateOutlet, Icon],
   templateUrl: './courier.html',
   styles: [`
     /* Entrega que quase nao alonga o trajeto: destaque verde para levar junto. */
@@ -50,31 +52,49 @@ export class Courier implements OnDestroy {
   readonly statusLabels = STATUS_LABELS;
   readonly onTheWayKm = ON_THE_WAY_KM;
 
-  /** Pool de entregas aguardando entregador (com endereco). */
+  /** Fila de entregas prontas, da que espera ha mais tempo para a mais nova. */
   pool = signal<DeliveryResponse[]>([]);
   /** Entregas em andamento deste motoboy. */
   mine = signal<DeliveryResponse[]>([]);
   selectedId = signal<number | null>(null);
-  /** Lista de disponiveis aberta mesmo com entrega em andamento. */
-  browsing = signal(false);
   error = signal<string | null>(null);
   confirmationCode = '';
   receivedByName = '';
+  /** Relogio da tela: o "esperando ha" anda a cada consulta da fila. */
+  private readonly now = signal(Date.now());
 
   readonly active = computed(() => {
-    if (this.browsing()) return null;
     const list = this.mine();
     return list.find((d) => d.id === this.selectedId()) ?? list[0] ?? null;
   });
+
+  /** Sem entrega em maos, a primeira da fila e a unica que ele pode pegar. */
+  readonly next = computed(() => (this.mine().length ? null : (this.pool()[0] ?? null)));
+  /** As que esperam a vez (sem botao de aceitar). */
+  readonly queued = computed(() => (this.mine().length ? [] : this.pool().slice(1)));
 
   /** Coordenadas por endereco (OpenStreetMap), buscadas uma a uma e guardadas. */
   private readonly coords = signal<Record<string, LatLng | null>>({});
   private geocoding = false;
 
-  /** Mapa embutido da cozinha ate o destino da entrega aberta. */
+  /**
+   * Destino do mapa embutido: as coordenadas ja calculadas, assim o Google sempre traca a
+   * rota (com endereco digitado errado ele mostrava o mapa-mundi) e ela bate com a
+   * distancia exibida. Sem coordenadas, vai o endereco escrito; undefined = localizando.
+   */
+  private readonly mapTarget = computed<string | null | undefined>(() => {
+    const d = this.active() ?? this.next();
+    if (!d) return null;
+    const c = this.coords();
+    if (!(d.addressSnapshot in c)) return undefined;
+    const at = c[d.addressSnapshot];
+    return at ? `${at.lat},${at.lng}` : d.addressSnapshot;
+  });
+
+  /** Mapa embutido da cozinha ate o destino (so recarrega quando o destino muda). */
   readonly routeEmbed = computed(() => {
-    const d = this.active();
-    return d ? this.sanitizer.bypassSecurityTrustResourceUrl(routeEmbedUrl(RESTAURANT.fallbackAddress, d.addressSnapshot)) : null;
+    const to = this.mapTarget();
+    return to ? this.sanitizer.bypassSecurityTrustResourceUrl(routeEmbedUrl(RESTAURANT.fallbackAddress, to)) : null;
   });
 
   /** Disponiveis ordenadas pelo desvio que causam no trajeto da entrega aberta. */
@@ -94,6 +114,11 @@ export class Courier implements OnDestroy {
   distanceOf(d: DeliveryResponse): string | null {
     const at = this.coords()[d.addressSnapshot];
     return at ? formatDistance(distanceKm(RESTAURANT, at)) : null;
+  }
+
+  /** "esperando ha 12 min" desde que o pedido ficou pronto. */
+  waiting(d: DeliveryResponse): string | null {
+    return waitingLabel(d.releasedAt, this.now());
   }
 
   /** Rota no Google Maps: com varias entregas aceitas, uma parada para cada (a mais longe por ultimo). */
@@ -124,7 +149,10 @@ export class Courier implements OnDestroy {
   constructor() {
     this.loadMine();
     this.loadPool();
-    this.pollHandle = setInterval(() => this.loadPool(), 10000);
+    this.pollHandle = setInterval(() => {
+      this.now.set(Date.now());
+      this.loadPool();
+    }, 10000);
     // Localiza os enderecos novos (devagar: o OpenStreetMap pede no maximo 1 consulta por segundo).
     effect(() => {
       const addresses = [...this.mine(), ...this.pool()].map((d) => d.addressSnapshot);
@@ -172,11 +200,14 @@ export class Courier implements OnDestroy {
   accept(id: number): void {
     this.api.post<DeliveryResponse>(`/deliveries/${id}/accept`).subscribe({
       next: (d) => {
-        this.browsing.set(false);
+        this.error.set(null);
         this.loadMine(this.active()?.id ?? d.id);
         this.loadPool();
       },
-      error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao aceitar entrega')),
+      error: (e) => {
+        this.error.set(apiErrorMessage(e, 'Erro ao aceitar entrega'));
+        this.loadPool(); // a fila pode ter andado (outro motoboy pegou antes)
+      },
     });
   }
 

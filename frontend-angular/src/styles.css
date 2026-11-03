@@ -333,5 +333,22 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
   }
 }
 
+/* Fundo da area do motoboy: a entrega na rua, a noite. A foto ja vem com o lado
+   esquerdo escuro e o motoboy do lado direito, que fica livre do conteudo. */
+.delivery-bg {
+  position: fixed; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, #07080c 30%, rgba(7, 8, 12, 0.8) 50%, rgba(7, 8, 12, 0.25) 100%),
+    linear-gradient(0deg, #07080c 0%, rgba(7, 8, 12, 0) 35%),
+    url('/entrega-moto.webp') right center / cover no-repeat #07080c;
+}
+@media (max-width: 1024px) {
+  .delivery-bg {
+    background:
+      linear-gradient(180deg, rgba(7, 8, 12, 0.7) 0%, #07080c 60%),
+      url('/entrega-moto.webp') 92% top / auto 55vh no-repeat #07080c;
+  }
+}
+
 /* Mapa claro do Google puxado para o tema escuro sem perder a leitura das ruas. */
 .map-dark { filter: invert(0.9) hue-rotate(180deg) saturate(0.7) brightness(0.95); }
