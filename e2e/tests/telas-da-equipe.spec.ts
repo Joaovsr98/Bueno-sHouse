@@ -26,9 +26,15 @@ test('telas da equipe cabem na largura do aparelho', async ({ page: primeira, co
       if (largura.pagina > largura.tela + 1) problemas.push(`${tela}: ${largura.pagina}px numa tela de ${largura.tela}px`);
       const erro = page.locator('.alert-error').first();
       if (await erro.isVisible()) problemas.push(`${tela}: ${await erro.textContent()}`);
-      await testInfo.attach(`${testInfo.project.name}${tela.replace('/', '-')}`, {
-        body: await page.screenshot(), contentType: 'image/png',
-      });
+      // O print e so para conferir o visual: o Safari de teste no Linux cai ao fotografar
+      // telas com graficos, depois de a tela ja ter sido medida e conferida acima.
+      try {
+        await testInfo.attach(`${testInfo.project.name}${tela.replace('/', '-')}`, {
+          body: await page.screenshot(), contentType: 'image/png',
+        });
+      } catch {
+        page = await context.newPage();
+      }
     } catch (e) {
       // O navegador do teste caiu nesta tela: anota qual foi e segue nas outras (mesma sessao).
       problemas.push(`${tela}: o navegador fechou (${String(e).split('\n')[0]})`);
