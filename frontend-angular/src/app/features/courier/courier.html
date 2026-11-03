@@ -18,6 +18,9 @@
       @if (routeEmbed(); as src) {
         <iframe [src]="src" title="Rota da cozinha até o endereço de entrega" loading="lazy"
           referrerpolicy="no-referrer-when-downgrade" class="absolute inset-0 w-full h-full border-0 map-dark"></iframe>
+        <span class="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-2.5 py-1 text-[10px] text-neutral-300 pointer-events-none">
+          Tempo do mapa é de carro; o botão abre a rota de moto
+        </span>
       } @else {
         <p class="absolute inset-0 grid place-items-center text-xs text-neutral-500">Localizando o endereço no mapa...</p>
       }
@@ -57,7 +60,7 @@
         <a [href]="routeLink()" target="_blank" rel="noopener"
           class="w-full btn-brand rounded-xl py-3 text-sm inline-flex items-center justify-center gap-2">
           <app-icon name="pin" [size]="16" />
-          {{ mine().length > 1 ? 'Abrir rota com as ' + mine().length + ' entregas no Google Maps' : 'Abrir rota no Google Maps' }}
+          {{ mine().length > 1 ? 'Abrir rota de moto com as ' + mine().length + ' entregas' : 'Abrir rota de moto no Google Maps' }}
         </a>
 
         <div class="flex flex-wrap gap-2">
@@ -104,7 +107,7 @@
               <p class="text-sm font-semibold flex items-center gap-2">
                 {{ n.delivery.neighborhoodSnapshot }}
                 @if (n.detour == null) {
-                  <span class="badge badge-gray">Calculando...</span>
+                  <span class="badge badge-gray">Localizando...</span>
                 } @else if (n.detour <= onTheWayKm) {
                   <span class="badge badge-green">No caminho, +{{ formatDistance(n.detour) }}</span>
                 } @else {

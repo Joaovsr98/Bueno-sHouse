@@ -53,5 +53,7 @@ describe('location', () => {
     expect(url).toContain('waypoints=Rua%20A%2C%201%7CRua%20B%2C%202');
     expect(url).toContain('destination=Rua%20C%2C%203');
     expect(url).not.toContain('origin=');
+    expect(url).toContain('travelmode=two-wheeler');
+    expect(directionsLink('Destino')).toContain('travelmode=two-wheeler');
   });
 });

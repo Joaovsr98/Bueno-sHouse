@@ -165,7 +165,9 @@ export class Courier implements OnDestroy {
     // So entregas antigas, sem localizacao no servidor, sao localizadas aqui (devagar: o
     // OpenStreetMap pede no maximo 1 consulta por segundo).
     effect(() => {
-      const missing = [...this.mine(), ...this.pool()].filter((d) => d.latitude == null);
+      // Endereco oculto sem localizacao: o servidor localiza pelo endereco completo; buscar so
+      // pelo bairro aqui achava "Centro" a 20 km da cozinha.
+      const missing = [...this.mine(), ...this.pool()].filter((d) => d.latitude == null && !d.addressHidden);
       untracked(() => this.geocodeMissing(missing));
     });
   }
@@ -181,8 +183,7 @@ export class Courier implements OnDestroy {
       for (const d of list) {
         const address = d.addressSnapshot;
         if (address in this.coords()) continue;
-        // Endereco oculto (entrega na fila): so o bairro, como o servidor manda.
-        const at = await geocode(d.addressHidden ? { neighborhood: d.neighborhoodSnapshot } : parseAddressSnapshot(address));
+        const at = await geocode(parseAddressSnapshot(address));
         this.coords.update((c) => ({ ...c, [address]: at }));
         await new Promise((r) => setTimeout(r, 1100));
       }

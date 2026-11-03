@@ -28,10 +28,13 @@ export function mapLink(address: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 }
 
-/** Rota no Google Maps; sem origem, o proprio Google usa a localizacao de quem abriu. */
+/** Modo moto do Google Maps (existe no Brasil): rota e tempo de quem entrega de moto. */
+const MOTO = 'two-wheeler';
+
+/** Rota de moto no Google Maps; sem origem, o proprio Google usa a localizacao de quem abriu. */
 export function directionsLink(destination: string, origin?: string): string {
   const from = origin ? `&origin=${encodeURIComponent(origin)}` : '';
-  return `https://www.google.com/maps/dir/?api=1${from}&destination=${encodeURIComponent(destination)}`;
+  return `https://www.google.com/maps/dir/?api=1${from}&destination=${encodeURIComponent(destination)}&travelmode=${MOTO}`;
 }
 
 /** Distancia em linha reta (formula de Haversine), em km. */
@@ -116,10 +119,10 @@ export function parseAddressSnapshot(snapshot: string): { street?: string; numbe
 export function multiStopLink(origin: string | null, stops: string[], destination: string): string {
   const from = origin ? `&origin=${encodeURIComponent(origin)}` : '';
   const via = stops.length ? `&waypoints=${stops.map(encodeURIComponent).join('%7C')}` : '';
-  return `https://www.google.com/maps/dir/?api=1${from}&destination=${encodeURIComponent(destination)}${via}&travelmode=driving`;
+  return `https://www.google.com/maps/dir/?api=1${from}&destination=${encodeURIComponent(destination)}${via}&travelmode=${MOTO}`;
 }
 
-/** Mapa embutido com o trajeto de um ponto a outro (sem chave de API). */
+/** Mapa embutido com o trajeto de um ponto a outro (sem chave de API; esse mapa so calcula rota de carro). */
 export function routeEmbedUrl(origin: string, destination: string): string {
   return `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${encodeURIComponent(destination)}&output=embed`;
 }
