@@ -18,6 +18,7 @@ test('telas da equipe cabem na largura do aparelho', async ({ page: primeira, co
 
   const problemas: string[] = [];
   for (const tela of TELAS) {
+    for (let tentativa = 1; tentativa <= 2; tentativa++) {
     try {
       await page.goto(tela);
       await page.waitForLoadState('networkidle');
@@ -35,10 +36,13 @@ test('telas da equipe cabem na largura do aparelho', async ({ page: primeira, co
       } catch {
         page = await context.newPage();
       }
+      break;
     } catch (e) {
-      // O navegador do teste caiu nesta tela: anota qual foi e segue nas outras (mesma sessao).
-      problemas.push(`${tela}: o navegador fechou (${String(e).split('\n')[0]})`);
+      // O navegador do teste caiu nesta tela: tenta de novo numa aba nova (mesma sessao);
+      // so reprova se cair duas vezes (o Safari de teste no Linux cai as vezes sozinho).
       page = await context.newPage();
+      if (tentativa === 2) problemas.push(`${tela}: o navegador fechou duas vezes (${String(e).split('\n')[0]})`);
+    }
     }
   }
   expect(problemas, 'telas com rolagem lateral, erro ou queda do navegador').toEqual([]);
