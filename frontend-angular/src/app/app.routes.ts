@@ -18,6 +18,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/register/register').then((m) => m.Register),
   },
   {
+    // Atalho curto para divulgar o cardapio (QR code na mesa, redes sociais).
+    path: 'cardapio',
+    pathMatch: 'full',
+    redirectTo: 'app/cardapio',
+  },
+  { path: 'cardapio/:productId', redirectTo: 'app/cardapio/:productId' },
+  {
     path: 'app',
     // Sem authGuard no pai: cardapio publico (RF-001/RF-002, sem login).
     // Carrinho/pedidos exigem login (RF-005/RF-006/RF-007/RF-008), guardados

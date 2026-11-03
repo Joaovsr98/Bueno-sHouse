@@ -1,8 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
-import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../core/api.service';
-import { UnitResponse } from '../core/models';
+import { UnitsService } from '../core/units.service';
 import { CEP_PATTERN, maskCep } from '../core/cep';
 import { RESTAURANT, directionsLink, distanceKm, formatDistance, geocode, mapEmbedUrl, mapLink } from '../core/location';
 import { Icon } from './icon';
@@ -74,6 +73,7 @@ import { Icon } from './icon';
 })
 export class LocationCard {
   private readonly api = inject(ApiService);
+  private readonly unitsService = inject(UnitsService);
   private readonly sanitizer = inject(DomSanitizer);
 
   readonly address = signal(RESTAURANT.fallbackAddress);
@@ -88,7 +88,7 @@ export class LocationCard {
   private lastCep = '';
 
   constructor() {
-    firstValueFrom(this.api.get<UnitResponse[]>('/units'))
+    this.unitsService.list()
       .then((units) => {
         const unit = units[0];
         if (unit?.address) this.address.set(unit.address);

@@ -42,8 +42,8 @@ export class Kitchen implements OnDestroy {
   private readonly auth = inject(AuthService);
 
   readonly unitId = this.auth.unitId;
-  readonly statusLabels = STATUS_LABELS;
-  readonly statusBadge = STATUS_BADGE;
+  readonly statusLabels: Partial<Record<string, string>> = STATUS_LABELS;
+  readonly statusBadge: Partial<Record<string, string>> = STATUS_BADGE;
   readonly elapsedMinutes = elapsedMinutes;
 
   sectors = signal<KitchenSectorResponse[]>([]);

@@ -45,9 +45,9 @@ export class Service {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
-  readonly serviceStatusLabels = SERVICE_STATUS_LABELS;
+  readonly serviceStatusLabels: Partial<Record<string, string>> = SERVICE_STATUS_LABELS;
   readonly serviceTransitions = SERVICE_TRANSITIONS;
-  readonly commandStatusLabels = COMMAND_STATUS_LABELS;
+  readonly commandStatusLabels: Partial<Record<string, string>> = COMMAND_STATUS_LABELS;
   readonly commandTransitions = COMMAND_TRANSITIONS;
 
   serviceId = this.route.snapshot.paramMap.get('serviceId')!;

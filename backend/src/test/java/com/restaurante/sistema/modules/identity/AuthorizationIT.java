@@ -55,6 +55,13 @@ class AuthorizationIT {
     }
 
     @Test
+    void customerSignupRequiresAPasswordOfAtLeast8Characters() {
+        Map<String, String> signup = Map.of("fullName", "Cliente Senha Curta", "email", "senha.curta@teste.local",
+                "password", "1234567", "phone", "11911112222");
+        assertThat(status(HttpMethod.POST, "/api/auth/register", signup, null)).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void protectedEndpointWithoutTokenReturns401() {
         assertThat(rest.getForEntity("/api/orders?unitId=1", String.class).getStatusCode())
                 .isEqualTo(HttpStatus.UNAUTHORIZED);

@@ -305,6 +305,13 @@ class DeliveryFlowIT {
         DeliveryResponse[] mine = restTemplate.exchange("/api/deliveries/mine", HttpMethod.GET,
                 new HttpEntity<>(courier), DeliveryResponse[].class).getBody();
         assertThat(mine).extracting(DeliveryResponse::id).containsExactlyInAnyOrder(older.id(), newer.id());
+
+        // Outro motoboy nao mexe na entrega de quem pegou (so o dono, o gerente ou o admin)
+        assertThat(restTemplate.exchange("/api/deliveries/" + older.id() + "/pickup", HttpMethod.POST,
+                new HttpEntity<>(authHeadersAs("motoboy@demo.local")), String.class).getStatusCode())
+                .isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(restTemplate.exchange("/api/deliveries/" + older.id() + "/pickup", HttpMethod.POST,
+                new HttpEntity<>(courier), DeliveryResponse.class).getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test

@@ -28,7 +28,7 @@ export class Order {
   private readonly router = inject(Router);
 
   readonly currency = currency;
-  readonly orderStatusLabels = ORDER_STATUS_LABELS;
+  readonly orderStatusLabels: Partial<Record<string, string>> = ORDER_STATUS_LABELS;
   readonly unitId = this.auth.unitId;
 
   serviceId = this.route.snapshot.paramMap.get('serviceId')!;

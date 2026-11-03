@@ -3,8 +3,9 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
+import { UnitsService } from '../../core/units.service';
 import { AuthService } from '../../core/auth.service';
-import { CustomerResponse, DeliveryZoneResponse, LoginResponse, ProductResponse, UnitResponse } from '../../core/models';
+import { CustomerResponse, DeliveryZoneResponse, LoginResponse, ProductResponse } from '../../core/models';
 import { defaultRouteForRole } from '../../core/routing';
 import { currency } from '../../core/format';
 import { Logo } from '../../shared/logo';
@@ -24,6 +25,7 @@ import { CepLookup } from '../../core/cep';
 })
 export class Register {
   private readonly api = inject(ApiService);
+  private readonly unitsService = inject(UnitsService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -57,7 +59,7 @@ export class Register {
 
   private async loadZones(): Promise<void> {
     try {
-      const units = await firstValueFrom(this.api.get<UnitResponse[]>('/units'));
+      const units = await this.unitsService.list();
       const unitId = units[0]?.id ?? 1;
       const [zones, products] = await Promise.all([
         firstValueFrom(this.api.get<DeliveryZoneResponse[]>(`/delivery-zones?unitId=${unitId}`)),

@@ -3,13 +3,13 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
+import { UnitsService } from '../../core/units.service';
 import { CartService } from '../../core/cart.service';
 import {
   CustomerResponse,
   CustomerAddressResponse,
   DeliveryZoneResponse,
   OrderResponse,
-  UnitResponse,
 } from '../../core/models';
 import { currency } from '../../core/format';
 import { groupZones } from '../../core/zones';
@@ -24,6 +24,7 @@ import { Icon } from '../../shared/icon';
 })
 export class CustomerCheckout {
   private readonly api = inject(ApiService);
+  private readonly unitsService = inject(UnitsService);
   private readonly cart = inject(CartService);
   private readonly router = inject(Router);
 
@@ -93,7 +94,7 @@ export class CustomerCheckout {
 
   private async loadZones(): Promise<void> {
     try {
-      const units = await firstValueFrom(this.api.get<UnitResponse[]>('/units'));
+      const units = await this.unitsService.list();
       const unitId = units[0]?.id ?? 1;
       const zones = await firstValueFrom(
         this.api.get<DeliveryZoneResponse[]>(`/delivery-zones?unitId=${unitId}`),
@@ -213,7 +214,7 @@ export class CustomerCheckout {
     this.placing.set(true);
     this.error.set(null);
     try {
-      const units = await firstValueFrom(this.api.get<UnitResponse[]>('/units'));
+      const units = await this.unitsService.list();
       const unitId = units[0]?.id ?? 1;
       const body = {
         unitId,

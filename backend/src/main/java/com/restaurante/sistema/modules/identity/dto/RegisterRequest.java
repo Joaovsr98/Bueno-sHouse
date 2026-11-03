@@ -14,7 +14,8 @@ public record RegisterRequest(
         String email,
 
         @NotBlank(message = "A senha e obrigatoria")
-        @Size(min = 6, message = "A senha precisa ter pelo menos 6 caracteres")
+        // Mesmo minimo da equipe (UserRequest); 72 e o limite do BCrypt. Contas antigas continuam entrando.
+        @Size(min = 8, max = 72, message = "A senha precisa ter de 8 a 72 caracteres")
         String password,
 
         @NotBlank(message = "O telefone e obrigatorio")

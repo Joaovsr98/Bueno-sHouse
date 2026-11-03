@@ -49,7 +49,7 @@ export class Courier implements OnDestroy {
 
   readonly currency = currency;
   readonly formatDistance = formatDistance;
-  readonly statusLabels = STATUS_LABELS;
+  readonly statusLabels: Partial<Record<string, string>> = STATUS_LABELS;
   readonly onTheWayKm = ON_THE_WAY_KM;
 
   /** Fila de entregas prontas, da que espera ha mais tempo para a mais nova. */

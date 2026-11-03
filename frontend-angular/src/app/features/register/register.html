@@ -48,8 +48,8 @@
         </div>
         <div class="sm:col-span-2 space-y-1.5">
           <label class="field-label" for="password">Senha</label>
-          <input id="password" type="password" name="password" [(ngModel)]="password" required minlength="6" autocomplete="new-password"
-            placeholder="Mínimo 6 caracteres" class="field py-3" />
+          <input id="password" type="password" name="password" [(ngModel)]="password" required minlength="8" maxlength="72" autocomplete="new-password"
+            placeholder="Mínimo 8 caracteres" class="field py-3" />
         </div>
       </div>
 

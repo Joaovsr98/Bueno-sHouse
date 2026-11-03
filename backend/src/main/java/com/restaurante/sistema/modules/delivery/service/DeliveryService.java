@@ -14,6 +14,7 @@ import com.restaurante.sistema.modules.delivery.repository.DeliveryRepository;
 import com.restaurante.sistema.modules.identity.security.CurrentUserProvider;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -165,6 +166,7 @@ public class DeliveryService {
     @Transactional
     public DeliveryResponse pickup(Long deliveryId) {
         Delivery delivery = getOrThrow(deliveryId);
+        assertCanHandle(delivery);
         validateTransition(delivery.getStatus(), "RETIRADA_NO_RESTAURANTE");
         delivery.setStatus("RETIRADA_NO_RESTAURANTE");
         delivery.setPickedUpAt(Instant.now());
@@ -174,6 +176,7 @@ public class DeliveryService {
     @Transactional
     public DeliveryResponse leaveForDelivery(Long deliveryId) {
         Delivery delivery = getOrThrow(deliveryId);
+        assertCanHandle(delivery);
         validateTransition(delivery.getStatus(), "EM_ROTA");
         delivery.setStatus("EM_ROTA");
         delivery.setLeftAt(Instant.now());
@@ -187,6 +190,7 @@ public class DeliveryService {
     @Transactional
     public DeliveryResponse confirmDelivery(Long deliveryId, ConfirmDeliveryRequest request) {
         Delivery delivery = getOrThrow(deliveryId);
+        assertCanHandle(delivery);
         validateTransition(delivery.getStatus(), "ENTREGUE");
 
         if (!delivery.getConfirmationCode().equals(request.confirmationCode())) {
@@ -207,6 +211,7 @@ public class DeliveryService {
     @Transactional
     public DeliveryResponse reportFailure(Long deliveryId, DeliveryFailureRequest request) {
         Delivery delivery = getOrThrow(deliveryId);
+        assertCanHandle(delivery);
         validateTransition(delivery.getStatus(), "NAO_ENTREGUE");
         delivery.setStatus("NAO_ENTREGUE");
         Delivery saved = deliveryRepository.save(delivery);
@@ -230,6 +235,16 @@ public class DeliveryService {
             courier.setStatus("DISPONIVEL");
             courierRepository.save(courier);
         });
+    }
+
+    /** Motoboy so mexe na entrega que e dele; gerente e administrador podem ajudar em qualquer uma. */
+    private void assertCanHandle(Delivery delivery) {
+        var user = currentUserProvider.getCurrentUser();
+        if (!"MOTOBOY".equals(user.getProfile().getName())) return;
+        Long myCourierId = courierRepository.findByUserId(user.getId()).map(Courier::getId).orElse(null);
+        if (myCourierId == null || !myCourierId.equals(delivery.getCourierId())) {
+            throw new AccessDeniedException("Esta entrega esta com outro motoboy");
+        }
     }
 
     private void validateTransition(String from, String to) {

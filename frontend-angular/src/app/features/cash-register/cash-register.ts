@@ -23,7 +23,7 @@ export class CashRegister {
 
   readonly unitId = this.auth.unitId;
   readonly currency = currency;
-  readonly movementLabels = MOVEMENT_LABELS;
+  readonly movementLabels: Partial<Record<string, string>> = MOVEMENT_LABELS;
 
   register = signal<CashRegisterResponse | null>(null);
   movements = signal<CashMovementResponse[]>([]);

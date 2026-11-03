@@ -3,8 +3,9 @@ import { RouterLink } from '@angular/router';
 import { LocationCard } from '../../shared/location-card';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
+import { UnitsService } from '../../core/units.service';
 import { CartService } from '../../core/cart.service';
-import { CategoryResponse, ProductResponse, UnitResponse } from '../../core/models';
+import { CategoryResponse, ProductResponse } from '../../core/models';
 import { currency } from '../../core/format';
 
 interface MenuGroup {
@@ -20,6 +21,7 @@ interface MenuGroup {
 })
 export class CustomerMenu {
   private readonly api = inject(ApiService);
+  private readonly unitsService = inject(UnitsService);
   private readonly cart = inject(CartService);
 
   readonly currency = currency;
@@ -40,7 +42,7 @@ export class CustomerMenu {
   private async load(): Promise<void> {
     this.loading.set(true);
     try {
-      const units = await firstValueFrom(this.api.get<UnitResponse[]>('/units'));
+      const units = await this.unitsService.list();
       const unitId = units[0]?.id ?? 1;
       const [categories, products] = await Promise.all([
         firstValueFrom(this.api.get<CategoryResponse[]>(`/categories?unitId=${unitId}`)),
