@@ -30,8 +30,8 @@ public class DeliveryLocationBackfill {
     private static final Logger log = LoggerFactory.getLogger(DeliveryLocationBackfill.class);
 
     /** "Rua das Flores, 100 (apto 2) - Centro, Sao Paulo/SP - CEP 01000-000" */
-    private static final Pattern SNAPSHOT = Pattern.compile(
-            "^(.*?),\s*([^\s(]+)(?:\s*\([^)]*\))?\s*-\s*(.*?),\s*.*?/\w{2}\s*-\s*CEP\s*(\d{5}-?\d{3})");
+    static final Pattern SNAPSHOT = Pattern.compile(
+            "^(.*?),\\s*([^\\s(]+)(?:\\s*\\([^)]*\\))?\\s*-\\s*(.*?),\\s*.*?/\\w{2}\\s*-\\s*CEP\\s*(\\d{5}-?\\d{3})");
 
     private static final List<String> ACTIVE = List.of(
             "AGUARDANDO_ENTREGADOR", "ACEITA", "RETIRADA_NO_RESTAURANTE", "EM_ROTA", "NAO_ENTREGUE");
