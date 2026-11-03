@@ -4,10 +4,11 @@ import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { OrderResponse } from '../../core/models';
 import { currency } from '../../core/format';
 import { ORDER_TIMELINE } from '../../core/order-status';
+import { BurgerGame } from '../../shared/burger-game';
 
 @Component({
   selector: 'app-customer-order-track',
-  imports: [RouterLink],
+  imports: [RouterLink, BurgerGame],
   templateUrl: './customer-order-track.html',
 })
 export class CustomerOrderTrack implements OnDestroy {
@@ -72,6 +73,12 @@ export class CustomerOrderTrack implements OnDestroy {
     if (!status) return -1;
     const idx = this.steps.findIndex((s) => s.statuses.includes(status));
     return idx;
+  }
+
+  /** Pedido ainda em andamento: mostra o joguinho para passar o tempo. */
+  waiting(): boolean {
+    const status = this.order()?.status;
+    return !!status && !['ENTREGUE', 'FINALIZADO', 'CANCELADO'].includes(status);
   }
 
   isCancelled(): boolean {

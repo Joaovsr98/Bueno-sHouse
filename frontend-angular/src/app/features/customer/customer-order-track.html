@@ -64,6 +64,20 @@
       <span class="font-semibold text-brand-300">{{ currency(o.total) }}</span>
     </div>
   </div>
+
+  @if (waiting()) {
+    <!-- Passatempo enquanto o pedido fica pronto (a tela continua se atualizando sozinha). -->
+    <section class="mt-4">
+      <div class="flex items-end justify-between mb-3">
+        <div>
+          <p class="eyebrow-plain text-[0.62rem]">Enquanto a chapa trabalha</p>
+          <h2 class="font-display text-xl font-bold uppercase mt-1">Bora montar um burger?</h2>
+        </div>
+        <span class="text-xs text-neutral-500">O status acima continua atualizando.</span>
+      </div>
+      <app-burger-game />
+    </section>
+  }
 } @else if (!error()) {
   <p class="text-sm text-neutral-500">Carregando...</p>
 }
