@@ -28,7 +28,9 @@ jobs:
           cache: maven
 
       - name: Testes (unitários + integração)
-        run: mvn -B verify -DtrimStackTrace=false
+        run: |
+          set -o pipefail
+          mvn -B verify -DtrimStackTrace=false 2>&1 | tee mvn.log
 
       # Resume as falhas como anotacoes (aparecem no resumo do job, sem abrir o log inteiro).
       - name: Resumo das falhas
@@ -47,6 +49,10 @@ jobs:
             echo
           done | grep -v '^\s*$' | head -5 | while read -r fail; do
             echo "::error title=assercao::$(echo "$fail" | cut -c1-800)"
+          done
+          # Erros de compilacao do Maven (o log completo exige login no GitHub).
+          grep -F "[ERROR]" mvn.log | grep -F ".java" | head -8 | while read -r line; do
+            echo "::error title=compilacao::$(echo "$line" | cut -c1-600)"
           done
           if [ ! -d target/failsafe-reports ] && [ ! -d target/surefire-reports ]; then
             echo "::error title=build::Falhou antes dos testes (compilacao?). Veja o passo anterior."
