@@ -49,8 +49,31 @@ export function formatDistance(km: number): string {
 }
 
 /**
- * Coordenadas de um endereco de Sao Paulo pelo OpenStreetMap. Tenta rua + numero e,
- * se nao achar, so a rua (ou o CEP). Devolve null se nada for encontrado ou se o
+ * Retangulo da cidade de Sao Paulo (oeste, norte, leste, sul). A busca fica presa nele:
+ * "city=São Paulo" sozinho tambem casa com o estado e devolvia ruas de mesmo nome em
+ * Guarulhos ou Osasco.
+ */
+const SAO_PAULO_VIEWBOX = '-46.83,-23.35,-46.36,-24.01';
+
+interface NominatimPlace {
+  lat: string;
+  lon: string;
+  address?: { postcode?: string; city?: string; town?: string; municipality?: string };
+}
+
+/** Quantos digitos iniciais do CEP batem: ruas homonimas na mesma cidade tem CEPs diferentes. */
+function cepScore(place: NominatimPlace, zipCode?: string): number {
+  const want = (zipCode ?? '').replace(/\D/g, '');
+  const got = (place.address?.postcode ?? '').replace(/\D/g, '');
+  let n = 0;
+  while (n < want.length && n < got.length && want[n] === got[n]) n++;
+  return n;
+}
+
+/**
+ * Coordenadas de um endereco da cidade de Sao Paulo pelo OpenStreetMap. Tenta rua +
+ * numero, depois o CEP e por fim o bairro; entre os resultados, fica com o da capital
+ * cujo CEP mais se parece com o informado. Devolve null se nada for encontrado ou se o
  * servico estiver fora do ar.
  */
 export async function geocode(parts: { street?: string; number?: string; neighborhood?: string; zipCode?: string }): Promise<LatLng | null> {
@@ -63,9 +86,15 @@ export async function geocode(parts: { street?: string; number?: string; neighbo
 
   for (const query of attempts) {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&${query}`);
-      const found: { lat: string; lon: string }[] = await res.json();
-      if (found[0]) return { lat: Number(found[0].lat), lng: Number(found[0].lon) };
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=10&addressdetails=1`
+        + `&viewbox=${SAO_PAULO_VIEWBOX}&bounded=1&${query}`);
+      const found: NominatimPlace[] = await res.json();
+      const inCity = found.filter((p) => (p.address?.city ?? p.address?.municipality ?? p.address?.town) === 'São Paulo');
+      const candidates = inCity.length ? inCity : found;
+      if (candidates.length) {
+        const best = candidates.reduce((a, b) => (cepScore(b, parts.zipCode) > cepScore(a, parts.zipCode) ? b : a));
+        return { lat: Number(best.lat), lng: Number(best.lon) };
+      }
     } catch {
       return null;
     }
