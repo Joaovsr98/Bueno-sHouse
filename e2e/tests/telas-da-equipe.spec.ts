@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 /**
  * Telas da equipe no celular: cada uma abre sem erro e sem rolagem para o lado (conteudo
@@ -7,8 +7,9 @@ import { expect, test } from '@playwright/test';
 const TELAS = ['/pedidos', '/mesas', '/cozinha', '/caixa', '/catalogo', '/motoboy', '/estoque',
   '/fornecedores', '/fichas-tecnicas', '/dashboard', '/usuarios'];
 
-test('telas da equipe cabem na largura do aparelho', async ({ page }, testInfo) => {
+test('telas da equipe cabem na largura do aparelho', async ({ page: primeira, context }, testInfo) => {
   test.skip(testInfo.project.name === 'computador', 'so no celular');
+  let page: Page = primeira;
   await page.goto('/login?lado=equipe');
   await page.locator('#email').fill('admin@demo.local');
   await page.locator('#password').fill('admin123');
@@ -17,16 +18,22 @@ test('telas da equipe cabem na largura do aparelho', async ({ page }, testInfo) 
 
   const problemas: string[] = [];
   for (const tela of TELAS) {
-    await page.goto(tela);
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(800); // animacoes de entrada
-    const largura = await page.evaluate(() => ({ pagina: document.documentElement.scrollWidth, tela: window.innerWidth }));
-    if (largura.pagina > largura.tela + 1) problemas.push(`${tela}: ${largura.pagina}px numa tela de ${largura.tela}px`);
-    if (await page.locator('.alert-error').first().isVisible()) problemas.push(`${tela}: ${await page.locator('.alert-error').first().textContent()}`);
-    await testInfo.attach(`${testInfo.project.name}${tela.replace('/', '-')}`, {
-      // Primeira tela do aparelho (o print da pagina inteira derruba o Safari do teste)
-      body: await page.screenshot(), contentType: 'image/png',
-    });
+    try {
+      await page.goto(tela);
+      await page.waitForLoadState('networkidle');
+      await page.waitForTimeout(800); // animacoes de entrada
+      const largura = await page.evaluate(() => ({ pagina: document.documentElement.scrollWidth, tela: window.innerWidth }));
+      if (largura.pagina > largura.tela + 1) problemas.push(`${tela}: ${largura.pagina}px numa tela de ${largura.tela}px`);
+      const erro = page.locator('.alert-error').first();
+      if (await erro.isVisible()) problemas.push(`${tela}: ${await erro.textContent()}`);
+      await testInfo.attach(`${testInfo.project.name}${tela.replace('/', '-')}`, {
+        body: await page.screenshot(), contentType: 'image/png',
+      });
+    } catch (e) {
+      // O navegador do teste caiu nesta tela: anota qual foi e segue nas outras (mesma sessao).
+      problemas.push(`${tela}: o navegador fechou (${String(e).split('\n')[0]})`);
+      page = await context.newPage();
+    }
   }
-  expect(problemas, 'telas com rolagem lateral ou erro').toEqual([]);
+  expect(problemas, 'telas com rolagem lateral, erro ou queda do navegador').toEqual([]);
 });
