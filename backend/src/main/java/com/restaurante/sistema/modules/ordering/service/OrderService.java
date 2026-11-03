@@ -1,5 +1,6 @@
 package com.restaurante.sistema.modules.ordering.service;
 
+import com.restaurante.sistema.common.event.OrderFinalizedEvent;
 import com.restaurante.sistema.common.event.OrderItemSentToKitchenEvent;
 import com.restaurante.sistema.common.event.OrderReadyEvent;
 import com.restaurante.sistema.common.exception.BusinessException;
@@ -257,6 +258,7 @@ public class OrderService {
         order.setCreatedBy(currentUserProvider.getCurrentUserId());
         order.setIdempotencyKey(key);
         order.setNotes(request.notes());
+        order.setPaymentMethod(validPaymentMethod(request.paymentMethod()));
         order.setOrderNumber(nextOrderNumber(request.unitId()));
         order.setStatus("RECEBIDO");
         order.setCreatedAt(Instant.now());
@@ -367,6 +369,10 @@ public class OrderService {
 
         if ("AGUARDANDO_ENTREGADOR".equals(newStatus)) {
             releaseDelivery(order.getId());
+        }
+        if ("FINALIZADO".equals(newStatus)) {
+            // Pedido do site: o modulo de pagamentos lanca o pagamento no caixa (SiteOrderPaymentListener).
+            applicationEventPublisher.publishEvent(new OrderFinalizedEvent(order.getId()));
         }
         if ("CANCELADO".equals(newStatus)) {
             // RF-018: estorna qualquer baixa de estoque ja feita (itens que
@@ -500,8 +506,17 @@ public class OrderService {
                 myCustomerId,
                 pickup ? null : request.customerAddressId(),
                 request.notes(),
-                request.items()
+                request.items(),
+                request.paymentMethod()
         );
+    }
+
+    private static final Set<String> PAYMENT_METHODS = Set.of("PIX", "CARTAO_CREDITO", "CARTAO_DEBITO", "DINHEIRO");
+
+    private String validPaymentMethod(String method) {
+        if (method == null || method.isBlank()) return null;
+        if (!PAYMENT_METHODS.contains(method)) throw new BusinessException("Forma de pagamento invalida: " + method);
+        return method;
     }
 
     private void validateChannel(String channel) {

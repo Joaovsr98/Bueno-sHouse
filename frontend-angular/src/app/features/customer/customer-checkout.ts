@@ -43,10 +43,14 @@ export class CustomerCheckout {
   readonly cep = new CepLookup();
   addr = { label: '', street: '', number: '', complement: '', neighborhood: '', city: 'São Paulo', state: 'SP', zipCode: '' };
 
-  /** RF-006: pagamento simulado - nenhuma cobranca real, a forma escolhida vai nas observacoes do pedido. */
+  /**
+   * RF-006: pagamento simulado (nenhuma cobranca real). A forma escolhida vai no pedido e,
+   * quando a entrega e confirmada (ou a retirada finalizada), e lancada no caixa.
+   */
   readonly paymentMethods = [
     { value: 'PIX', label: 'Pix' },
-    { value: 'CARTAO', label: 'Cartão (na entrega)' },
+    { value: 'CARTAO_CREDITO', label: 'Crédito (na entrega)' },
+    { value: 'CARTAO_DEBITO', label: 'Débito (na entrega)' },
     { value: 'DINHEIRO', label: 'Dinheiro (na entrega)' },
   ];
   paymentMethod = 'PIX';
@@ -222,6 +226,7 @@ export class CustomerCheckout {
         customerAddressId: pickup ? null : this.selectedAddressId(),
         notes: [this.orderNotes.trim(), this.paymentSummary()].filter(Boolean).join(' | '),
         items: this.lines().map((l) => ({ productId: l.productId, quantity: l.quantity, notes: l.notes || null })),
+        paymentMethod: this.paymentMethod,
       };
       const order = await firstValueFrom(
         this.api.post<OrderResponse>('/orders', body, { 'Idempotency-Key': this.idempotencyKey(body) }),

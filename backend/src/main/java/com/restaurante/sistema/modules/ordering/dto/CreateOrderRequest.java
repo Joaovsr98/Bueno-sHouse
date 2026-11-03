@@ -26,5 +26,14 @@ public record CreateOrderRequest(
 
         @NotEmpty(message = "O pedido precisa ter pelo menos um item")
         @Valid
-        List<CreateOrderItemRequest> items
-) {}
+        List<CreateOrderItemRequest> items,
+
+        /** Pedido do site: PIX, CARTAO_CREDITO, CARTAO_DEBITO ou DINHEIRO (lancado no caixa ao finalizar). */
+        String paymentMethod
+) {
+    /** Pedidos da equipe (salao, balcao): pagos no caixa, sem forma de pagamento antecipada. */
+    public CreateOrderRequest(Long unitId, String channel, Long commandId, Long customerId, Long customerAddressId,
+                              String notes, List<CreateOrderItemRequest> items) {
+        this(unitId, channel, commandId, customerId, customerAddressId, notes, items, null);
+    }
+}

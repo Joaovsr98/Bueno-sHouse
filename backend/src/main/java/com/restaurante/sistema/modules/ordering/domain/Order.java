@@ -71,6 +71,10 @@ public class Order {
     @Column(length = 500)
     private String notes;
 
+    /** Forma de pagamento escolhida no site (null nos pedidos da equipe, pagos no caixa). */
+    @Column(name = "payment_method", length = 20)
+    private String paymentMethod;
+
     @Column(name = "cancel_reason", length = 255)
     private String cancelReason;
 

@@ -227,6 +227,11 @@ class DeliveryFlowIT {
 
     /** Pedido DELIVERY recem-criado (RECEBIDO) para o bairro Centro. */
     private OrderResponse deliveryOrder(HttpHeaders admin, String phone) {
+        return deliveryOrder(admin, phone, null);
+    }
+
+    /** Idem, com a forma de pagamento escolhida no site (lancada no caixa ao finalizar). */
+    private OrderResponse deliveryOrder(HttpHeaders admin, String phone, String paymentMethod) {
         CustomerResponse customer = restTemplate.exchange("/api/customers", HttpMethod.POST,
                 new HttpEntity<>(new CustomerRequest("Cliente Fila " + phone, phone, null, null, null), admin),
                 CustomerResponse.class).getBody();
@@ -236,14 +241,18 @@ class DeliveryFlowIT {
                         "Sao Paulo", "SP", "01000-000", null, true), admin), CustomerAddressResponse.class).getBody();
         OrderResponse order = restTemplate.exchange("/api/orders", HttpMethod.POST, new HttpEntity<>(
                 new CreateOrderRequest(1L, "DELIVERY", null, customer.id(), address.id(), null,
-                        List.of(new CreateOrderItemRequest(DEMO_PRODUCT_ID, null, 1, null, List.of()))), admin),
+                        List.of(new CreateOrderItemRequest(DEMO_PRODUCT_ID, null, 1, null, List.of())), paymentMethod), admin),
                 OrderResponse.class).getBody();
         return order;
     }
 
     /** Pedido DELIVERY levado ate pronto (cozinha concluida); devolve a entrega. */
     private DeliveryResponse readyDelivery(HttpHeaders admin, String phone) {
-        OrderResponse order = deliveryOrder(admin, phone);
+        return readyDelivery(admin, phone, null);
+    }
+
+    private DeliveryResponse readyDelivery(HttpHeaders admin, String phone, String paymentMethod) {
+        OrderResponse order = deliveryOrder(admin, phone, paymentMethod);
 
         // Ainda na cozinha: nao esta na fila do motoboy
         DeliveryResponse[] poolBefore = restTemplate.exchange("/api/deliveries/available/details", HttpMethod.GET,
@@ -331,6 +340,61 @@ class DeliveryFlowIT {
                 new HttpEntity<>(admin), DeliveryResponse.class).getBody();
         assertThat(after.status()).isEqualTo("CANCELADA");
         assertThat(after.releasedAt()).isNull();
+    }
+
+    @Autowired
+    private com.restaurante.sistema.modules.delivery.repository.DeliveryRepository deliveryRepository;
+
+    @Test
+    void cashOnDeliveryReachesTheOpenCashRegister() {
+        HttpHeaders admin = authHeaders();
+        com.fasterxml.jackson.databind.JsonNode register = restTemplate.exchange("/api/cash-registers", HttpMethod.POST,
+                new HttpEntity<>(java.util.Map.of("unitId", 1, "openingBalance", 100), admin),
+                com.fasterxml.jackson.databind.JsonNode.class).getBody();
+
+        // Motoboy so deste teste, sem entrega em maos
+        restTemplate.exchange("/api/users", HttpMethod.POST, new HttpEntity<>(
+                java.util.Map.of("email", "motoboy.caixa@teste.local", "password", "senhaCaixa123", "profileName", "MOTOBOY"),
+                admin), String.class);
+        Long userId = java.util.Arrays.stream(restTemplate.exchange("/api/users", HttpMethod.GET, new HttpEntity<>(admin),
+                        com.restaurante.sistema.modules.identity.dto.UserResponse[].class).getBody())
+                .filter(u -> u.email().equals("motoboy.caixa@teste.local")).findFirst().orElseThrow().id();
+        restTemplate.exchange("/api/couriers", HttpMethod.POST, new HttpEntity<>(
+                new CourierRequest(1L, userId, "Motoboy do Caixa", "11966665555", "11122233344", "MOTO", "CAI1X23"), admin),
+                CourierResponse.class);
+        LoginResponse login = restTemplate.postForEntity("/api/auth/login",
+                new LoginRequest("motoboy.caixa@teste.local", "senhaCaixa123"), LoginResponse.class).getBody();
+        HttpHeaders courier = new HttpHeaders();
+        courier.setBearerAuth(login.token());
+        courier.setContentType(MediaType.APPLICATION_JSON);
+
+        // Cliente pediu pelo site pagando em dinheiro na entrega
+        DeliveryResponse delivery = readyDelivery(admin, "11999996664", "DINHEIRO");
+        String code = deliveryRepository.findById(delivery.id()).orElseThrow().getConfirmationCode();
+        for (String step : List.of("accept", "pickup", "leave")) {
+            assertThat(restTemplate.exchange("/api/deliveries/" + delivery.id() + "/" + step, HttpMethod.POST,
+                    new HttpEntity<>(courier), String.class).getStatusCode()).isEqualTo(HttpStatus.OK);
+        }
+        assertThat(restTemplate.exchange("/api/deliveries/" + delivery.id() + "/confirm", HttpMethod.POST,
+                new HttpEntity<>(new ConfirmDeliveryRequest(code, "Cliente"), courier), String.class).getStatusCode())
+                .isEqualTo(HttpStatus.OK);
+
+        // Pedido finalizado: o dinheiro entrou no caixa aberto
+        OrderResponse order = restTemplate.exchange("/api/orders/" + delivery.orderId(), HttpMethod.GET,
+                new HttpEntity<>(admin), OrderResponse.class).getBody();
+        assertThat(order.status()).isEqualTo("FINALIZADO");
+        com.fasterxml.jackson.databind.JsonNode payments = restTemplate.exchange("/api/payments?orderId=" + order.id(),
+                HttpMethod.GET, new HttpEntity<>(admin), com.fasterxml.jackson.databind.JsonNode.class).getBody();
+        assertThat(payments.size()).isEqualTo(1);
+        assertThat(payments.get(0).get("method").asText()).isEqualTo("DINHEIRO");
+        assertThat(new BigDecimal(payments.get(0).get("amount").asText())).isEqualByComparingTo(order.total());
+
+        BigDecimal expected = new BigDecimal("100").add(order.total());
+        com.fasterxml.jackson.databind.JsonNode closed = restTemplate.exchange(
+                "/api/cash-registers/" + register.get("id").asLong() + "/close", HttpMethod.POST,
+                new HttpEntity<>(java.util.Map.of("closingBalance", expected), admin),
+                com.fasterxml.jackson.databind.JsonNode.class).getBody();
+        assertThat(new BigDecimal(closed.get("expectedBalance").asText())).isEqualByComparingTo(expected);
     }
 
     @Test
