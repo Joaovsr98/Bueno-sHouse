@@ -1,0 +1,93 @@
+name: E2E · pedido ponta a ponta
+
+# O caminho inteiro pela tela, com MySQL, servidor e site de verdade:
+# cliente pede -> equipe confirma -> cozinha prepara -> motoboy entrega.
+on:
+  push:
+    branches: [main, feat/migracao-angular]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: restaurante_db
+          MYSQL_USER: restaurante_app
+          MYSQL_PASSWORD: e2e_password
+          MYSQL_ROOT_PASSWORD: e2e_root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pe2e_root"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend-angular/package-lock.json
+            e2e/package-lock.json
+
+      - name: Servidor (Spring Boot com os dados de demonstracao)
+        working-directory: backend
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: restaurante_db
+          DB_USER: restaurante_app
+          DB_PASSWORD: e2e_password
+          JWT_SECRET: e2e-secret-key-only-for-ci-tests-0123456789
+        run: |
+          mvn -B -q -DskipTests package
+          nohup java -jar target/*.jar --spring.profiles.active=dev \
+            --app.cep-check.enabled=false --app.geocoding.enabled=false > ../backend.log 2>&1 &
+
+      - name: Dependencias do site
+        working-directory: frontend-angular
+        run: npm ci
+
+      - name: Dependencias do teste e navegador
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Esperar o servidor
+        run: |
+          for i in $(seq 1 90); do
+            curl -sf http://localhost:8080/api/health > /dev/null && exit 0
+            sleep 2
+          done
+          echo "O servidor nao subiu"; tail -100 backend.log; exit 1
+
+      - name: Teste ponta a ponta
+        working-directory: e2e
+        run: npx playwright test
+
+      - name: Log do servidor
+        if: failure()
+        run: tail -200 backend.log
+
+      - name: Relatorio do teste (screenshots e trace em caso de falha)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-relatorio
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+          retention-days: 7
