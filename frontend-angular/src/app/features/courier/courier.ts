@@ -3,6 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
 import { DeliveryResponse } from '../../core/models';
 import { currency, waitingLabel } from '../../core/format';
 import {
@@ -46,6 +47,8 @@ interface Nearby { delivery: DeliveryResponse; detour: number | null; }
 export class Courier implements OnDestroy {
   private readonly api = inject(ApiService);
   private readonly sanitizer = inject(DomSanitizer);
+  /** Gerente e admin acompanham a fila, mas so quem e motoboy aceita e tem "minhas entregas". */
+  readonly isCourier = inject(AuthService).user()?.profileName === 'MOTOBOY';
 
   readonly currency = currency;
   readonly formatDistance = formatDistance;
@@ -156,7 +159,7 @@ export class Courier implements OnDestroy {
   private pollHandle: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
-    this.loadMine();
+    if (this.isCourier) this.loadMine();
     this.loadPool();
     this.pollHandle = setInterval(() => {
       this.now.set(Date.now());
@@ -253,7 +256,7 @@ export class Courier implements OnDestroy {
         next: () => {
           this.confirmationCode = '';
           this.receivedByName = '';
-          this.loadMine();
+          if (this.isCourier) this.loadMine();
           this.loadPool();
         },
         error: (e) => this.error.set(apiErrorMessage(e, 'Erro ao confirmar entrega')),

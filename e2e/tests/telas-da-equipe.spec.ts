@@ -24,7 +24,8 @@ test('telas da equipe cabem na largura do aparelho', async ({ page }, testInfo) 
     if (largura.pagina > largura.tela + 1) problemas.push(`${tela}: ${largura.pagina}px numa tela de ${largura.tela}px`);
     if (await page.locator('.alert-error').first().isVisible()) problemas.push(`${tela}: ${await page.locator('.alert-error').first().textContent()}`);
     await testInfo.attach(`${testInfo.project.name}${tela.replace('/', '-')}`, {
-      body: await page.screenshot({ fullPage: true }), contentType: 'image/png',
+      // Primeira tela do aparelho (o print da pagina inteira derruba o Safari do teste)
+      body: await page.screenshot(), contentType: 'image/png',
     });
   }
   expect(problemas, 'telas com rolagem lateral ou erro').toEqual([]);
