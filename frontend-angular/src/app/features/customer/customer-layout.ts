@@ -4,10 +4,11 @@ import { AuthService } from '../../core/auth.service';
 import { CartService } from '../../core/cart.service';
 import { Logo } from '../../shared/logo';
 import { Icon } from '../../shared/icon';
+import { FloatingCart } from '../../shared/floating-cart';
 
 @Component({
   selector: 'app-customer-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Logo, Icon],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, Logo, Icon, FloatingCart],
   templateUrl: './customer-layout.html',
 })
 export class CustomerLayout {

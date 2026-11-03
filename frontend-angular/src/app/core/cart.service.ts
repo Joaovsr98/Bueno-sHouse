@@ -36,6 +36,8 @@ export class CartService {
   readonly lines = this._lines.asReadonly();
   readonly count = computed(() => this._lines().reduce((s, l) => s + l.quantity, 0));
   readonly subtotal = computed(() => this._lines().reduce((s, l) => s + l.basePrice * l.quantity, 0));
+  /** Ultimo item adicionado (o carrinho flutuante anima e mostra "+1 X-Burguer"). */
+  readonly lastAdded = signal<{ text: string; at: number } | null>(null);
 
   constructor() {
     effect(() => {
@@ -63,6 +65,7 @@ export class CartService {
         { productId: product.id, productName: product.name, basePrice: product.basePrice, quantity, notes },
       ];
     });
+    this.lastAdded.set({ text: `+${quantity} ${product.name}`, at: Date.now() });
   }
 
   setNotes(productId: number, notes: string): void {

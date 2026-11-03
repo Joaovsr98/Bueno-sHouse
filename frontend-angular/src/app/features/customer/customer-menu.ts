@@ -4,7 +4,6 @@ import { LocationCard } from '../../shared/location-card';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { CartService } from '../../core/cart.service';
-import { ToastService } from '../../core/toast.service';
 import { CategoryResponse, ProductResponse, UnitResponse } from '../../core/models';
 import { currency } from '../../core/format';
 
@@ -22,7 +21,6 @@ interface MenuGroup {
 export class CustomerMenu {
   private readonly api = inject(ApiService);
   private readonly cart = inject(CartService);
-  private readonly toast = inject(ToastService);
 
   readonly currency = currency;
   groups = signal<MenuGroup[]>([]);
@@ -64,6 +62,5 @@ export class CustomerMenu {
 
   quickAdd(product: ProductResponse): void {
     this.cart.add(product);
-    this.toast.success(`${product.name} adicionado ao carrinho`);
   }
 }

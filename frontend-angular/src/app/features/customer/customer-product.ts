@@ -4,7 +4,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { CartService } from '../../core/cart.service';
-import { ToastService } from '../../core/toast.service';
 import { ProductResponse } from '../../core/models';
 import { currency } from '../../core/format';
 import { Icon } from '../../shared/icon';
@@ -95,7 +94,6 @@ import { Icon } from '../../shared/icon';
 export class CustomerProduct {
   private readonly api = inject(ApiService);
   private readonly cart = inject(CartService);
-  private readonly toast = inject(ToastService);
 
   private readonly route = inject(ActivatedRoute);
 
@@ -128,7 +126,6 @@ export class CustomerProduct {
     const p = this.product();
     if (!p) return;
     this.cart.add(p, this.qty(), this.notes.trim());
-    this.toast.success(`${this.qty()}x ${p.name} adicionado ao carrinho`);
     this.qty.set(1);
     this.notes = '';
   }
