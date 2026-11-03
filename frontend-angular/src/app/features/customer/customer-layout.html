@@ -46,5 +46,9 @@
       <p class="eyebrow-plain text-[0.6rem]">Feito na brasa, {{ year }}</p>
     </div>
   </footer>
-  <app-floating-cart />
+  <!-- Canto do cliente: chapeiro + carrinho flutuante -->
+  <div class="fixed z-40 bottom-4 inset-x-4 sm:inset-x-auto sm:right-6 sm:bottom-6 flex items-end justify-end gap-2 pointer-events-none">
+    <app-chef-mascot class="hidden sm:block pointer-events-auto" />
+    <app-floating-cart class="flex-1 sm:flex-none" />
+  </div>
 </div>

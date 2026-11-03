@@ -16,7 +16,7 @@ import { Icon } from './icon';
   imports: [RouterLink, Icon],
   template: `
     @if (visible()) {
-      <div class="fixed z-40 bottom-4 inset-x-4 sm:inset-x-auto sm:right-6 sm:bottom-6 flex flex-col items-end gap-2 pointer-events-none">
+      <div class="flex flex-col items-end gap-2 pointer-events-none">
         @if (bubble(); as text) {
           <span class="added-bubble pointer-events-none rounded-full bg-ink-850 border border-brand-500/40 px-3 py-1 text-xs text-brand-200 shadow-lg" aria-live="polite">
             {{ text }}
