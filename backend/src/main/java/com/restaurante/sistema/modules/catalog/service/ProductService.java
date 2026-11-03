@@ -136,18 +136,23 @@ public class ProductService {
         productRepository.save(product);
     }
 
-    /** RN01: um prato so pode ficar ATIVO (available) se tiver ficha tecnica cadastrada. */
+    /**
+     * RN01: um prato so pode ficar ATIVO (available) se tiver ficha tecnica cadastrada.
+     * Tambem precisa de setor da cozinha: o painel da cozinha busca os itens por setor, entao
+     * um prato sem setor seria pedido, confirmado e nunca apareceria para ser preparado.
+     */
     private void assertCanBeActive(Product product) {
-        boolean hasRecipe = recipeLookup.hasRecipe(product.getId());
+        if (product.getKitchenSector() == null) {
+            throw new BusinessException("Defina o setor da cozinha do prato antes de ativa-lo: sem setor ele nao aparece no painel da cozinha");
+        }
+        boolean hasRecipe = product.getId() != null && recipeLookup.hasRecipe(product.getId());
         if (!hasRecipe) {
             throw new BusinessException("Cadastre a ficha tecnica do prato antes de ativa-lo (RN01)");
         }
     }
 
     private void applyRequest(Product product, ProductRequest request, boolean available) {
-        if (available && !product.isAvailable()) {
-            assertCanBeActive(product);
-        }
+        boolean wasAvailable = product.isAvailable();
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category", request.categoryId()));
         product.setCategory(category);
@@ -167,6 +172,10 @@ public class ProductService {
             product.setKitchenSector(sector);
         } else {
             product.setKitchenSector(null);
+        }
+        // Confere depois de aplicar o setor novo: ativar agora, ou tirar o setor de um prato ativo.
+        if (available && (!wasAvailable || product.getKitchenSector() == null)) {
+            assertCanBeActive(product);
         }
 
         // variations ausente = preserva as existentes (o formulario simples do catalogo nao as envia).

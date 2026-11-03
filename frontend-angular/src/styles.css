@@ -315,3 +315,20 @@ h1, h2, h3, .font-display { font-family: var(--font-display); letter-spacing: -0
     linear-gradient(270deg, #07080c 0%, rgba(7, 8, 12, 0) 30%),
     url('/comida-cheeseburger.webp') center 130% / 110% auto no-repeat #07080c;
 }
+
+/* Fundo das telas da equipe: a cozinha em acao (chama na frigideira), bem escurecida
+   do lado do conteudo para tabelas e formularios continuarem faceis de ler. */
+.kitchen-bg {
+  position: fixed; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(90deg, #07080c 28%, rgba(7, 8, 12, 0.86) 55%, rgba(7, 8, 12, 0.5) 100%),
+    linear-gradient(0deg, #07080c 0%, rgba(7, 8, 12, 0) 45%),
+    url('/cozinha-chama.webp') right center / cover no-repeat;
+}
+@media (max-width: 1024px) {
+  .kitchen-bg {
+    background:
+      linear-gradient(180deg, rgba(7, 8, 12, 0.78) 0%, #07080c 60%),
+      url('/cozinha-chama.webp') 70% top / auto 55vh no-repeat;
+  }
+}

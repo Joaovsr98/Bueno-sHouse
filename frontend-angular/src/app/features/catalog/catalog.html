@@ -69,9 +69,7 @@
           </div>
           <button
             (click)="openNewProduct()"
-            [disabled]="selectedCategoryId() === null"
-            [title]="selectedCategoryId() === null ? 'Selecione uma categoria para adicionar' : ''"
-            class="btn-brand rounded-xl px-3 py-1.5 text-sm"
+            class="btn-brand rounded-xl px-4 py-2 text-sm"
           >
             + Novo produto
           </button>
@@ -96,15 +94,18 @@
             <div class="glass glass-hover rounded-2xl p-4 flex flex-col transition">
               <div class="flex items-start justify-between gap-2">
                 <h3 class="text-sm font-medium">{{ product.name }}</h3>
-                @if (!product.available) {
-                  <span class="text-[10px] uppercase tracking-wide text-neutral-500 border border-white/15 rounded px-1.5 py-0.5 shrink-0">
-                    Indisponível
-                  </span>
-                }
+                <span class="badge shrink-0" [class]="product.available ? 'badge-green' : 'badge-gray'">
+                  {{ product.available ? 'No cardápio' : 'Inativo' }}
+                </span>
               </div>
               <p class="text-xs text-neutral-500 mt-1 mb-3 line-clamp-2 flex-1">
                 {{ product.description || 'Sem descrição' }}
               </p>
+              @if (!product.available) {
+                <a routerLink="/fichas-tecnicas" class="mb-3 text-[11px] text-amber-300 hover:text-amber-200">
+                  Próximo passo: ficha técnica e ativar no cardápio →
+                </a>
+              }
               <div class="flex items-center justify-between">
                 <span class="text-sm font-semibold text-brand-300">{{ currency(product.basePrice) }}</span>
                 <div class="flex gap-2 text-xs">
@@ -169,7 +170,6 @@
                 name="kitchenSectorId" [(ngModel)]="form.kitchenSectorId"
                 class="w-full rounded-xl bg-ink-850 border border-white/10 px-3 py-2 text-sm outline-none focus:border-brand-500/60"
               >
-                <option [ngValue]="null">Nenhum</option>
                 @for (s of sectors(); track s.id) {
                   <option [ngValue]="s.id">{{ s.name }}</option>
                 }
@@ -211,7 +211,8 @@
               Disponível no cardápio
             </label>
             <p class="text-[11px] text-neutral-500">
-              Só é possível ativar um prato depois de cadastrar a ficha técnica (menu Fichas técnicas).
+              Para ativar, o prato precisa de setor da cozinha e de ficha técnica (menu Fichas técnicas):
+              é a ficha que baixa o estoque a cada pedido.
             </p>
           </div>
 

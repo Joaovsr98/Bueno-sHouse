@@ -1,5 +1,6 @@
 import { Component, inject, signal, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { CategoryResponse, KitchenSectorResponse, ProductResponse } from '../../core/models';
@@ -20,7 +21,7 @@ interface ProductForm {
 
 @Component({
   selector: 'app-catalog',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './catalog.html',
 })
 export class Catalog {

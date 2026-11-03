@@ -1,6 +1,7 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { Component, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from '../core/auth.service';
+import { IntroService } from '../core/intro.service';
 import { defaultRouteForRole } from '../core/routing';
 import { Logo } from './logo';
 import { Icon } from './icon';
@@ -13,7 +14,7 @@ const BURNERS = 3;
  * Abertura "esquentando a chapa" (inspirada na largada do Paddock 22): as bocas
  * acendem uma a uma e, com a chapa quente, a pessoa escolhe o lado: matar a fome
  * (cardapio) ou acender a chapa (equipe). Aparece toda vez que se entra pela
- * pagina inicial (ao abrir o site ou ao voltar ao inicio por dentro dele); em
+ * pagina inicial (a propria pagina inicial pede, venha a pessoa de onde vier); em
  * outra tela so no primeiro acesso da sessao, e ai fecha
  * sozinha. Quem prefere menos movimento so ve a abertura na pagina inicial.
  */
@@ -100,6 +101,7 @@ const BURNERS = 3;
 export class Intro implements OnDestroy {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly intro = inject(IntroService);
 
   readonly burners = Array.from({ length: BURNERS }, (_, i) => i);
   readonly visible = signal(false);
@@ -120,14 +122,15 @@ export class Intro implements OnDestroy {
   private timers: ReturnType<typeof setTimeout>[] = [];
 
   constructor() {
-    const home = this.onHome();
-    if (home || !(this.alreadySeen() || this.prefersReducedMotion())) this.start(home);
-    // Voltar ao inicio por dentro do site (logo, "Voltar ao inicio") tambem abre a escolha.
-    let first = true;
-    this.router.events.subscribe((e) => {
-      if (!(e instanceof NavigationEnd)) return;
-      if (!first && e.urlAfterRedirects.split(/[?#]/)[0] === '/') this.start(true);
-      first = false;
+    // Em outras telas: so no primeiro acesso da sessao, e fecha sozinha.
+    if (!this.onHome() && !(this.alreadySeen() || this.prefersReducedMotion())) this.start(false);
+    // Na pagina inicial: ela mesma pede a abertura com a escolha toda vez que aparece.
+    effect(() => {
+      if (this.intro.requests() > 0) untracked(() => this.start(true));
+    });
+    // Voltar para o site pelo botao do navegador pode restaurar a pagina do cache, sem recarregar.
+    window.addEventListener('pageshow', (e) => {
+      if (e.persisted && this.onHome() && !this.intro.stayOnHome) this.intro.show();
     });
   }
 
@@ -141,15 +144,21 @@ export class Intro implements OnDestroy {
     const step = home && this.prefersReducedMotion() ? 120 : 380;
     this.burners.forEach((i) => this.timers.push(setTimeout(() => this.lit.set(i + 1), 350 + i * step)));
     const lit = 350 + BURNERS * step;
-    this.timers.push(setTimeout(() => (home ? this.choosing.set(true) : this.finish()), lit + 500));
+    this.timers.push(setTimeout(() => (home ? this.choosing.set(true) : this.close()), lit + 500));
   }
 
   choose(link: string): void {
     this.router.navigateByUrl(link);
-    this.finish();
+    this.close();
   }
 
+  /** "Pular" / "Ver a pagina inicial": fica na pagina inicial sem reabrir a escolha. */
   finish(): void {
+    if (this.onHome()) this.intro.stayOnHome = true;
+    this.close();
+  }
+
+  private close(): void {
     this.markSeen();
     this.leaving.set(true);
     this.timers.push(setTimeout(() => this.visible.set(false), 500));

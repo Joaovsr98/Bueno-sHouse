@@ -1,6 +1,7 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, OnDestroy, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { IntroService } from '../../core/intro.service';
 import { defaultRouteForRole } from '../../core/routing';
 import { Logo } from '../../shared/logo';
 import { Icon } from '../../shared/icon';
@@ -90,8 +91,9 @@ import { Backdrop } from '../../shared/backdrop';
     .door:hover .door-cta { gap: .8rem; }
   `],
 })
-export class Home {
+export class Home implements OnDestroy {
   private readonly auth = inject(AuthService);
+  private readonly intro = inject(IntroService);
   private readonly profile = computed(() => this.auth.user()?.profileName);
 
   readonly isCustomer = computed(() => this.profile() === 'CLIENTE');
@@ -99,4 +101,14 @@ export class Home {
   /** Cardapio primeiro (publico): a conta so e pedida no checkout, que volta ao carrinho. */
   readonly customerLink = computed(() => '/app/cardapio');
   readonly staffLink = computed(() => (this.isStaff() ? defaultRouteForRole(this.profile()) : '/login'));
+
+  constructor() {
+    // A tela inicial e a escolha "O que voce quer?": toda vez que ela aparece, chama a abertura
+    // (menos logo depois de a pessoa escolher "Ver a pagina inicial").
+    if (!this.intro.stayOnHome) this.intro.show();
+  }
+
+  ngOnDestroy(): void {
+    this.intro.stayOnHome = false;
+  }
 }
