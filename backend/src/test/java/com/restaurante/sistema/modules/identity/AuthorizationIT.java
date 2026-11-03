@@ -12,6 +12,7 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -67,6 +68,21 @@ class AuthorizationIT {
         assertThat(status(HttpMethod.GET, "/api/tables?unitId=1", null, customer)).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(status(HttpMethod.GET, "/api/customers/by-phone/000", null, customer)).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(status(HttpMethod.GET, "/api/users", null, customer)).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void customerCanOrderForPickupWithoutAddressOrFee() {
+        HttpHeaders customer = login("cliente@demo.local");
+        ResponseEntity<JsonNode> created = rest.exchange("/api/orders", HttpMethod.POST, new HttpEntity<>(
+                Map.of("unitId", 1, "channel", "RETIRADA",
+                        "items", List.of(Map.of("productId", 3, "quantity", 1))), customer), JsonNode.class);
+
+        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(created.getBody().get("channel").asText()).isEqualTo("RETIRADA");
+        assertThat(created.getBody().get("deliveryFee").decimalValue()).isEqualByComparingTo("0");
+        // aparece em "Meus pedidos" do proprio cliente
+        assertThat(status(HttpMethod.GET, "/api/orders/" + created.getBody().get("id").asLong(), null, customer))
+                .isEqualTo(HttpStatus.OK);
     }
 
     @Test

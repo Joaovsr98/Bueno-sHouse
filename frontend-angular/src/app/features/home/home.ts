@@ -35,14 +35,14 @@ import { Backdrop } from '../../shared/backdrop';
         </div>
 
         <div class="mt-5 w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-5 reveal reveal-3">
-          <a [routerLink]="customerLink()" [queryParams]="isCustomer() ? null : { returnUrl: '/app/cardapio' }" class="door group">
+          <a [routerLink]="customerLink()" class="door group">
             <span class="door-icon"><app-icon name="cart" [size]="26" /></span>
             <span class="eyebrow-plain text-[0.62rem]">Para você</span>
             <span class="block font-display text-2xl xl:text-[1.7rem] font-bold uppercase mt-2 leading-tight">Matar minha fome</span>
             <span class="block text-sm text-neutral-400 mt-3 leading-relaxed">
               Escolha no cardápio, peça do seu jeito e acompanhe cada etapa até o lanche chegar na sua porta.
             </span>
-            <span class="door-cta">{{ isCustomer() ? 'Continuar pedindo' : 'Entrar ou criar conta' }} <app-icon name="arrow" [size]="16" /></span>
+            <span class="door-cta">{{ isCustomer() ? 'Continuar pedindo' : 'Ver o cardápio' }} <app-icon name="arrow" [size]="16" /></span>
           </a>
 
           <a [routerLink]="staffLink()" [queryParams]="isStaff() ? null : { lado: 'equipe' }" class="door group">
@@ -96,9 +96,7 @@ export class Home {
 
   readonly isCustomer = computed(() => this.profile() === 'CLIENTE');
   readonly isStaff = computed(() => !!this.profile() && this.profile() !== 'CLIENTE');
-  /** Cliente logado vai direto ao cardapio; os demais entram ou criam conta e voltam para ele. */
-  readonly customerLink = computed(() =>
-    this.isCustomer() ? '/app/cardapio' : '/login',
-  );
+  /** Cardapio primeiro (publico): a conta so e pedida no checkout, que volta ao carrinho. */
+  readonly customerLink = computed(() => '/app/cardapio');
   readonly staffLink = computed(() => (this.isStaff() ? defaultRouteForRole(this.profile()) : '/login'));
 }

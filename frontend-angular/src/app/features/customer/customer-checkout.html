@@ -39,6 +39,31 @@
   </div>
 
   <div class="glass rounded-2xl p-5 mb-6">
+    <h2 class="text-sm font-semibold mb-3">Como você quer receber?</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <button type="button" (click)="mode.set('DELIVERY')" [attr.aria-pressed]="mode() === 'DELIVERY'"
+        class="text-left rounded-xl border px-4 py-3 transition"
+        [class]="mode() === 'DELIVERY' ? 'border-brand-500/60 bg-brand-500/10' : 'border-white/10 hover:bg-white/5'">
+        <span class="flex items-center gap-2 text-sm font-medium"><app-icon name="bike" [size]="16" /> Entrega em casa</span>
+        <span class="block text-xs text-neutral-500 mt-1">Taxa conforme o bairro.</span>
+      </button>
+      <button type="button" (click)="mode.set('RETIRADA')" [attr.aria-pressed]="mode() === 'RETIRADA'"
+        class="text-left rounded-xl border px-4 py-3 transition"
+        [class]="mode() === 'RETIRADA' ? 'border-brand-500/60 bg-brand-500/10' : 'border-white/10 hover:bg-white/5'">
+        <span class="flex items-center gap-2 text-sm font-medium"><app-icon name="pin" [size]="16" /> Retirar no balcão</span>
+        <span class="block text-xs text-neutral-500 mt-1">Sem taxa. Rua Pais Leme, Pinheiros.</span>
+      </button>
+    </div>
+    @if (mode() === 'RETIRADA') {
+      <p class="mt-3 text-xs text-neutral-400 leading-relaxed">
+        Avisamos aqui quando estiver pronto para retirar.
+        <a [href]="pickupRoute" target="_blank" rel="noopener" class="text-brand-400 hover:text-brand-300">Ver como chegar</a>
+      </p>
+    }
+  </div>
+
+  @if (mode() === 'DELIVERY') {
+  <div class="glass rounded-2xl p-5 mb-6">
     <h2 class="text-sm font-semibold mb-3">Endereço de entrega</h2>
     @if (addresses().length === 0) {
       <p class="text-sm text-neutral-500">Nenhum endereço cadastrado.</p>
@@ -71,9 +96,9 @@
         <input name="label" [(ngModel)]="addr.label" placeholder="Apelido (Casa, Trabalho)" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
         <input #zipInput [value]="addr.zipCode" (input)="onCep(zipInput)" placeholder="CEP (00000-000)" inputmode="numeric" maxlength="9"
           aria-label="CEP" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2"
-          [class.!border-red-500]="cep.status() === 'not-found' || cep.status() === 'outside'" />
+          [class.!border-red-500]="cep.status() === 'not-found'" [class.!border-amber-500]="cep.pickupOnly()" />
         <p class="self-center text-xs leading-snug" aria-live="polite"
-          [class]="cep.status() === 'ok' ? 'text-green-400' : cep.status() === 'idle' || cep.status() === 'loading' ? 'text-neutral-500' : 'text-red-400'">
+          [class]="cep.status() === 'ok' ? 'text-green-400' : cep.status() === 'idle' || cep.status() === 'loading' ? 'text-neutral-500' : cep.pickupOnly() ? 'text-amber-300' : 'text-red-400'">
           {{ cep.message() ?? 'Digite o CEP: preenchemos rua e bairro.' }}
         </p>
         <input name="street" [(ngModel)]="addr.street" placeholder="Rua" class="col-span-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2" />
@@ -91,6 +116,11 @@
         </select>
         <input name="city" [(ngModel)]="addr.city" placeholder="Cidade" readonly aria-label="Cidade" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2 opacity-70" />
         <input name="state" [(ngModel)]="addr.state" placeholder="UF" maxlength="2" readonly aria-label="UF" class="rounded-lg bg-white/5 border border-white/10 px-3 py-2 opacity-70" />
+        @if (cep.pickupOnly()) {
+          <button type="button" (click)="mode.set('RETIRADA')" class="col-span-2 text-left rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+            Ainda não entregamos neste endereço. <strong>Retirar no balcão em Pinheiros, sem taxa →</strong>
+          </button>
+        }
         <div class="col-span-2 flex gap-2">
           <button type="submit" [disabled]="savingAddress()" class="btn-brand rounded-xl px-4 py-2">{{ savingAddress() ? 'Salvando...' : 'Salvar endereço' }}</button>
           @if (addresses().length > 0) {
@@ -100,6 +130,7 @@
       </form>
     }
   </div>
+  }
 
   <div class="glass rounded-2xl p-5 mb-6 space-y-3">
     <div>
@@ -130,7 +161,16 @@
       <span class="text-neutral-400">Subtotal</span>
       <span class="font-medium">{{ currency(subtotal()) }}</span>
     </div>
-    @if (selectedZone(); as zone) {
+    @if (mode() === 'RETIRADA') {
+      <div class="flex justify-between text-sm mb-1">
+        <span class="text-neutral-400">Retirada no balcão</span>
+        <span class="font-medium text-green-400">Grátis</span>
+      </div>
+      <div class="flex justify-between text-sm mb-4">
+        <span class="text-neutral-400">Total</span>
+        <span class="font-semibold text-brand-300">{{ currency(subtotal()) }}</span>
+      </div>
+    } @else if (selectedZone(); as zone) {
       <div class="flex justify-between text-sm mb-1">
         <span class="text-neutral-400">Entrega ({{ zone.neighborhood }})</span>
         <span class="font-medium">{{ currency(zone.fee) }}</span>
@@ -149,7 +189,7 @@
     }
     <button
       (click)="placeOrder()"
-      [disabled]="placing() || selectedZone() == null || subtotal() < selectedZone()!.minimumOrderValue"
+      [disabled]="!canPlace()"
       class="w-full btn-brand rounded-xl py-2.5 text-sm"
     >
       {{ placing() ? 'Enviando...' : 'Finalizar pedido' }}

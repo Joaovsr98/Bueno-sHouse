@@ -15,7 +15,13 @@ export class CustomerOrderTrack implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
 
   readonly currency = currency;
-  readonly steps = ORDER_TIMELINE;
+  /** Etapas do pedido; na retirada no balcao nao ha "saiu para entrega" e o fim e "Retirado". */
+  get steps() {
+    if (this.order()?.channel !== 'RETIRADA') return ORDER_TIMELINE;
+    return ORDER_TIMELINE.filter((s) => s.key !== 'delivering').map((s) =>
+      s.key === 'ready' ? { ...s, label: 'Pronto p/ retirar' } : s.key === 'delivered' ? { ...s, label: 'Retirado' } : s,
+    );
+  }
   orderId = this.route.snapshot.paramMap.get('orderId')!;
   order = signal<OrderResponse | null>(null);
   error = signal<string | null>(null);

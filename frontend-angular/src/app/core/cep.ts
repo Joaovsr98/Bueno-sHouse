@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { DeliveryZoneResponse } from './models';
 
 /** Formato aceito (o mesmo que o backend valida). */
@@ -35,12 +35,13 @@ export interface CepAddress {
   zipCode: string;
 }
 
-export type CepStatus = 'idle' | 'loading' | 'ok' | 'not-found' | 'outside' | 'offline';
+/** outside = outra cidade; out-of-area = Sao Paulo, mas bairro sem entrega (pode retirar no balcao). */
+export type CepStatus = 'idle' | 'loading' | 'ok' | 'not-found' | 'outside' | 'out-of-area' | 'offline';
 
 /**
  * CEP do endereco de entrega: mascara, busca no ViaCEP (servico publico dos Correios)
- * e preenchimento automatico de rua, bairro, cidade e UF. Recusa CEP de fora da cidade
- * de Sao Paulo e escolhe o bairro atendido correspondente. Se o ViaCEP estiver fora do
+ * e preenchimento automatico de rua, bairro, cidade e UF. CEP de outra cidade ou de bairro
+ * sem entrega vira "so retirada"; nos demais, escolhe o bairro atendido. Se o ViaCEP estiver fora do
  * ar, a pessoa preenche a mao e so o formato e conferido.
  */
 export class CepLookup {
@@ -48,6 +49,9 @@ export class CepLookup {
   /** Explicacao para a pessoa: o que foi preenchido ou o que esta errado. */
   readonly message = signal<string | null>(null);
   private lastLookup = '';
+
+  /** CEP valido, mas sem entrega: o cadastro e o checkout oferecem a retirada no balcao. */
+  readonly pickupOnly = computed(() => this.status() === 'outside' || this.status() === 'out-of-area');
 
   /** Chamado a cada digitacao no campo CEP; busca quando os 8 digitos estao completos. */
   async onInput(raw: string, addr: CepAddress, zones: DeliveryZoneResponse[]): Promise<void> {
@@ -81,7 +85,7 @@ export class CepLookup {
     }
     if (normalize(data.localidade ?? '') !== normalize(DELIVERY_CITY)) {
       this.status.set('outside');
-      this.message.set(`Este CEP é de ${data.localidade}/${data.uf}. Por enquanto entregamos só na cidade de São Paulo.`);
+      this.message.set(`Este CEP é de ${data.localidade}/${data.uf}. Ainda não entregamos aí, mas você pode retirar no balcão em Pinheiros.`);
       return;
     }
 
@@ -97,15 +101,18 @@ export class CepLookup {
         const n = normalize(z.neighborhood);
         return bairro.length >= 4 && n.length >= 4 && (bairro.includes(n) || n.includes(bairro));
       });
-    this.status.set('ok');
+    addr.neighborhood = zone?.neighborhood ?? '';
     if (zone) {
-      addr.neighborhood = zone.neighborhood;
+      this.status.set('ok');
       this.message.set(`Endereço encontrado: ${data.bairro || zone.neighborhood}, São Paulo/SP. Falta só o número.`);
+    } else if (data.bairro) {
+      // Bairro de verdade, mas fora da area: nao deixa trocar por um bairro atendido qualquer.
+      this.status.set('out-of-area');
+      this.message.set(`Ainda não entregamos em ${data.bairro}, mas você pode retirar no balcão em Pinheiros.`);
     } else {
-      addr.neighborhood = '';
-      this.message.set(data.bairro
-        ? `Endereço encontrado em ${data.bairro}, que não está na lista de bairros atendidos. Escolha o mais próximo ou outro endereço.`
-        : 'Endereço encontrado. Escolha o seu bairro na lista.');
+      // CEP geral da cidade (sem bairro): a pessoa escolhe o bairro na lista.
+      this.status.set('ok');
+      this.message.set('Endereço encontrado. Escolha o seu bairro na lista.');
     }
   }
 
@@ -113,7 +120,7 @@ export class CepLookup {
   validate(addr: CepAddress): string | null {
     if (!CEP_PATTERN.test(addr.zipCode)) return 'Informe um CEP válido no formato 00000-000.';
     if (this.status() === 'loading') return 'Aguarde a consulta do CEP terminar.';
-    if (this.status() === 'not-found' || this.status() === 'outside') return this.message();
+    if (this.status() === 'not-found' || this.pickupOnly()) return this.message();
     if (normalize(addr.city) !== normalize(DELIVERY_CITY)) return 'Por enquanto entregamos só na cidade de São Paulo.';
     return null;
   }

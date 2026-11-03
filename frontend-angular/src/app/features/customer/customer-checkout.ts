@@ -59,6 +59,17 @@ export class CustomerCheckout {
   /** Distancia do endereco escolhido ate a cozinha, com link da rota no Google Maps. */
   distance = signal<{ text: string; route: string } | null>(null);
 
+  /** Entrega em casa ou retirada no balcao (sem taxa, para quem esta fora da area). */
+  mode = signal<'DELIVERY' | 'RETIRADA'>('DELIVERY');
+  readonly pickupRoute = directionsLink(RESTAURANT.fallbackAddress);
+
+  canPlace(): boolean {
+    if (this.placing() || this.lines().length === 0) return false;
+    if (this.mode() === 'RETIRADA') return true;
+    const zone = this.selectedZone();
+    return zone != null && this.subtotal() >= zone.minimumOrderValue;
+  }
+
   constructor() {
     this.loadAddresses();
     this.loadZones();
@@ -104,7 +115,11 @@ export class CustomerCheckout {
       const me = await firstValueFrom(this.api.get<CustomerResponse>('/customers/me'));
       this.customerId.set(me.id);
       this.addresses.set(me.addresses);
-      if (me.addresses.length === 0) this.showAddressForm.set(true);
+      // Sem endereco (ex.: se cadastrou fora da area de entrega): comeca em retirada no balcao.
+      if (me.addresses.length === 0) {
+        this.showAddressForm.set(true);
+        this.mode.set('RETIRADA');
+      }
       const def = me.addresses.find((a) => a.isDefault) ?? me.addresses[0];
       if (def) this.selectedAddressId.set(def.id);
     } catch (e) {
@@ -176,7 +191,8 @@ export class CustomerCheckout {
   }
 
   async placeOrder(): Promise<void> {
-    if (this.lines().length === 0 || this.selectedAddressId() == null) return;
+    if (!this.canPlace()) return;
+    const pickup = this.mode() === 'RETIRADA';
     this.placing.set(true);
     this.error.set(null);
     try {
@@ -185,8 +201,8 @@ export class CustomerCheckout {
       const order = await firstValueFrom(
         this.api.post<OrderResponse>('/orders', {
           unitId,
-          channel: 'DELIVERY',
-          customerAddressId: this.selectedAddressId(),
+          channel: pickup ? 'RETIRADA' : 'DELIVERY',
+          customerAddressId: pickup ? null : this.selectedAddressId(),
           notes: [this.orderNotes.trim(), this.paymentSummary()].filter(Boolean).join(' | '),
           items: this.lines().map((l) => ({ productId: l.productId, quantity: l.quantity, notes: l.notes || null })),
         }),

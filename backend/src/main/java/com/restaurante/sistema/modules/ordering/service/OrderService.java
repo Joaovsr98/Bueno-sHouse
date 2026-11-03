@@ -435,10 +435,12 @@ public class OrderService {
 
     /**
      * Se quem cria o pedido e um usuario CLIENTE (app do cliente), forcamos:
-     * canal DELIVERY, sem comanda, e o customerId do proprio cliente logado -
+     * canal DELIVERY ou RETIRADA (retirar no balcao, para quem mora fora da area
+     * de entrega), sem comanda, e o customerId do proprio cliente logado -
      * ignorando o que veio no request, para um cliente nunca pedir "como
-     * outro". O endereco enviado ainda e validado (precisa pertencer a esse
-     * cliente) pela regra de DELIVERY ja existente no create().
+     * outro". Na entrega o endereco ainda e validado (precisa pertencer a esse
+     * cliente) pela regra de DELIVERY ja existente no create(); na retirada nao
+     * ha endereco nem taxa.
      */
     private CreateOrderRequest applyClienteRulesIfNeeded(CreateOrderRequest request) {
         String profile = currentUserProvider.getCurrentUser().getProfile().getName();
@@ -446,12 +448,13 @@ public class OrderService {
             return request;
         }
         Long myCustomerId = customerService.customerIdOfUser(currentUserProvider.getCurrentUserId());
+        boolean pickup = "RETIRADA".equals(request.channel());
         return new CreateOrderRequest(
                 request.unitId(),
-                "DELIVERY",
+                pickup ? "RETIRADA" : "DELIVERY",
                 null,
                 myCustomerId,
-                request.customerAddressId(),
+                pickup ? null : request.customerAddressId(),
                 request.notes(),
                 request.items()
         );

@@ -47,7 +47,7 @@ const BURNERS = 3;
                   <span class="side-icon"><app-icon name="cart" [size]="22" /></span>
                   <span class="eyebrow-plain text-[0.6rem]">Para você</span>
                   <span class="block font-display text-xl font-bold uppercase mt-1">Matar minha fome</span>
-                  <span class="side-cta">{{ profileIsCustomer() ? 'Ver o cardápio' : 'Entrar ou criar conta' }} <app-icon name="arrow" [size]="15" /></span>
+                  <span class="side-cta">Ver o cardápio <app-icon name="arrow" [size]="15" /></span>
                 </button>
                 <button (click)="choose(staffLink())" class="side">
                   <span class="side-icon"><app-icon name="chef" [size]="22" /></span>
@@ -110,11 +110,8 @@ export class Intro implements OnDestroy {
   readonly choosing = signal(false);
 
   private readonly profile = computed(() => this.auth.user()?.profileName);
-  readonly profileIsCustomer = computed(() => this.profile() === 'CLIENTE');
-  /** Cliente logado vai direto ao cardapio; os demais entram ou criam conta e voltam para ele. */
-  readonly customerLink = computed(() =>
-    this.profile() === 'CLIENTE' ? '/app/cardapio' : '/login?returnUrl=%2Fapp%2Fcardapio',
-  );
+  /** Cardapio primeiro (publico): a conta so e pedida no checkout, que volta ao carrinho. */
+  readonly customerLink = computed(() => '/app/cardapio');
   readonly staffLink = computed(() => {
     const p = this.profile();
     return p && p !== 'CLIENTE' ? defaultRouteForRole(p) : '/login?lado=equipe';

@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService, apiErrorMessage } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
-import { CustomerResponse, DeliveryZoneResponse, LoginResponse, UnitResponse } from '../../core/models';
+import { CustomerResponse, DeliveryZoneResponse, LoginResponse, ProductResponse, UnitResponse } from '../../core/models';
 import { defaultRouteForRole } from '../../core/routing';
 import { currency } from '../../core/format';
 import { Logo } from '../../shared/logo';
@@ -48,6 +48,8 @@ export class Register {
   loading = signal(false);
   /** CEP: mascara, ViaCEP e checagem de cidade/bairro atendido. */
   readonly cep = new CepLookup();
+  /** Destaques do cardapio, mostrados quando o CEP e so para retirada (para nao perder o interesse). */
+  readonly teaser = signal<ProductResponse[]>([]);
 
   constructor() {
     this.loadZones();
@@ -56,10 +58,15 @@ export class Register {
   private async loadZones(): Promise<void> {
     try {
       const units = await firstValueFrom(this.api.get<UnitResponse[]>('/units'));
-      const zones = await firstValueFrom(
-        this.api.get<DeliveryZoneResponse[]>(`/delivery-zones?unitId=${units[0]?.id ?? 1}`),
-      );
+      const unitId = units[0]?.id ?? 1;
+      const [zones, products] = await Promise.all([
+        firstValueFrom(this.api.get<DeliveryZoneResponse[]>(`/delivery-zones?unitId=${unitId}`)),
+        firstValueFrom(this.api.get<ProductResponse[]>(`/products?unitId=${unitId}`)),
+      ]);
       this.zones.set(zones.filter((z) => z.active));
+      // Com foto primeiro: e o que da fome.
+      const available = products.filter((p) => p.available);
+      this.teaser.set([...available.filter((p) => p.imageUrl), ...available.filter((p) => !p.imageUrl)].slice(0, 3));
     } catch {
       this.zones.set([]);
     }
@@ -73,14 +80,18 @@ export class Register {
 
   async submit(): Promise<void> {
     const a = this.addr;
-    if (!a.street || !a.number || !a.neighborhood || !a.city || !a.state || !a.zipCode) {
-      this.error.set('Preencha o endereço de entrega: CEP, rua, número e bairro');
-      return;
-    }
-    const cepError = this.cep.validate(a);
-    if (cepError) {
-      this.error.set(cepError);
-      return;
+    // Fora da area de entrega: a conta e criada sem endereco e o pedido sai como retirada.
+    const pickupOnly = this.cep.pickupOnly();
+    if (!pickupOnly) {
+      if (!a.street || !a.number || !a.neighborhood || !a.city || !a.state || !a.zipCode) {
+        this.error.set('Preencha o endereço de entrega: CEP, rua, número e bairro');
+        return;
+      }
+      const cepError = this.cep.validate(a);
+      if (cepError) {
+        this.error.set(cepError);
+        return;
+      }
     }
     this.error.set(null);
     this.loading.set(true);
@@ -94,10 +105,12 @@ export class Register {
         }),
       );
       this.auth.login(data);
-      const me = await firstValueFrom(this.api.get<CustomerResponse>('/customers/me'));
-      await firstValueFrom(
-        this.api.post(`/customers/${me.id}/addresses`, { ...a, label: 'Casa', isDefault: true }),
-      );
+      if (!pickupOnly) {
+        const me = await firstValueFrom(this.api.get<CustomerResponse>('/customers/me'));
+        await firstValueFrom(
+          this.api.post(`/customers/${me.id}/addresses`, { ...a, label: 'Casa', isDefault: true }),
+        );
+      }
       this.router.navigateByUrl(this.returnUrl || defaultRouteForRole(data.user.profileName));
     } catch (err) {
       // Conta criada mas endereco recusado: segue logado, endereco pode ser feito no checkout.

@@ -60,18 +60,19 @@
             <label class="field-label" for="zipCode">CEP</label>
             <input id="zipCode" #zipInput [value]="addr.zipCode" (input)="onCep(zipInput)" required inputmode="numeric"
               placeholder="00000-000" maxlength="9" autocomplete="postal-code" class="field py-3"
-              [class.!border-red-500]="cep.status() === 'not-found' || cep.status() === 'outside'" />
+              [class.!border-red-500]="cep.status() === 'not-found'" [class.!border-amber-500]="cep.pickupOnly()" />
           </div>
           <div class="col-span-6 sm:col-span-4 flex items-end pb-1">
             @if (cep.message()) {
               <p class="text-xs leading-relaxed" aria-live="polite"
-                [class]="cep.status() === 'ok' ? 'text-green-400' : cep.status() === 'loading' ? 'text-neutral-400' : 'text-red-400'">
+                [class]="cep.status() === 'ok' ? 'text-green-400' : cep.status() === 'loading' ? 'text-neutral-400' : cep.pickupOnly() ? 'text-amber-300' : 'text-red-400'">
                 {{ cep.message() }}
               </p>
             } @else {
               <p class="text-xs text-neutral-500">Digite o CEP: preenchemos rua, bairro e cidade para você.</p>
             }
           </div>
+          @if (!cep.pickupOnly()) {
           <div class="col-span-6 space-y-1.5">
             <label class="field-label" for="neighborhood">Bairro</label>
             <select id="neighborhood" name="neighborhood" [(ngModel)]="addr.neighborhood" required class="field py-3">
@@ -110,6 +111,42 @@
             <label class="field-label" for="state">UF</label>
             <input id="state" name="state" [(ngModel)]="addr.state" required readonly maxlength="2" autocomplete="address-level1" class="field py-3 uppercase opacity-70" />
           </div>
+          } @else {
+            <!-- CEP sem entrega: em vez de travar, oferece a retirada no balcao. -->
+            <div class="col-span-6 rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] p-5 space-y-4">
+              <div class="flex items-start gap-3">
+                <span class="text-amber-400 mt-0.5"><app-icon name="pin" [size]="18" /></span>
+                <div>
+                  <p class="font-display font-bold uppercase">Retire no balcão, sai quentinho</p>
+                  <p class="mt-1 text-sm text-neutral-300 leading-relaxed">
+                    Crie a conta sem endereço: no carrinho você escolhe "Retirar no balcão" e busca o pedido na
+                    Rua Pais Leme, em Pinheiros, sem taxa de entrega.
+                  </p>
+                </div>
+              </div>
+              @if (teaser().length) {
+                <div>
+                  <p class="eyebrow-plain text-[0.6rem] mb-2">Saindo da nossa chapa</p>
+                  <div class="grid grid-cols-3 gap-2">
+                    @for (p of teaser(); track p.id) {
+                      <a [routerLink]="['/app/cardapio', p.id]" class="group rounded-xl overflow-hidden border border-white/10 bg-black/30 hover:border-brand-500/50 transition">
+                        @if (p.imageUrl) {
+                          <img [src]="p.imageUrl" [alt]="p.name" class="h-16 w-full object-cover group-hover:scale-105 transition" loading="lazy" />
+                        } @else {
+                          <div class="h-16 grid place-items-center text-brand-400/70"><app-icon name="utensils" [size]="22" /></div>
+                        }
+                        <p class="px-2 pt-1.5 text-[11px] font-medium truncate">{{ p.name }}</p>
+                        <p class="px-2 pb-2 text-[11px] text-brand-300">{{ currency(p.basePrice) }}</p>
+                      </a>
+                    }
+                  </div>
+                </div>
+              }
+              <a routerLink="/app/cardapio" class="inline-flex items-center gap-1.5 text-sm text-brand-400 hover:text-brand-300">
+                Ver o cardápio completo <app-icon name="arrow" [size]="14" />
+              </a>
+            </div>
+          }
         </div>
       </div>
 
@@ -118,7 +155,7 @@
       }
 
       <button type="submit" [disabled]="loading()" class="w-full btn-brand rounded-xl py-3 text-sm inline-flex items-center justify-center gap-2">
-        {{ loading() ? 'Criando conta...' : 'Criar conta' }}
+        {{ loading() ? 'Criando conta...' : cep.pickupOnly() ? 'Criar conta e retirar no balcão' : 'Criar conta' }}
         @if (!loading()) { <app-icon name="arrow" [size]="16" /> }
       </button>
 
