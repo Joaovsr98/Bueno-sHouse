@@ -54,6 +54,9 @@ export class ChartComponent implements OnDestroy {
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          // Celular com tela 3x: grafico em 2x nao muda a nitidez e gasta bem menos memoria
+          // (no iPhone o Safari chegava a fechar a pagina do dashboard).
+          devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2),
           plugins: {
             legend: { display: false },
             tooltip: { callbacks: { label: (ctx) => ` ${this.label()}: ${fmt(Number(ctx.parsed.y))}` } },
