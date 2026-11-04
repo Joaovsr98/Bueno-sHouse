@@ -4,7 +4,25 @@
   <div class="mb-4 rounded-xl bg-red-950/70 border border-red-800/60 p-3 text-sm text-red-300">{{ error() }}</div>
 }
 
+@if (alert(); as a) {
+  <div role="status" aria-live="polite"
+    class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[min(92vw,26rem)] glass rounded-2xl border border-brand-500/40 shadow-[0_20px_60px_-15px_rgba(255,106,26,.6)] p-4 flex items-start gap-3">
+    <span class="text-3xl leading-none" aria-hidden="true">{{ a.icon }}</span>
+    <div class="flex-1 min-w-0">
+      <p class="font-display font-bold">{{ a.title }}</p>
+      <p class="text-sm text-neutral-300 mt-0.5">{{ a.body }}</p>
+    </div>
+    <button (click)="alert.set(null)" class="text-neutral-500 hover:text-neutral-200" aria-label="Fechar aviso">×</button>
+  </div>
+}
+
 @if (order(); as o) {
+  @if (canAskNotifications() && !isCancelled()) {
+    <button (click)="enableNotifications()"
+      class="mb-4 w-full rounded-2xl border border-brand-500/30 bg-brand-500/10 px-4 py-3 text-sm text-brand-200 hover:bg-brand-500/15 transition text-left">
+      🔔 Me avise quando o pedido mudar de fase (mesmo com outra aba aberta)
+    </button>
+  }
   <div class="glass rounded-2xl p-6 mb-4">
     <div class="flex items-center justify-between mb-6">
       <div>
