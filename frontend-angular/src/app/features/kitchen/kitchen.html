@@ -6,7 +6,7 @@
       <div class="reveal">
         <p class="eyebrow">Produção</p>
         <h1 class="page-title mt-3">Painel da cozinha</h1>
-        <p class="page-sub mt-2">Itens dos pedidos confirmados. Atualiza sozinho a cada 15 segundos.</p>
+        <p class="page-sub mt-2">Pedidos confirmados, com todos os itens juntos. O pedido fica pronto quando todos os itens são concluídos. Atualiza sozinho a cada 15 segundos.</p>
       </div>
       <div class="flex gap-6 reveal reveal-1">
         <div class="text-right"><p class="kpi-value">{{ countBy('ENVIADO') }}</p><p class="kpi-label">Na fila</p></div>
@@ -48,35 +48,57 @@
       <div class="glass rounded-2xl"><p class="empty">Nenhum item na fila {{ sectorId() == null ? 'da cozinha' : 'deste setor' }}.</p></div>
     }
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      @for (task of visibleTasks(); track task.orderItemId) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      @for (card of orders(); track card.orderId) {
         <div class="glass rounded-2xl p-5 flex flex-col gap-3 relative overflow-hidden"
-          [class.ring-1]="task.status === 'EM_PREPARO'" [class.ring-brand-500]="task.status === 'EM_PREPARO'">
+          [class.ring-1]="hasStatus(card, 'EM_PREPARO')" [class.ring-brand-500]="hasStatus(card, 'EM_PREPARO')">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <p class="kpi-label">{{ sectorLabel(task.sectorName) }}</p>
-              <p class="font-display text-lg font-bold mt-1">Pedido #{{ task.orderNumber }}</p>
+              <p class="font-display text-lg font-bold">Pedido #{{ card.orderNumber }}</p>
+              <p class="kpi-label mt-1">{{ card.items.length }} {{ card.items.length === 1 ? 'item' : 'itens' }} para fazer</p>
             </div>
             <span class="inline-flex items-center gap-1.5 text-xs tabular-nums"
-              [class]="elapsedMinutes(task.orderCreatedAt) >= 20 ? 'text-red-300' : 'text-neutral-400'">
-              <app-icon name="clock" [size]="14" /> {{ elapsedMinutes(task.orderCreatedAt) }} min
+              [class]="elapsedMinutes(card.orderCreatedAt) >= 20 ? 'text-red-300' : 'text-neutral-400'">
+              <app-icon name="clock" [size]="14" /> {{ elapsedMinutes(card.orderCreatedAt) }} min
             </span>
           </div>
-          <p class="text-base"><span class="font-display font-bold text-brand-400">{{ task.quantity }}x</span> {{ task.productName }}</p>
-          @if (task.notes) {
-            <p class="text-xs text-gold-400 bg-gold-400/10 border border-gold-400/20 rounded-lg px-2.5 py-1.5">{{ task.notes }}</p>
-          }
-          <span class="badge w-fit" [class]="statusBadge[task.status] ?? 'badge-gray'">{{ statusLabels[task.status] ?? task.status }}</span>
+
+          <ul class="flex flex-col divide-y divide-white/10 border-y border-white/10">
+            @for (task of card.items; track task.orderItemId) {
+              <li class="py-2.5 flex flex-col gap-1.5">
+                <div class="flex items-start justify-between gap-2">
+                  <p class="text-base"><span class="font-display font-bold text-brand-400">{{ task.quantity }}x</span> {{ task.productName }}</p>
+                  <span class="badge shrink-0" [class]="statusBadge[task.status] ?? 'badge-gray'">{{ statusLabels[task.status] ?? task.status }}</span>
+                </div>
+                <p class="text-xs text-neutral-500">{{ sectorLabel(task.sectorName) }}</p>
+                @if (task.notes) {
+                  <p class="text-xs text-gold-400 bg-gold-400/10 border border-gold-400/20 rounded-lg px-2.5 py-1.5">{{ task.notes }}</p>
+                }
+                @if (card.items.length > 1) {
+                  <div class="flex gap-2">
+                    @if (task.status === 'ENVIADO') {
+                      <button (click)="start(task.orderItemId)" class="btn-ghost !text-xs !py-1">Iniciar item</button>
+                    }
+                    @if (task.status === 'EM_PREPARO') {
+                      <button (click)="complete(task.orderItemId)" class="btn-ghost !text-xs !py-1">Item pronto</button>
+                    }
+                    @if (canToggle(task.status)) {
+                      <button (click)="markUnavailable(task.orderItemId)" class="btn-ghost btn-danger !text-xs !py-1">Indisponível</button>
+                    }
+                  </div>
+                }
+              </li>
+            }
+          </ul>
 
           <div class="flex gap-2 mt-auto pt-1">
-            @if (task.status === 'ENVIADO') {
-              <button (click)="start(task.orderItemId)" class="flex-1 text-sm btn-brand rounded-xl py-2">Iniciar preparo</button>
+            @if (hasStatus(card, 'ENVIADO')) {
+              <button (click)="allItems(card, 'start')" class="flex-1 text-sm btn-brand rounded-xl py-2">Iniciar preparo</button>
+            } @else if (hasStatus(card, 'EM_PREPARO')) {
+              <button (click)="allItems(card, 'complete')" class="flex-1 text-sm btn-brand rounded-xl py-2">Concluir pedido</button>
             }
-            @if (task.status === 'EM_PREPARO') {
-              <button (click)="complete(task.orderItemId)" class="flex-1 text-sm btn-brand rounded-xl py-2">Concluir</button>
-            }
-            @if (canToggle(task.status)) {
-              <button (click)="markUnavailable(task.orderItemId)" class="btn-ghost btn-danger">Indisponível</button>
+            @if (card.items.length === 1 && canToggle(card.items[0].status)) {
+              <button (click)="markUnavailable(card.items[0].orderItemId)" class="btn-ghost btn-danger">Indisponível</button>
             }
           </div>
         </div>

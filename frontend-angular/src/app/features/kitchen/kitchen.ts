@@ -28,6 +28,14 @@ const SECTOR_LABELS: Record<string, string> = {
 
 type SectorTask = KitchenTaskResponse & { sectorId: number; sectorName: string };
 
+/** Um pedido na cozinha: todos os itens dele que ainda faltam, num cartao so. */
+interface OrderCard {
+  orderId: number;
+  orderNumber: number;
+  orderCreatedAt: string;
+  items: SectorTask[];
+}
+
 /**
  * Painel de producao: abre com TODOS os setores juntos (mais antigos primeiro)
  * e so filtra quando a cozinha escolhe um setor.
@@ -56,6 +64,39 @@ export class Kitchen implements OnDestroy {
     const id = this.sectorId();
     return id == null ? this.tasks() : this.tasks().filter((t) => t.sectorId === id);
   });
+
+  /**
+   * Itens agrupados por pedido, do mais antigo para o mais novo: o pedido so fica pronto
+   * quando todos os itens sao concluidos, entao a cozinha ve o pedido inteiro junto.
+   */
+  readonly orders = computed<OrderCard[]>(() => {
+    const byOrder = new Map<number, OrderCard>();
+    for (const t of this.visibleTasks()) {
+      const card = byOrder.get(t.orderId) ?? { orderId: t.orderId, orderNumber: t.orderNumber, orderCreatedAt: t.orderCreatedAt, items: [] };
+      if (!card.items.some((x) => x.orderItemId === t.orderItemId)) card.items.push(t);
+      byOrder.set(t.orderId, card);
+    }
+    return [...byOrder.values()];
+  });
+
+  /** Algum item do pedido ainda na fila / em preparo. */
+  hasStatus(card: OrderCard, status: string): boolean {
+    return card.items.some((t) => t.status === status);
+  }
+
+  /** Inicia (ou conclui) de uma vez todos os itens do pedido que estao nessa etapa. */
+  allItems(card: OrderCard, action: 'start' | 'complete'): void {
+    const from = action === 'start' ? 'ENVIADO' : 'EM_PREPARO';
+    const ids = card.items.filter((t) => t.status === from).map((t) => t.orderItemId);
+    if (ids.length === 0) return;
+    forkJoin(ids.map((id) => this.api.post<KitchenTaskResponse>(`/kitchen/tasks/${id}/${action}`))).subscribe({
+      next: () => this.loadTasks(),
+      error: (e) => {
+        this.error.set(apiErrorMessage(e, action === 'start' ? 'Erro ao iniciar o pedido' : 'Erro ao concluir o pedido'));
+        this.loadTasks();
+      },
+    });
+  }
 
   private pollHandle: ReturnType<typeof setInterval> | null = null;
 

@@ -92,7 +92,7 @@ test('pedido de delivery: do cardapio ate a entrega confirmada pelo motoboy', as
   await equipe.goto('/cozinha');
   const tarefa = equipe.locator('div.glass').filter({ has: equipe.getByText(`Pedido #${numero}`, { exact: true }) });
   await tarefa.getByRole('button', { name: 'Iniciar preparo' }).click();
-  await tarefa.getByRole('button', { name: 'Concluir' }).click();
+  await tarefa.getByRole('button', { name: 'Concluir pedido' }).click();
 
   // 3. Motoboy: a entrega e a primeira da fila, com o endereco oculto ate aceitar
   const motoboy = await novaPessoa(browser);
