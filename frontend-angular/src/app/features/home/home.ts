@@ -5,6 +5,7 @@ import { IntroService } from '../../core/intro.service';
 import { defaultRouteForRole } from '../../core/routing';
 import { Logo } from '../../shared/logo';
 import { Icon } from '../../shared/icon';
+import { MadeBy } from '../../shared/made-by';
 import { Backdrop } from '../../shared/backdrop';
 
 /**
@@ -14,7 +15,7 @@ import { Backdrop } from '../../shared/backdrop';
  */
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, Logo, Icon, Backdrop],
+  imports: [MadeBy, RouterLink, Logo, Icon, Backdrop],
   template: `
     <div class="relative min-h-screen overflow-hidden flex flex-col">
       <app-backdrop align="center" />
@@ -61,6 +62,10 @@ import { Backdrop } from '../../shared/backdrop';
           Ainda não tem conta? <a routerLink="/registrar" class="text-brand-400 hover:text-brand-300">Cadastre-se para pedir</a>
         </p>
       </main>
+
+      <footer class="relative pb-6 flex justify-center reveal reveal-4">
+        <app-made-by />
+      </footer>
     </div>
   `,
   styles: [`

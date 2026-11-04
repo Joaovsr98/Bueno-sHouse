@@ -5,11 +5,12 @@ import { CartService } from '../../core/cart.service';
 import { Logo } from '../../shared/logo';
 import { Icon } from '../../shared/icon';
 import { FloatingCart } from '../../shared/floating-cart';
+import { MadeBy } from '../../shared/made-by';
 import { ChefMascot } from '../../shared/chef-mascot';
 
 @Component({
   selector: 'app-customer-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Logo, Icon, FloatingCart, ChefMascot],
+  imports: [MadeBy, RouterOutlet, RouterLink, RouterLinkActive, Logo, Icon, FloatingCart, ChefMascot],
   templateUrl: './customer-layout.html',
 })
 export class CustomerLayout {
