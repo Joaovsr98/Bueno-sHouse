@@ -8,6 +8,7 @@ import { defaultRouteForRole } from '../../core/routing';
 import { Logo } from '../../shared/logo';
 import { Icon } from '../../shared/icon';
 import { Backdrop } from '../../shared/backdrop';
+import { MadeBy } from '../../shared/made-by';
 import { Burners } from '../../shared/burners';
 
 
@@ -22,7 +23,7 @@ const QUICK_ACCESS = [
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, RouterLink, Logo, Icon, Backdrop, Burners],
+  imports: [MadeBy, FormsModule, RouterLink, Logo, Icon, Backdrop, Burners],
   templateUrl: './login.html',
 })
 export class Login {

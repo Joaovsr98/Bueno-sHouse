@@ -11,6 +11,7 @@ import { currency } from '../../core/format';
 import { Logo } from '../../shared/logo';
 import { Icon } from '../../shared/icon';
 import { groupZones } from '../../core/zones';
+import { MadeBy } from '../../shared/made-by';
 import { CepLookup } from '../../core/cep';
 
 /**
@@ -20,7 +21,7 @@ import { CepLookup } from '../../core/cep';
  */
 @Component({
   selector: 'app-register',
-  imports: [FormsModule, RouterLink, Logo, Icon],
+  imports: [MadeBy, FormsModule, RouterLink, Logo, Icon],
   templateUrl: './register.html',
 })
 export class Register {
