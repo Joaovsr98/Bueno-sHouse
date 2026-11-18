@@ -120,6 +120,8 @@ export class Intro implements OnDestroy {
   });
 
   private timers: ReturnType<typeof setTimeout>[] = [];
+  /** Clique ja escolheu um lado: ignora cliques repetidos ate a tela abrir. */
+  private navigating = false;
 
   constructor() {
     // Em outras telas: so no primeiro acesso da sessao, e fecha sozinha.
@@ -147,9 +149,17 @@ export class Intro implements OnDestroy {
     this.timers.push(setTimeout(() => (home ? this.choosing.set(true) : this.close()), lit + 500));
   }
 
+  /**
+   * So esmaece depois que a tela escolhida abriu: fechar antes deixava a pagina inicial
+   * aparecer por um instante enquanto o cardapio (carregado sob demanda) ainda chegava.
+   */
   choose(link: string): void {
-    this.router.navigateByUrl(link);
-    this.close();
+    if (this.navigating) return;
+    this.navigating = true;
+    this.router.navigateByUrl(link).finally(() => {
+      this.navigating = false;
+      this.close();
+    });
   }
 
   /** "Pular" / "Ver a pagina inicial": fica na pagina inicial sem reabrir a escolha. */
