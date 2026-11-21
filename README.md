@@ -18,13 +18,16 @@ em tempo real).
 
 | | URL |
 |---|---|
-| **Aplicação (Angular, Vercel)** | https://bueno-s-house.vercel.app |
+| **Aplicação principal (Angular, Vercel)** | https://buenoshouse.vnbueno.com.br |
 | **API (Spring Boot, Render)** | https://bueno-s-house-api.onrender.com/api/health |
-| **Swagger** | https://bueno-s-house.vercel.app/swagger-ui.html (botão "Authorize" aceita o token do login) |
+| **Swagger da demonstração** | https://buenoshouse.vnbueno.com.br/swagger-ui.html (botão "Authorize" aceita o token do login) |
 | **Banco** | MySQL 8 gerenciado (Aiven) |
 
-> O backend roda no plano gratuito do Render e "dorme" após ~15 min sem uso: o primeiro
-> acesso pode levar cerca de 1 minuto.
+> O backend roda no plano gratuito do Render e pode hibernar por inatividade. O primeiro acesso pode demorar; o tempo varia.
+>
+> **Situação verificada em 21/11/2026:** a aplicação principal respondeu HTTP 200 e `/api/health` retornou `status: UP`. O endereço `https://bueno-s-house.vercel.app` é um alias legado, não o endereço recomendado para divulgação.
+>
+> **Atenção:** o ambiente público atual é uma **demonstração com perfil Spring `dev`**, conforme `render.yaml`: contém usuários e dados de exemplo. A expressão "produção" aqui significa *URL publicada*, não implantação comercial para restaurante real. Não inserir informações de clientes reais; para uso comercial configurar perfil `prod`, credenciais próprias, base segregada e backups.
 
 **Logins de demonstração**
 
@@ -37,11 +40,20 @@ Os botões de acesso rápido do login só escolhem a conta (preenchem o e-mail):
 
 O cardápio (`/app/cardapio`) e a página de cada prato (`/app/cardapio/:id`) são públicos; clientes novos se cadastram em `/registrar`.
 
-**Arquitetura de produção:** `Angular (Vercel) → /api (rewrite da Vercel) → Spring Boot (Render, Docker) → MySQL (Aiven)`.
+**Arquitetura da demonstração publicada:** `Angular (Vercel) → /api (rewrite da Vercel) → Spring Boot (Render, Docker) → MySQL (Aiven)`.
 Variáveis do backend no Render: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`,
 `SPRING_PROFILES_ACTIVE`, `CORS_ALLOWED_ORIGINS` (ver [render.yaml](render.yaml)). DER do banco: [docs/DER.md](docs/DER.md).
 
 ---
+
+## Situação do código e da publicação
+
+- **Domínio para portfólio:** [buenoshouse.vnbueno.com.br](https://buenoshouse.vnbueno.com.br).
+- **Código analisado:** branch `main`; o repositório também mantém `feat/migracao-angular`, apontada pelo blueprint `render.yaml` e pelo deploy que atendia o domínio personalizado em 21/11/2026. **Não presumir que `main` e o domínio exibem o mesmo commit.** Conferir o SHA do deploy antes de anunciar uma nova funcionalidade.
+- **Pedidos repetidos (H4):** `OrderController` recebe `Idempotency-Key`; `OrderService` consulta a chave por usuário; o checkout Angular envia a chave. Confirmar comportamento concorrente com teste específico antes de prometer garantia absoluta.
+- **Fuso dos relatórios (H5):** `ReportService` usa `America/Sao_Paulo` para os períodos de faturamento. Não é mais uma pendência sem implementação.
+- **Arquitetura:** existe `ModuleArchitectureTest` com ArchUnit para impedir ciclos entre módulos; a auditoria histórica deve ser lida com a atualização de status.
+- **Qualidade:** na execução E2E de 18/11/2026 para `main` (SHA `1330901`), os testes de fluxo de pedido passaram em desktop, Android e iPhone. O teste de *largura das telas da equipe* no iPhone excedeu 180 s; resultado geral: 4 aprovados, 1 ignorado e 1 falhou. **O motivo do timeout ainda precisa ser investigado; não há comprovação de defeito visual específico.** [Logs da execução](https://github.com/Joaovsr98/Bueno-sHouse/actions/runs/44368427958).
 
 ## Escopo: guia da disciplina × extensões
 
