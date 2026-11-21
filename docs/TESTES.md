@@ -1,4 +1,25 @@
-# Como testar (Fases 1–7)
+# Como testar — Bueno's House (Angular + Spring Boot)
+
+## Demonstração pública
+
+- **Aplicação:** https://buenoshouse.vnbueno.com.br
+- **Saúde da API:** https://buenoshouse.vnbueno.com.br/api/health — `UP` confirmado em 21/11/2026.
+- **Perfil do servidor publicado:** `dev`, com dados e contas **fictícios**. Não registrar clientes ou operações comerciais reais.
+
+O roteiro abaixo é voltado ao ambiente de **desenvolvimento/testes**, não a operações de produção. Não execute comandos de reset destrutivo em banco de dados com informações reais.
+
+## Situação dos testes automatizados (18/11/2026)
+
+- Backend: integração Java/JUnit 5 + Testcontainers; rodar `cd backend && mvn verify`.
+- Frontend: testes Angular + build; conferir `.github/workflows/frontend-tests.yml`.
+- E2E: Playwright na `.github/workflows/e2e.yml`, com cenários de fluxo de pedido e largura das telas.
+- **Última execução E2E em `main` consultada:** [GitHub Actions #44368427958](https://github.com/Joaovsr98/Bueno-sHouse/actions/runs/44368427958), commit `1330901`. Resultado: 4 aprovados, 1 ignorado e 1 falha por **timeout (180s)** no cenário de telas da equipe em iPhone. O fluxo de delivery passou em desktop, Android e iPhone. Isso exige investigação/novo teste; não permite concluir que o layout está quebrado.
+- O teste de arquitetura `ModuleArchitectureTest` usa ArchUnit para bloquear ciclos entre módulos.
+- A chave `Idempotency-Key` para criação de pedidos e o agrupamento em `America/Sao_Paulo` já estão no código. Acrescentar/verificar casos de reenvio concorrente e virada de dia no horário de Brasília.
+
+---
+
+## Roteiro local
 
 Pré-requisitos: Docker Desktop (ou JDK 21 + Maven + Node 20 + MySQL 8).
 

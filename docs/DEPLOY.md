@@ -1,4 +1,39 @@
-# Deploy em produção (VPS com Docker)
+# Deploy da Bueno's House — demonstração publicada e opção VPS
+
+## Ambiente atual (21/11/2026)
+
+| Componente | Endereço / serviço |
+|---|---|
+| **Domínio público recomendado** | https://buenoshouse.vnbueno.com.br |
+| Angular | Vercel — projeto `bueno-s-house`; endereço antigo `bueno-s-house.vercel.app` é alias legado |
+| API Spring Boot | Render — `https://bueno-s-house-api.onrender.com` |
+| Health check pela aplicação | `https://buenoshouse.vnbueno.com.br/api/health` (HTTP 200 e `UP` em 21/11/2026) |
+| Dados | MySQL 8 gerenciado na Aiven |
+| Origem do deploy do domínio consultado | Branch `feat/migracao-angular`, commit `54dfad6`, diferente da `main` `1330901` |
+
+**Importante:** o endereço está publicado, mas o backend do blueprint `render.yaml` usa **`SPRING_PROFILES_ACTIVE=dev`**, com dados e usuários de demonstração. Trata-se de um ambiente **de portfólio/testes**, não de produção comercial. Não registrar dados pessoais reais ou permitir pagamentos reais nessa demonstração.
+
+### Como a configuração atual funciona
+
+- `frontend-angular/vercel.json` encaminha `/api/:path*` ao Render; o usuário navega pelo domínio da VN Bueno.
+- As rotas `/swagger-ui/*` e `/v3/api-docs` também são encaminhadas para a API. Rever exposição pública do Swagger antes de uma operação comercial.
+- A política de cabeçalhos inclui HSTS, CSP, proteção contra enquadramento e outras restrições. Revisar CSP e integrações ao trocar recursos de produção.
+- O `render.yaml` ainda aponta `CORS_ALLOWED_ORIGINS` para `https://bueno-s-house.vercel.app`. Como o site usa o rewrite `/api`, essa diferença não impediu o health check. **Antes de acesso direto entre origens**, alinhar as origens liberadas e testar CORS.
+- O serviço gratuito do Render pode hibernar; planejar uma experiência de carregamento e indicadores de indisponibilidade.
+- **Antes de publicar uma mudança**: conferir a branch efetivamente ligada ao projeto na Vercel, a branch do Render, o SHA e os testes de backend/frontend/E2E.
+
+### Passagem futura para uso comercial (ainda não efetuada)
+
+1. Separar um **banco novo** para dados reais; não converter nem apagar o banco de demonstração sem backup validado.
+2. Configurar perfil `prod`, credenciais próprias, política de acesso e segredos fora do Git.
+3. Revisar a exposição de Swagger, reset de demonstração, CORS e permissões dos usuários.
+4. Validar fluxos de pedidos, pagamentos, estoque, caixa e entrega com testes automatizados e de aceitação.
+5. Estabelecer backups testados, monitoramento e procedimentos de restauração.
+6. Controlar deploy e aprovação na branch correta. Nenhuma alteração nesse guia executa essas migrações.
+
+---
+
+## Alternativa: VPS com Docker (guia existente)
 
 Resultado: o sistema inteiro (Angular + Spring Boot + MySQL) em **uma URL pública com HTTPS**,
 atendendo ao entregável de deploy do SRS. Só as portas 80/443 ficam abertas; MySQL e API ficam
