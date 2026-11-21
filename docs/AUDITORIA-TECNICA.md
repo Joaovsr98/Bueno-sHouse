@@ -1,5 +1,23 @@
 # Auditoria técnica · Bueno's House
 
+## Atualização do estado — 21/11/2026 (somente leitura)
+
+A auditoria original abaixo é **histórica** (28/10/2026, commit `0d6ba27`). Suas tabelas de problemas, hipóteses e prioridades retratam aquele momento, **não** o estado atual. A conferência do código da `main` e dos registros de CI em 21/11/2026 identificou:
+
+| Tema | Estado verificado |
+|---|---|
+| Aplicação pública | [buenoshouse.vnbueno.com.br](https://buenoshouse.vnbueno.com.br) respondeu HTTP 200; `/api/health` retornou `UP`. |
+| Ambiente publicado | **Demonstração** com `SPRING_PROFILES_ACTIVE=dev` no blueprint do Render, com seed e contas de teste; **não é ambiente comercial com dados reais**. |
+| Branch e deploy | `main` no commit `1330901`; domínio personalizado atendido por um deploy originado de `feat/migracao-angular` (`54dfad6`). Validar divergências antes de liberar alterações de `main`. |
+| C7, ciclos entre módulos | Existe `ModuleArchitectureTest` usando ArchUnit e portas/eventos nos módulos; o job de testes de backend em 18/11/2026 concluiu com sucesso. A pendência descrita abaixo é histórica. |
+| H4, pedidos duplicados | **Implementação existente**: cabeçalho opcional `Idempotency-Key` em `OrderController`, persistência e consulta por usuário em `OrderService`, chave enviada pelo checkout Angular. Recomenda-se teste específico de concorrência e reenvio. |
+| H5, fuso dos relatórios | **Implementação existente**: `ReportService` define `America/Sao_Paulo` e agrupa períodos usando o fuso da operação. |
+| E2E em `main` | Execução [44368427958](https://github.com/Joaovsr98/Bueno-sHouse/actions/runs/44368427958), em 18/11/2026: **4 aprovados, 1 ignorado e 1 falha por timeout de 180 s** no cenário de largura das telas da equipe para iPhone. Fluxo de pedido aprovado nos três dispositivos; o timeout requer diagnóstico, não prova de defeito responsivo. |
+
+**Não houve execução de novos testes nem alteração da aplicação nesta atualização documental.**
+
+---
+
 28/10/2026 · código do commit `0d6ba27` · auditoria só de leitura (nenhuma correção aplicada).
 
 ## Situação após as correções (commit `567de11`)
@@ -12,14 +30,14 @@
 | C4 atualização perdida de saldo | **Resolvido.** Todo ajuste de saldo é um `UPDATE` atômico no banco. |
 | C5 saldo negativo | **Resolvido.** A baixa só ocorre se houver saldo (`UPDATE ... WHERE quantidade >= baixa`); sem saldo, 422 e a confirmação é desfeita. Teste: `StockConsistencyIT`. |
 | C6 idempotência da baixa | **Resolvido.** Índice único `V18` em `stock_movements`; violação vira 409. |
-| C7 ciclos entre módulos | **Pendente.** Plano incremental mantido (eventos + interfaces de consulta + ArchUnit). |
+| C7 ciclos entre módulos | **Implementado depois da auditoria original.** Há eventos/portas e `ModuleArchitectureTest` com ArchUnit; último CI de backend consultado em 18/11/2026 concluído com sucesso. |
 | C8 contas de demonstração | **Resolvido.** Senha, perfil e situação das contas `@demo.local` e `admin@email.com` não podem ser alterados (422). Teste: `AuthorizationIT`. |
 | C9, C11 dados da equipe | **Resolvido.** Entregadores, mesas, atendimentos, comandas e setores só para perfis da equipe. Teste: `AuthorizationIT`. |
 | C10 notificação de outro usuário | **Resolvido.** Só o destinatário marca como lida (404 para os demais). |
 | H1 colunas CHAR | **Confirmada e resolvida** (ver C1). |
 | H2 colunas BOOLEAN | **Descartada:** o `validate` passou no CI. |
 | H3 seeds × testes | **Confirmada e resolvida** (ver C2). |
-| H4, H5 | Pendentes (idempotência do `POST /orders` e fuso horário dos relatórios). |
+| H4, H5 | **Implementações encontradas na `main`.** `Idempotency-Key` no pedido e fuso `America/Sao_Paulo` nos relatórios; manter testes de regressão. |
 | Documentação (seção 3) | **Atualizada:** README (estoque, timeline, testes, escopo guia × extensões), TESTES.md, DER.md e aviso de histórico no CONTINUAR-PROJETO.md. |
 
 ---
@@ -31,7 +49,7 @@ a suíte de testes foram executadas. Onde isso importa, o item está marcado com
 
 ---
 
-## 1. Problemas confirmados (com evidência no código)
+## 1. Problemas confirmados na auditoria original (histórico de 28/10/2026)
 
 | # | Problema | Evidência | Severidade | Correção recomendada | Testes necessários |
 |---|---|---|---|---|---|
@@ -47,7 +65,7 @@ a suíte de testes foram executadas. Onde isso importa, o item está marcado com
 | C10 | Qualquer usuário marca como lida a notificação de outra pessoa. | `NotificationService.markRead(id)` não confere o dono (`NotificationService.java:45`). | Baixa | Conferir `notification.userId == usuário atual` (senão 404). | Usuário A marca notificação de B → 404. |
 | C11 | Cliente lê dados do salão (mesas, atendimentos, comandas, setores). | `GET /api/tables`, `/api/services`, `/api/commands`, `/api/kitchen-sectors`, `/api/additional-groups` sem `@PreAuthorize`. | Baixa | Restringir aos perfis da equipe. | Cliente → 403 em cada endpoint. |
 
-## 2. Hipóteses (precisam ser confirmadas executando)
+## 2. Hipóteses registradas na auditoria original (histórico)
 
 | # | Hipótese | Por que suspeitar | Como confirmar |
 |---|---|---|---|
@@ -99,7 +117,7 @@ Prioridade de novos testes:
 Extensões além do guia (não obrigatórias): salão (mesas, atendimentos, comandas), caixa,
 motoboy, multiunidade, perfis Caixa, Garçom e Motoboy.
 
-## 6. Ordem sugerida para as correções
+## 6. Ordem originalmente sugerida para as correções (histórico)
 
 1. C1 + C2: mapeamentos, `validate` reativado, `mvn test` verde em máquina com Docker e CI.
 2. C3, C4, C5, C6: consistência do estoque (com os testes da seção 4, item 2).
