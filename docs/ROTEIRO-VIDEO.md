@@ -7,8 +7,9 @@ Ritmo de referência: cerca de 140 palavras por minuto. Cada bloco traz o **temp
 mostrar** e a **narração**. Antes de gravar, abra o site uma vez para "acordar" o servidor (o
 plano gratuito hiberna por volta de 1 minuto) e deixe as abas prontas.
 
-- Aplicação: https://bueno-s-house.vercel.app
-- Documentação da API (Swagger): https://bueno-s-house.vercel.app/swagger-ui.html
+- Aplicação: https://buenoshouse.vnbueno.com.br
+- **Observação:** ambiente publicado para demonstração, com dados e contas fictícios. O backend gratuito pode precisar acordar; conferir `/api/health` antes de gravar. Não apresentar como operação comercial com pedidos reais.
+- Documentação da API (Swagger): https://buenoshouse.vnbueno.com.br/swagger-ui.html
 - Repositório: https://github.com/Joaovsr98/Bueno-sHouse
 - Logins: `admin@email.com` / `senha123`. Perfis de demonstração com senha `admin123`:
   `gerente@demo.local`, `cozinha@demo.local`, `caixa@demo.local`, `garcom@demo.local`,
