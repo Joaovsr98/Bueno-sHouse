@@ -26,6 +26,7 @@ import { Backdrop } from '../../shared/backdrop';
 
       <main class="relative flex-1 flex flex-col items-center justify-center px-6 pb-16">
         <div class="text-center max-w-4xl">
+          <div class="vn-heat" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
           <p class="eyebrow reveal reveal-1">Bueno's House, uma experiência completa</p>
           <h1 class="mt-5 text-5xl sm:text-7xl font-bold uppercase leading-[0.95] reveal reveal-2">
             Por trás de cada pedido,<br /><span class="text-ember">uma experiência.</span>
@@ -69,6 +70,8 @@ import { Backdrop } from '../../shared/backdrop';
     </div>
   `,
   styles: [`
+    .vn-heat{height:64px;display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px}.vn-heat i{display:block;width:14px;height:44px;border-radius:60% 40% 50% 50%;background:linear-gradient(0deg,#ee4910,#ff983d,#ffdd9a);box-shadow:0 0 18px #ff782c88;transform-origin:bottom;animation:vn-heatwave 1.8s ease-in-out infinite alternate}.vn-heat i:nth-child(2n){animation-delay:-.75s;height:56px}.vn-heat i:nth-child(3n){animation-delay:-1.2s;height:62px}@keyframes vn-heatwave{from{transform:scaleY(.45) skewX(-10deg);opacity:.55}to{transform:scaleY(1) skewX(9deg);opacity:1}}@media(prefers-reduced-motion:reduce){.vn-heat i{animation:none}}
+
     .door {
       position: relative; display: block; padding: 2rem; border-radius: 1.5rem; overflow: hidden;
       background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015));
